@@ -1,0 +1,84 @@
+name: ceremonial_ledger
+description: 경조사 장부 앱
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # 상태관리
+  flutter_riverpod: ^2.4.9
+
+  #알림
+  flutter_local_notifications: ^17.2.2
+  timezone: ^0.9.4
+
+  # Firebase / 인증
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3
+  google_sign_in: ^6.2.1
+  kakao_flutter_sdk_user: ^1.9.1
+
+  # 로컬 DB
+  drift: ^2.14.1
+  drift_flutter: ^0.1.0
+  sqlite3_flutter_libs: ^0.5.0
+
+  # Firebase / 인증 아래에 추가
+  cloud_firestore: ^4.14.0
+  connectivity_plus: ^5.0.2  # 네트워크 상태 확인용
+
+  # 캘린더
+  table_calendar: ^3.0.9
+
+  # 엑셀
+  excel: ^4.0.6
+
+  # PDF
+  pdf: ^3.10.8
+  printing: ^5.12.0
+
+  # 공유
+  share_plus: ^7.2.1
+
+  # OCR
+  google_mlkit_text_recognition: ^0.13.0
+  image_picker: ^1.0.7
+  camera: ^0.10.5+9
+
+  # 엑셀 가져오기
+  file_picker: ^8.1.2
+  open_file: ^3.3.2
+
+  # 기타
+  path_provider: ^2.1.4
+  intl: ^0.20.2
+  cupertino_icons: ^1.0.2
+  home_widget: ^0.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.7
+  drift_dev: ^2.14.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Pretendard-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Pretendard-Bold.ttf
+          weight: 700

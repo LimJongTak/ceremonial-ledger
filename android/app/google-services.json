@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "561456351283",
+    "project_id": "ceremonial-ledger",
+    "storage_bucket": "ceremonial-ledger.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:561456351283:android:705a372f08d508dc497b46",
+        "android_client_info": {
+          "package_name": "com.yourcompany.ceremonial_ledger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "561456351283-7g8lq9df35f2kb2cepam772etc1e94t1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAo3CRXHW0lVRXRVPV7HRjJkBf8ePCHXGo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "561456351283-7g8lq9df35f2kb2cepam772etc1e94t1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "561456351283-dsqh9s742jp85ubevb4eu5oordukd6h4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.yourcompany.ceremonialLedger"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

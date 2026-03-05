@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="16dp">
+
+    <!-- 헤더 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="💝 경조사 장부"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
+
+        <TextView
+            android:id="@+id/widget_month"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3월"
+            android:textSize="11sp"
+            android:textColor="#CCFFFFFF" />
+    </LinearLayout>
+
+    <!-- 잔액 -->
+    <TextView
+        android:id="@+id/widget_balance_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="이번 달 잔액"
+        android:textSize="11sp"
+        android:textColor="#AAFFFFFF" />
+
+    <TextView
+        android:id="@+id/widget_balance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0원"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 구분선 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#33FFFFFF"
+        android:layout_marginBottom="10dp" />
+
+    <!-- 수입/지출 행 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- 수입 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="↓ 수입"
+                android:textSize="10sp"
+                android:textColor="#8010B981" />
+
+            <TextView
+                android:id="@+id/widget_income"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0원"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#10B981" />
+        </LinearLayout>
+
+        <!-- 지출 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="↑ 지출"
+                android:textSize="10sp"
+                android:textColor="#80EF4444" />
+
+            <TextView
+                android:id="@+id/widget_expense"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0원"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#EF4444" />
+        </LinearLayout>
+
+        <!-- 건수 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📋 건수"
+                android:textSize="10sp"
+                android:textColor="#AAFFFFFF" />
+
+            <TextView
+                android:id="@+id/widget_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0건"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 다가오는 일정 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#33FFFFFF"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/widget_upcoming"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="다가오는 일정 없음"
+        android:textSize="11sp"
+        android:textColor="#CCFFFFFF"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+</LinearLayout>
