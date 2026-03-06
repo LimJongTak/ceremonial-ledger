@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../calendar/event_bottom_sheet.dart';
 import '../common/app_theme.dart';
 import '../search/search_screen.dart';
+import '../notifications/notification_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -166,15 +167,22 @@ class _Header extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => SearchScreen()),
                   ),
                 ),
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const NotificationScreen()),
                   ),
-                  child: const Icon(Icons.notifications_outlined,
-                      color: Colors.white, size: 20),
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.notifications_outlined,
+                        color: Colors.white, size: 20),
+                  ),
                 ),
               ]),
             ],
