@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/event_provider.dart';
-import '../calendar/ocr_register_screen.dart';
+// TODO: OCR 기능 준비 중 - import '../calendar/ocr_register_screen.dart';
 import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
 import '../common/app_theme.dart';
@@ -102,16 +102,7 @@ class ProfileScreen extends ConsumerWidget {
                 _Section(
                   title: '데이터 관리',
                   children: [
-                    _MenuItem(
-                      icon: Icons.document_scanner_outlined,
-                      iconColor: AppTheme.primary,
-                      title: '카메라로 일괄 등록',
-                      subtitle: 'OCR로 여러 내역 한번에',
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const OcrRegisterScreen())),
-                    ),
+                    // TODO: OCR 기능 준비 중 - 카메라 일괄 등록 메뉴
                     _MenuItem(
                       icon: Icons.table_view_outlined,
                       iconColor: AppTheme.secondary,

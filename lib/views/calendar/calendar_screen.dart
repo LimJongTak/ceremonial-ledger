@@ -5,7 +5,7 @@ import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/auth_provider.dart';
 import 'event_bottom_sheet.dart';
-import 'ocr_register_screen.dart';
+// TODO: OCR 기능 준비 중 - import '../calendar/ocr_register_screen.dart';
 import '../export/excel_import_screen.dart';
 
 class CalendarScreen extends ConsumerWidget {
@@ -22,14 +22,7 @@ class CalendarScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('경조사 캘린더'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.document_scanner_outlined),
-            tooltip: '카메라로 일괄 등록',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const OcrRegisterScreen()),
-            ),
-          ),
+          // TODO: OCR 기능 준비 중 - 카메라 일괄 등록 버튼
           IconButton(
             // ← 이 버튼 추가
             icon: const Icon(Icons.table_view_outlined),
