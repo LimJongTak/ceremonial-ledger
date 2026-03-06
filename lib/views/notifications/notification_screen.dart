@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../../services/notification_service.dart';
 import '../common/app_theme.dart';
@@ -177,7 +178,7 @@ class _SummaryBanner extends StatelessWidget {
 
 // ── 이벤트별 알림 카드 ─────────────────────────────────────────
 class _EventNotifCard extends StatelessWidget {
-  final dynamic event;
+  final EventModel event;
   const _EventNotifCard({required this.event});
 
   @override
