@@ -30,6 +30,18 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- 카카오 로그인 OAuth 콜백 Activity -->
+        <activity
+            android:name="com.kakao.sdk.flutter.AuthCodeCustomTabsActivity"
+            android:exported="true">
+            <intent-filter android:label="flutter_web_auth">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="kakao06e429ad4f8cfddc6f1535446c345d90" android:host="oauth"/>
+            </intent-filter>
+        </activity>
+
         <!-- 네이버 로그인 OAuth Activity -->
         <activity
             android:name="com.naver.sdk.oauth.OAuthLoginActivity"
