@@ -526,21 +526,19 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   @override
-  Widget build(BuildContext context) => const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: Column(children: [
-            Text('📭', style: TextStyle(fontSize: 48)),
-            SizedBox(height: 12),
-            Text('아직 내역이 없어요',
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textSecondary)),
-            SizedBox(height: 4),
-            Text('하단 + 버튼으로 첫 내역을 추가해보세요',
-                style: TextStyle(fontSize: 13, color: AppTheme.textHint)),
-          ]),
-        ),
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.all(40),
+        child: Column(children: [
+          Text('📭', style: TextStyle(fontSize: 48)),
+          SizedBox(height: 12),
+          Text('아직 내역이 없어요',
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary)),
+          SizedBox(height: 4),
+          Text('하단 + 버튼으로 첫 내역을 추가해보세요',
+              style: TextStyle(fontSize: 13, color: AppTheme.textHint)),
+        ]),
       );
 }

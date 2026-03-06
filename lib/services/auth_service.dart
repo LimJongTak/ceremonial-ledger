@@ -75,7 +75,8 @@ class AuthService {
       return cred;
     } catch (e) {
       if (e is AuthException) rethrow;
-      throw AuthException('카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      // TODO: 배포 전 제거 - 디버그용 실제 오류 노출
+      throw AuthException('카카오 오류: $e');
     }
   }
 
