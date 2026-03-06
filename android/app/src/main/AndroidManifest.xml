@@ -42,13 +42,7 @@
             </intent-filter>
         </activity>
 
-        <!-- 네이버 로그인 OAuth Activity -->
-        <activity
-            android:name="com.naver.sdk.oauth.OAuthLoginActivity"
-            android:exported="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
-        <!-- 네이버 로그인 SDK 초기화 (flutter_naver_login 2.x 필수) -->
+<!-- 네이버 로그인 SDK 초기화 (flutter_naver_login 2.x 필수) -->
         <meta-data android:name="com.naver.sdk.clientId" android:value="@string/naver_client_id"/>
         <meta-data android:name="com.naver.sdk.clientSecret" android:value="@string/naver_client_secret"/>
         <meta-data android:name="com.naver.sdk.clientName" android:value="@string/naver_client_name"/>
