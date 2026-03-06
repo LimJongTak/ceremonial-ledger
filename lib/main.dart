@@ -8,6 +8,7 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'views/home/main_nav_screen.dart';
 import 'views/auth/login_screen.dart';
+import 'views/auth/profile_setup_screen.dart';
 import 'views/common/app_theme.dart';
 import 'services/notification_service.dart';
 import 'services/home_widget_service.dart';
@@ -50,13 +51,34 @@ class CeremonialLedgerApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('ko', 'KR')],
-      theme: AppTheme.light, // ← 새 테마 적용
+      theme: AppTheme.light,
       home: authState.when(
-        data: (user) =>
-            user != null ? const MainNavScreen() : const LoginScreen(),
+        data: (user) {
+          if (user == null) return const LoginScreen();
+          // 로그인 됐으면 프로필 존재 여부 확인 후 분기
+          return const _ProfileAwareHome();
+        },
         loading: () => const SplashScreen(),
         error: (_, __) => const LoginScreen(),
       ),
+    );
+  }
+}
+
+// 프로필 유무에 따라 ProfileSetupScreen 또는 MainNavScreen으로 분기
+class _ProfileAwareHome extends ConsumerWidget {
+  const _ProfileAwareHome();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(userProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) => profile == null
+          ? const ProfileSetupScreen()
+          : const MainNavScreen(),
+      loading: () => const SplashScreen(),
+      error: (_, __) => const ProfileSetupScreen(),
     );
   }
 }
@@ -67,15 +89,15 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.bgLight,
+      backgroundColor: Colors.white, // 순수 흰색 배경
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
               'assets/images/splash_logo.jpg',
-              width: 180,
-              height: 180,
+              width: 200,
+              height: 200,
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 32),
@@ -89,8 +111,10 @@ class SplashScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text('소중한 인연을 기록하세요',
-                style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+            const Text(
+              '소중한 인연을 기록하세요',
+              style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+            ),
             const SizedBox(height: 40),
             const SizedBox(
               width: 24,

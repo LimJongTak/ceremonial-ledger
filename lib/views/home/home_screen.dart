@@ -35,6 +35,12 @@ class _HomeBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 프로필 닉네임 우선, 없으면 Firebase displayName, 없으면 이메일 앞부분
+    final nickname = ref.watch(userProfileProvider).valueOrNull?.nickname
+        ?? user?.displayName
+        ?? user?.email?.split('@').first
+        ?? '사용자';
+
     final now = DateTime.now();
     final thisMonth = events
         .where((e) => e.date.year == now.year && e.date.month == now.month)
@@ -61,7 +67,7 @@ class _HomeBody extends ConsumerWidget {
       physics: const BouncingScrollPhysics(),
       slivers: [
         // ── 상단 헤더 ──
-        SliverToBoxAdapter(child: _Header(user: user, balance: balance)),
+        SliverToBoxAdapter(child: _Header(nickname: nickname, balance: balance)),
 
         // ── 이번달 요약 카드 ──
         SliverToBoxAdapter(
@@ -115,9 +121,9 @@ class _HomeBody extends ConsumerWidget {
 
 // ── 헤더 ──────────────────────────────────────────────────────
 class _Header extends StatelessWidget {
-  final dynamic user;
+  final String nickname;
   final int balance;
-  const _Header({required this.user, required this.balance});
+  const _Header({required this.nickname, required this.balance});
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +134,6 @@ class _Header extends StatelessWidget {
         : now.hour < 18
             ? '안녕하세요'
             : '좋은 저녁이에요';
-    final name = user?.displayName ?? user?.email?.split('@').first ?? '사용자';
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -151,7 +156,7 @@ class _Header extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 13)),
                   const SizedBox(height: 2),
-                  Text('$name 님',
+                  Text('$nickname 님',
                       style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,

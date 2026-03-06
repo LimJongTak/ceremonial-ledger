@@ -65,12 +65,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             height: 280,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppTheme.primary.withValues(alpha: 0.15),
-                  Colors.transparent
-                ],
-              ),
+              gradient: RadialGradient(colors: [
+                AppTheme.primary.withValues(alpha: 0.15),
+                Colors.transparent,
+              ]),
             ),
           ),
         ),
@@ -82,12 +80,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             height: 220,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppTheme.secondary.withValues(alpha: 0.1),
-                  Colors.transparent
-                ],
-              ),
+              gradient: RadialGradient(colors: [
+                AppTheme.secondary.withValues(alpha: 0.1),
+                Colors.transparent,
+              ]),
             ),
           ),
         ),
@@ -99,27 +95,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Column(
                 children: [
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 52),
 
-                  // 로고
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.gradientPrimary,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                            color: AppTheme.primary.withValues(alpha: 0.35),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8)),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text('💝', style: TextStyle(fontSize: 36)),
+                  // 앱 로고
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'assets/images/app_icon.jpg',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   const Text('경조사 장부',
                       style: TextStyle(
                           fontSize: 28,
@@ -131,9 +119,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       style: TextStyle(
                           fontSize: 14, color: AppTheme.textSecondary)),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 40),
 
-                  // 탭
+                  // 로그인 / 회원가입 탭
                   Container(
                     height: 46,
                     decoration: BoxDecoration(
@@ -152,9 +140,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     ]),
                   ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
-                  // 이메일 입력
+                  // 이메일
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
@@ -165,6 +153,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     ),
                   ),
                   const SizedBox(height: 12),
+
+                  // 비밀번호
                   TextField(
                     controller: _pwCtrl,
                     obscureText: !_pwVisible,
@@ -186,46 +176,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // 로그인/가입 버튼
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.gradientPrimary,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                            color: AppTheme.primary.withValues(alpha: 0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6)),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: isLoading ? null : _handleEmailAuth,
-                        child: Container(
-                          height: 52,
-                          alignment: Alignment.center,
-                          child: isLoading
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white, strokeWidth: 2.5))
-                              : Text(_isLogin ? '로그인' : '회원가입',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700)),
-                        ),
-                      ),
-                    ),
+                  // 이메일 로그인 버튼
+                  _GradientBtn(
+                    onTap: isLoading ? null : _handleEmailAuth,
+                    loading: isLoading,
+                    label: _isLogin ? '로그인' : '회원가입',
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // 구분선
                   Row(children: [
@@ -233,15 +193,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text('또는',
-                          style:
-                              TextStyle(color: Colors.grey[400], fontSize: 13)),
+                          style: TextStyle(
+                              color: Colors.grey[400], fontSize: 13)),
                     ),
                     Expanded(child: Divider(color: Colors.grey[200])),
                   ]),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // 구글 로그인
+                  // ── 소셜 로그인 버튼들 ──
+                  // Google
                   _SocialBtn(
                     onTap: isLoading
                         ? null
@@ -266,6 +227,80 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppTheme.textPrimary)),
+                        ]),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 카카오 로그인
+                  _SocialBtn(
+                    onTap: isLoading
+                        ? null
+                        : () => ref
+                            .read(authNotifierProvider.notifier)
+                            .signInWithKakao(),
+                    backgroundColor: const Color(0xFFFEE500),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF3C1E1E),
+                            ),
+                            child: const Center(
+                              child: Text('K',
+                                  style: TextStyle(
+                                      color: Color(0xFFFEE500),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text('카카오로 계속하기',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF3C1E1E))),
+                        ]),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 네이버 로그인
+                  _SocialBtn(
+                    onTap: isLoading
+                        ? null
+                        : () => ref
+                            .read(authNotifierProvider.notifier)
+                            .signInWithNaver(),
+                    backgroundColor: const Color(0xFF03C75A),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                            ),
+                            child: const Center(
+                              child: Text('N',
+                                  style: TextStyle(
+                                      color: Color(0xFF03C75A),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text('네이버로 계속하기',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
                         ]),
                   ),
 
@@ -297,6 +332,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 }
 
+// ── 공통 위젯 ──────────────────────────────────────────────────
+
 class _TabBtn extends StatelessWidget {
   final String label;
   final bool isActive;
@@ -327,9 +364,57 @@ class _TabBtn extends StatelessWidget {
               child: Text(label,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                    color: isActive ? AppTheme.primary : AppTheme.textSecondary,
+                    fontWeight:
+                        isActive ? FontWeight.w700 : FontWeight.w400,
+                    color: isActive
+                        ? AppTheme.primary
+                        : AppTheme.textSecondary,
                   )),
+            ),
+          ),
+        ),
+      );
+}
+
+class _GradientBtn extends StatelessWidget {
+  final VoidCallback? onTap;
+  final bool loading;
+  final String label;
+  const _GradientBtn(
+      {required this.onTap, required this.loading, required this.label});
+
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          gradient: AppTheme.gradientPrimary,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+                color: AppTheme.primary.withValues(alpha: 0.35),
+                blurRadius: 16,
+                offset: const Offset(0, 6)),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: onTap,
+            child: Container(
+              height: 52,
+              alignment: Alignment.center,
+              child: loading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2.5))
+                  : Text(label,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700)),
             ),
           ),
         ),
@@ -339,7 +424,8 @@ class _TabBtn extends StatelessWidget {
 class _SocialBtn extends StatelessWidget {
   final VoidCallback? onTap;
   final Widget child;
-  const _SocialBtn({required this.onTap, required this.child});
+  final Color? backgroundColor;
+  const _SocialBtn({required this.onTap, required this.child, this.backgroundColor});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -347,12 +433,14 @@ class _SocialBtn extends StatelessWidget {
         child: Container(
           height: 52,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: backgroundColor ?? Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey[200]!),
+            border: backgroundColor == null
+                ? Border.all(color: Colors.grey[200]!)
+                : null,
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 2)),
             ],

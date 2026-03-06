@@ -24,6 +24,7 @@ dependencies:
   firebase_auth: ^4.15.3
   google_sign_in: ^6.2.1
   kakao_flutter_sdk_user: ^1.9.1
+  flutter_naver_login: ^1.8.0
 
   # 로컬 DB
   drift: ^2.14.1
@@ -84,17 +85,15 @@ flutter_launcher_icons:
     generate: false
 
 flutter_native_splash:
-  color: "#F8FAFF"
+  color: "#ffffff"
   image: assets/images/splash_logo.jpg
-  color_dark: "#0F172A"
-  image_dark: assets/images/splash_logo.jpg
+  fullscreen: true
   android: true
   ios: true
   android_12:
     image: assets/images/splash_logo.jpg
-    color: "#F8FAFF"
-    image_dark: assets/images/splash_logo.jpg
-    color_dark: "#0F172A"
+    color: "#ffffff"
+    icon_background_color: "#ffffff"
 
 flutter:
   uses-material-design: true

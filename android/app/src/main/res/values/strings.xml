@@ -2,4 +2,9 @@
 <resources>
     <string name="app_name">오고가고</string>
     <string name="widget_description">이번 달 경조사 요약</string>
+
+    <!-- 네이버 로그인 설정 -->
+    <string name="naver_client_id">YOUR_NAVER_CLIENT_ID</string>
+    <string name="naver_client_secret">YOUR_NAVER_CLIENT_SECRET</string>
+    <string name="naver_client_name">오고가고</string>
 </resources>
