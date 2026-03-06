@@ -31,7 +31,7 @@ void main() async {
   }
   await HomeWidgetService.instance.initialize();
   await NotificationService.instance.initialize();
-  KakaoSdk.init(nativeAppKey: 'YOUR_KAKAO_NATIVE_APP_KEY');
+  KakaoSdk.init(nativeAppKey: '9e8cb74d18d1c54a5a7be9cd53461b56');
   runApp(const ProviderScope(child: CeremonialLedgerApp()));
 }
 
@@ -74,9 +74,8 @@ class _ProfileAwareHome extends ConsumerWidget {
     final profileAsync = ref.watch(userProfileProvider);
 
     return profileAsync.when(
-      data: (profile) => profile == null
-          ? const ProfileSetupScreen()
-          : const MainNavScreen(),
+      data: (profile) =>
+          profile == null ? const ProfileSetupScreen() : const MainNavScreen(),
       loading: () => const SplashScreen(),
       error: (_, __) => const ProfileSetupScreen(),
     );
