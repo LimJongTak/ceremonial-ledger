@@ -389,7 +389,7 @@ class _State extends ConsumerState<EventBottomSheet>
                   Row(children: [
                     Expanded(
                       child: DropdownButtonFormField<RelationType>(
-                        value: _rel,
+                        initialValue: _rel,
                         decoration: _deco('관계', Icons.people_outline_rounded),
                         isExpanded: true,
                         items: RelationType.values
@@ -405,7 +405,7 @@ class _State extends ConsumerState<EventBottomSheet>
                     const SizedBox(width: 10),
                     Expanded(
                       child: DropdownButtonFormField<CeremonyType>(
-                        value: _cer,
+                        initialValue: _cer,
                         decoration: _deco('경조사', Icons.celebration_outlined),
                         isExpanded: true,
                         items: CeremonyType.values

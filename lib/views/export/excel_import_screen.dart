@@ -238,7 +238,9 @@ class _ExcelImportScreenState extends ConsumerState<ExcelImportScreen> {
                       onPressed: () {
                         final all = _entries.every((e) => e.isSelected);
                         setState(() {
-                          for (final e in _entries) e.isSelected = !all;
+                          for (final e in _entries) {
+                            e.isSelected = !all;
+                          }
                         });
                       },
                       style: TextButton.styleFrom(
@@ -300,13 +302,13 @@ class _GuideSection extends StatelessWidget {
                       fontSize: 15)),
             ]),
             const SizedBox(height: 16),
-            _GuideItem('날짜', 'YYYY-MM-DD 형식 (예: 2024-03-15)'),
-            _GuideItem('이름', '2글자 이상 입력'),
-            _GuideItem('경조사', '결혼 / 부고 / 돌잔치 / 생일 / 졸업 / 집들이 / 승진 / 기타'),
-            _GuideItem('관계', '가족 / 친척 / 친구 / 직장 / 이웃 / 기타'),
-            _GuideItem('금액', '숫자만 입력 (예: 50000)'),
-            _GuideItem('수입/지출', '"수입" 또는 "지출" 중 하나'),
-            _GuideItem('메모', '선택사항'),
+            const _GuideItem('날짜', 'YYYY-MM-DD 형식 (예: 2024-03-15)'),
+            const _GuideItem('이름', '2글자 이상 입력'),
+            const _GuideItem('경조사', '결혼 / 부고 / 돌잔치 / 생일 / 졸업 / 집들이 / 승진 / 기타'),
+            const _GuideItem('관계', '가족 / 친척 / 친구 / 직장 / 이웃 / 기타'),
+            const _GuideItem('금액', '숫자만 입력 (예: 50000)'),
+            const _GuideItem('수입/지출', '"수입" 또는 "지출" 중 하나'),
+            const _GuideItem('메모', '선택사항'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),

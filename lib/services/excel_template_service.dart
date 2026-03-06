@@ -189,7 +189,7 @@ class ExcelTemplateService {
 
         // ?.trim() → .trim() 으로 수정 (String은 null이 아님)
         final dateStr =
-            row.length > 0 ? row[0]?.value?.toString().trim() ?? '' : '';
+            row.isNotEmpty ? row[0]?.value?.toString().trim() ?? '' : '';
         final name =
             row.length > 1 ? row[1]?.value?.toString().trim() ?? '' : '';
         final ceremonyStr =

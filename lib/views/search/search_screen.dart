@@ -145,8 +145,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       // 필터
       if (_filter == _FilterType.income && !e.isIncome) return false;
       if (_filter == _FilterType.expense && e.isIncome) return false;
-      if (_filter == _FilterType.scheduled && !(e.date.isAfter(DateTime.now())))
+      if (_filter == _FilterType.scheduled && !(e.date.isAfter(DateTime.now()))) {
         return false;
+      }
       if (_filter != _FilterType.all &&
           _filter != _FilterType.income &&
           _filter != _FilterType.expense &&

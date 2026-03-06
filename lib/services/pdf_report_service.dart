@@ -27,7 +27,7 @@ class PdfReportService {
     );
 
     final title =
-        month != null ? '${year}년 ${month}월 경조사 결산' : '${year}년 경조사 결산';
+        month != null ? '$year년 $month월 경조사 결산' : '$year년 경조사 결산';
 
     await Printing.sharePdf(bytes: pdf, filename: '$title.pdf');
   }
@@ -41,7 +41,7 @@ class PdfReportService {
     required String userName,
   }) async {
     final title =
-        month != null ? '${year}년 ${month}월 경조사 결산' : '${year}년 경조사 결산';
+        month != null ? '$year년 $month월 경조사 결산' : '$year년 경조사 결산';
 
     await Navigator.push(
       context,
@@ -124,7 +124,7 @@ class PdfReportService {
     }
 
     final title =
-        month != null ? '$year년 ${month}월 경조사 결산 보고서' : '$year년 경조사 결산 보고서';
+        month != null ? '$year년 $month월 경조사 결산 보고서' : '$year년 경조사 결산 보고서';
     final now = DateFormat('yyyy.MM.dd HH:mm').format(DateTime.now());
 
     pdf.addPage(
@@ -195,7 +195,7 @@ class PdfReportService {
                     font: boldFont, fontSize: 18, color: PdfColors.white)),
             pw.SizedBox(height: 4),
             pw.Text('$userName · 생성일: $now',
-                style: pw.TextStyle(fontSize: 10, color: PdfColors.white)),
+                style: const pw.TextStyle(fontSize: 10, color: PdfColors.white)),
           ],
         ),
       ),
@@ -223,20 +223,20 @@ class PdfReportService {
       int income, int expense, int balance, int count, pw.Font boldFont) {
     return pw.Row(children: [
       _summaryCard('총 수입', '${_fmt.format(income)}원',
-          PdfColor.fromInt(0xFF10B981), boldFont),
+          const PdfColor.fromInt(0xFF10B981), boldFont),
       pw.SizedBox(width: 8),
       _summaryCard('총 지출', '${_fmt.format(expense)}원',
-          PdfColor.fromInt(0xFFEF4444), boldFont),
+          const PdfColor.fromInt(0xFFEF4444), boldFont),
       pw.SizedBox(width: 8),
       _summaryCard(
           '잔액',
           '${balance >= 0 ? '+' : ''}${_fmt.format(balance)}원',
           balance >= 0
-              ? PdfColor.fromInt(0xFF2563EB)
-              : PdfColor.fromInt(0xFFEF4444),
+              ? const PdfColor.fromInt(0xFF2563EB)
+              : const PdfColor.fromInt(0xFFEF4444),
           boldFont),
       pw.SizedBox(width: 8),
-      _summaryCard('총 건수', '$count건', PdfColor.fromInt(0xFF7C3AED), boldFont),
+      _summaryCard('총 건수', '$count건', const PdfColor.fromInt(0xFF7C3AED), boldFont),
     ]);
   }
 
@@ -256,7 +256,7 @@ class PdfReportService {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(label,
-                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
             pw.SizedBox(height: 4),
             pw.Text(value,
                 style:
@@ -274,7 +274,7 @@ class PdfReportService {
         width: 4,
         height: 16,
         decoration: pw.BoxDecoration(
-          color: PdfColor.fromInt(0xFF2563EB),
+          color: const PdfColor.fromInt(0xFF2563EB),
           borderRadius: pw.BorderRadius.circular(2),
         ),
       ),
@@ -397,8 +397,8 @@ class PdfReportService {
                           fontSize: 8,
                           color: cell.key == 4
                               ? (isInc
-                                  ? PdfColor.fromInt(0xFF10B981)
-                                  : PdfColor.fromInt(0xFFEF4444))
+                                  ? const PdfColor.fromInt(0xFF10B981)
+                                  : const PdfColor.fromInt(0xFFEF4444))
                               : PdfColors.grey800,
                         ),
                       ),

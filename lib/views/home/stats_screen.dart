@@ -182,9 +182,9 @@ class _StatsBody extends StatelessWidget {
                 const _ChartTitle(title: '월별 수입/지출'),
                 const SizedBox(height: 16),
                 // 범례
-                Row(children: [
+                const Row(children: [
                   _Legend(color: AppTheme.income, label: '수입'),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   _Legend(color: AppTheme.expense, label: '지출'),
                 ]),
                 const SizedBox(height: 16),

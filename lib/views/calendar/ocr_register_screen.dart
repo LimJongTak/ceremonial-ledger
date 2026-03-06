@@ -90,9 +90,9 @@ class _OcrRegisterScreenState extends ConsumerState<OcrRegisterScreen> {
 
     // 경조사 타입 추출
     CeremonyType ceremony = CeremonyType.other;
-    if (line.contains('결혼') || line.contains('웨딩'))
+    if (line.contains('결혼') || line.contains('웨딩')) {
       ceremony = CeremonyType.wedding;
-    else if (line.contains('부고') || line.contains('장례') || line.contains('조의'))
+    } else if (line.contains('부고') || line.contains('장례') || line.contains('조의'))
       ceremony = CeremonyType.funeral;
     else if (line.contains('돌') || line.contains('백일'))
       ceremony = CeremonyType.babyShower;
@@ -106,9 +106,9 @@ class _OcrRegisterScreenState extends ConsumerState<OcrRegisterScreen> {
 
     // 관계 추출
     RelationType relation = RelationType.other;
-    if (line.contains('가족') || line.contains('부모') || line.contains('형제'))
+    if (line.contains('가족') || line.contains('부모') || line.contains('형제')) {
       relation = RelationType.family;
-    else if (line.contains('친척') || line.contains('친인척'))
+    } else if (line.contains('친척') || line.contains('친인척'))
       relation = RelationType.relative;
     else if (line.contains('친구') || line.contains('동창') || line.contains('동기'))
       relation = RelationType.friend;
@@ -267,10 +267,10 @@ class _OcrRegisterScreenState extends ConsumerState<OcrRegisterScreen> {
                                   fontWeight: FontWeight.bold)),
                         ]),
                         const SizedBox(height: 12),
-                        _GuideRow('홍길동 결혼 50,000'),
-                        _GuideRow('김철수 친구 장례 30000원'),
-                        _GuideRow('이영희 직장 집들이 100,000 받음'),
-                        _GuideRow('박민준 50000 졸업'),
+                        const _GuideRow('홍길동 결혼 50,000'),
+                        const _GuideRow('김철수 친구 장례 30000원'),
+                        const _GuideRow('이영희 직장 집들이 100,000 받음'),
+                        const _GuideRow('박민준 50000 졸업'),
                         const SizedBox(height: 8),
                         Text('• 이름, 금액은 필수\n• 경조사/관계/수입지출 키워드 포함시 자동 분류',
                             style: TextStyle(
@@ -649,7 +649,7 @@ class _EditEntrySheetState extends State<_EditEntrySheet> {
           Row(children: [
             Expanded(
                 child: DropdownButtonFormField<RelationType>(
-              value: _relation,
+              initialValue: _relation,
               decoration: _deco('관계', Icons.people_outline),
               isExpanded: true,
               items: RelationType.values
@@ -663,7 +663,7 @@ class _EditEntrySheetState extends State<_EditEntrySheet> {
             const SizedBox(width: 8),
             Expanded(
                 child: DropdownButtonFormField<CeremonyType>(
-              value: _ceremony,
+              initialValue: _ceremony,
               decoration: _deco('경조사', Icons.event),
               isExpanded: true,
               items: CeremonyType.values

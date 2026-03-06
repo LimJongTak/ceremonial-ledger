@@ -158,9 +158,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: '이메일',
-                      prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                      prefixIcon: Icon(Icons.email_outlined, size: 20),
                       prefixIconColor: AppTheme.textSecondary,
                     ),
                   ),
