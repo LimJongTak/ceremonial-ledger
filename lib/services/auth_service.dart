@@ -87,8 +87,11 @@ class AuthService {
     try {
       // 1. 네이버 로그인
       final result = await FlutterNaverLogin.logIn();
-      if (result.status != NaverLoginStatus.loggedIn) {
+      if (result.status == NaverLoginStatus.loggedOut) {
         return null; // 사용자가 취소
+      }
+      if (result.status == NaverLoginStatus.error) {
+        throw AuthException('네이버 로그인 오류: ${result.errorMessage ?? '알 수 없는 오류'}');
       }
 
       // 2. 네이버 사용자 정보 (logIn 결과에 포함된 account 또는 getCurrentAccount 사용)
