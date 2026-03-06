@@ -89,12 +89,16 @@ class AuthService {
         return null; // 사용자가 취소
       }
 
-      // 2. 네이버 사용자 정보
-      final account = await FlutterNaverLogin.currentAccount();
-      final naverId = account.id;
-      final nickname = account.nickname.isNotEmpty
-          ? account.nickname
-          : (account.name.isNotEmpty ? account.name : '네이버 사용자');
+      // 2. 네이버 사용자 정보 (logIn 결과에 포함된 account 또는 getCurrentAccount 사용)
+      final account =
+          result.account ?? await FlutterNaverLogin.getCurrentAccount();
+      final naverId = account.id ?? '';
+      final nickname =
+          (account.nickname?.isNotEmpty == true)
+              ? account.nickname!
+              : ((account.name?.isNotEmpty == true)
+                  ? account.name!
+                  : '네이버 사용자');
 
       // 3. Firebase 계정 구성
       final firebaseEmail = 'naver_$naverId@naver.cl.user';
