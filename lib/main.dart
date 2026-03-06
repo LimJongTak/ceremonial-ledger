@@ -72,25 +72,13 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                gradient: AppTheme.gradientPrimary,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primary.withValues(alpha: 0.35),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text('💝', style: TextStyle(fontSize: 36)),
-              ),
+            Image.asset(
+              'assets/images/splash_logo.jpg',
+              width: 180,
+              height: 180,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
             const Text(
               '경조사 장부',
               style: TextStyle(

@@ -68,6 +68,33 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   build_runner: ^2.4.7
   drift_dev: ^2.14.1
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.jpg"
+  min_sdk_android: 21
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
+
+flutter_native_splash:
+  color: "#F8FAFF"
+  image: assets/images/splash_logo.jpg
+  color_dark: "#0F172A"
+  image_dark: assets/images/splash_logo.jpg
+  android: true
+  ios: true
+  android_12:
+    image: assets/images/splash_logo.jpg
+    color: "#F8FAFF"
+    image_dark: assets/images/splash_logo.jpg
+    color_dark: "#0F172A"
 
 flutter:
   uses-material-design: true
