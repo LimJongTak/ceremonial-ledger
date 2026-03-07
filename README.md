@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/images/app_icon.jpg" width="110" style="border-radius:22px;" alt="오고가고 앱 아이콘">
+
 # 오고가고
 ### 스마트한 경조사 장부
 
@@ -24,9 +26,9 @@
 
 ## 📱 주요 화면
 
-| 로그인 | 홈 | 캘린더 | 장부 | 통계 | 프로필 |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| <img src="assets/images/screenshot_login.png" width="130"> | <img src="assets/images/screenshot_home.png" width="130"> | <img src="assets/images/screenshot_calendar.png" width="130"> | <img src="assets/images/screenshot_ledger.png" width="130"> | <img src="assets/images/screenshot_stats.png" width="130"> | <img src="assets/images/screenshot_profile.png" width="130"> |
+> 📸 스크린샷은 추후 업데이트 예정입니다.
+
+**화면 구성:** 로그인 · 홈(최근 내역 요약) · 캘린더(월별 경조사) · 장부(전체 목록) · 통계(월별 차트) · 프로필(계정·데이터 관리)
 
 <br>
 
