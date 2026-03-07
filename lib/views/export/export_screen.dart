@@ -50,39 +50,30 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           SliverToBoxAdapter(
             child: Container(
               padding: EdgeInsets.fromLTRB(
-                  24, MediaQuery.paddingOf(context).top + 20, 24, 28),
-              decoration: const BoxDecoration(
-                gradient: AppTheme.gradientPrimary,
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(32)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.arrow_back_rounded,
-                            color: Colors.white, size: 20),
-                      ),
+                  24, MediaQuery.paddingOf(context).top + 20, 24, 24),
+              color: Colors.white,
+              child: Row(children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgLight,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(width: 12),
-                    const Text('내보내기 & 알림',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5)),
-                  ]),
-                ],
-              ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: AppTheme.textPrimary, size: 16),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text('내보내기 & 알림',
+                    style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5)),
+              ]),
             ),
           ),
 
@@ -232,7 +223,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
                     // 알림 정보
                     const _InfoRow(
+                        icon: Icons.alarm_outlined, text: 'D-30: 30일 전 오전 9시 알림'),
+                    const _InfoRow(
                         icon: Icons.alarm_outlined, text: 'D-7: 7일 전 오전 9시 알림'),
+                    const _InfoRow(
+                        icon: Icons.alarm_outlined, text: 'D-3: 3일 전 오전 9시 알림'),
                     const _InfoRow(
                         icon: Icons.alarm_outlined, text: 'D-1: 하루 전 오전 9시 알림'),
                     const _InfoRow(

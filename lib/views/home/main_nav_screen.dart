@@ -90,13 +90,13 @@ class _BottomNav extends StatelessWidget {
           activeIcon: Icons.home_rounded,
           label: '홈'),
       _NavItem(
-          icon: Icons.calendar_month_outlined,
-          activeIcon: Icons.calendar_month_rounded,
-          label: '캘린더'),
-      _NavItem(
           icon: Icons.receipt_long_outlined,
           activeIcon: Icons.receipt_long_rounded,
           label: '장부'),
+      _NavItem(
+          icon: Icons.receipt_long_outlined, // FAB 자리 (표시 안 됨)
+          activeIcon: Icons.receipt_long_rounded,
+          label: ''),
       _NavItem(
           icon: Icons.bar_chart_outlined,
           activeIcon: Icons.bar_chart_rounded,
@@ -127,33 +127,26 @@ class _BottomNav extends StatelessWidget {
               final item = i > 2 ? items[i] : items[i];
               final isActive =
                   currentIndex == i || (i > 2 && currentIndex == i);
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onTap(i < 2
-                      ? i
+              // i=0→홈(0), i=1→장부(2), i=3→통계(3), i=4→프로필(4)
+              final screenIdx = i == 0
+                  ? 0
+                  : i == 1
+                      ? 2
                       : i == 3
                           ? 3
-                          : 4),
+                          : 4;
+              final isActive = currentIndex == screenIdx;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onTap(screenIdx),
                   behavior: HitTestBehavior.opaque,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        currentIndex ==
-                                (i < 2
-                                    ? i
-                                    : i == 3
-                                        ? 3
-                                        : 4)
-                            ? item.activeIcon
-                            : item.icon,
+                        isActive ? item.activeIcon : item.icon,
                         size: 22,
-                        color: currentIndex ==
-                                (i < 2
-                                    ? i
-                                    : i == 3
-                                        ? 3
-                                        : 4)
+                        color: isActive
                             ? AppTheme.primary
                             : AppTheme.textSecondary,
                       ),
@@ -161,20 +154,10 @@ class _BottomNav extends StatelessWidget {
                       Text(item.label,
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: currentIndex ==
-                                    (i < 2
-                                        ? i
-                                        : i == 3
-                                            ? 3
-                                            : 4)
+                            fontWeight: isActive
                                 ? FontWeight.w700
                                 : FontWeight.w400,
-                            color: currentIndex ==
-                                    (i < 2
-                                        ? i
-                                        : i == 3
-                                            ? 3
-                                            : 4)
+                            color: isActive
                                 ? AppTheme.primary
                                 : AppTheme.textSecondary,
                           )),

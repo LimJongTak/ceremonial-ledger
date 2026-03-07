@@ -389,13 +389,50 @@ class _State extends ConsumerState<EventBottomSheet>
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: [30000, 50000, 100000, 200000, 300000]
-                            .map((amt) => _QuickAmountBtn(
-                                  amount: amt,
-                                  onTap: () => setState(
-                                      () => _amtCtrl.text = amt.toString()),
-                                ))
-                            .toList(),
+                        children: [
+                          // +금액 버튼 (누적)
+                          ...[50000, 100000, 200000, 300000].map((amt) =>
+                              _QuickAmountBtn(
+                                amount: amt,
+                                onTap: () => setState(() {
+                                  final current =
+                                      int.tryParse(_amtCtrl.text) ?? 0;
+                                  _amtCtrl.text = (current + amt).toString();
+                                }),
+                              )),
+                          // 초기화 버튼
+                          GestureDetector(
+                            onTap: () =>
+                                setState(() => _amtCtrl.text = ''),
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 13, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEF4444)
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: const Color(0xFFEF4444)
+                                        .withValues(alpha: 0.25)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.refresh_rounded,
+                                      size: 13, color: Color(0xFFEF4444)),
+                                  SizedBox(width: 4),
+                                  Text('초기화',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFFEF4444),
+                                      )),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
