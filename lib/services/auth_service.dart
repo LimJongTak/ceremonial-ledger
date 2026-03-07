@@ -73,6 +73,14 @@ class AuthService {
         await cred.user?.updateDisplayName(nickname);
       }
 
+      // 6. 카카오 프로필 이미지 → Firebase photoURL 동기화 (로그인마다 최신화)
+      final kakaoPhotoUrl =
+          kakaoUser.kakaoAccount?.profile?.profileImageUrl?.replaceFirst(
+              'http://', 'https://');
+      if (kakaoPhotoUrl != null && kakaoPhotoUrl.isNotEmpty) {
+        await cred.user?.updatePhotoURL(kakaoPhotoUrl);
+      }
+
       return cred;
     } catch (e) {
       if (e is AuthException) rethrow;
@@ -134,6 +142,14 @@ class AuthService {
       if (cred.user?.displayName == null ||
           cred.user!.displayName!.isEmpty) {
         await cred.user?.updateDisplayName(nickname);
+      }
+
+      // 6. 네이버 프로필 이미지 → Firebase photoURL 동기화 (로그인마다 최신화)
+      final naverPhotoUrl = account.profileImage?.isNotEmpty == true
+          ? account.profileImage!.replaceFirst('http://', 'https://')
+          : null;
+      if (naverPhotoUrl != null) {
+        await cred.user?.updatePhotoURL(naverPhotoUrl);
       }
 
       return cred;
