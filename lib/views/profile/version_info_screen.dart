@@ -49,25 +49,13 @@ class VersionInfoScreen extends StatelessWidget {
           Column(
             children: [
               // 앱 아이콘 이미지
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withValues(alpha: 0.18),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Image.asset(
-                    'assets/images/app_icon.png',
-                    fit: BoxFit.cover,
-                  ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: Image.asset(
+                  'assets/images/app_icon.png',
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(height: 16),
