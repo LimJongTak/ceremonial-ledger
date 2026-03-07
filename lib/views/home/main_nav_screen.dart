@@ -124,9 +124,7 @@ class _BottomNav extends StatelessWidget {
             children: List.generate(items.length, (i) {
               // 중앙 FAB 자리 비우기
               if (i == 2) return const SizedBox(width: 70);
-              final item = i > 2 ? items[i] : items[i];
-              final isActive =
-                  currentIndex == i || (i > 2 && currentIndex == i);
+              final item = items[i];
               // i=0→홈(0), i=1→장부(2), i=3→통계(3), i=4→프로필(4)
               final screenIdx = i == 0
                   ? 0
