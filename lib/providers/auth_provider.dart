@@ -59,6 +59,17 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     await _s.signOut();
     state = const AsyncValue.data(null);
   }
+
+  Future<void> deleteAccount() async {
+    state = const AsyncLoading();
+    try {
+      await _s.deleteAccount();
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
 }
 
 final authNotifierProvider =

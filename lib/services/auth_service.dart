@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' hide User;
@@ -176,6 +177,50 @@ class AuthService {
     try {
       await UserApi.instance.logout();
     } catch (_) {}
+  }
+
+  // ── 회원탈퇴 ─────────────────────────────────────────────────
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) throw AuthException('로그인 상태가 아닙니다.');
+
+    final uid = user.uid;
+    final db = FirebaseFirestore.instance;
+
+    try {
+      // 1. Firestore 이벤트 데이터 삭제
+      final eventsSnap =
+          await db.collection('users').doc(uid).collection('events').get();
+      final batch = db.batch();
+      for (final doc in eventsSnap.docs) {
+        batch.delete(doc.reference);
+      }
+      // 2. Firestore 프로필 데이터 삭제
+      batch.delete(
+          db.collection('users').doc(uid).collection('profile').doc('data'));
+      await batch.commit();
+
+      // 3. 소셜 로그아웃
+      await Future.wait([
+        _googleSignIn.signOut(),
+        FlutterNaverLogin.logOut(),
+      ]);
+      try {
+        await UserApi.instance.logout();
+      } catch (_) {}
+
+      // 4. Firebase Auth 계정 삭제
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw AuthException(
+            '보안을 위해 재로그인이 필요합니다.\n로그아웃 후 다시 로그인하여 탈퇴를 진행해주세요.');
+      }
+      throw AuthException('계정 삭제에 실패했습니다: ${e.message}');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('계정 삭제 중 오류가 발생했습니다.');
+    }
   }
 
   String _message(String code) {
