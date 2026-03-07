@@ -46,9 +46,7 @@ class ProfileScreen extends ConsumerWidget {
               padding: EdgeInsets.fromLTRB(
                   24, MediaQuery.paddingOf(context).top + 20, 24, 28),
               decoration: const BoxDecoration(
-                gradient: AppTheme.gradientPrimary,
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(32)),
+                color: Colors.white,
               ),
               child: Column(children: [
                 // 아바타 + 수정 버튼
@@ -59,16 +57,16 @@ class ProfileScreen extends ConsumerWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppTheme.primary.withValues(alpha: 0.08),
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.4),
+                            color: AppTheme.primary.withValues(alpha: 0.2),
                             width: 2),
                       ),
                       child: ClipOval(
                         child: user?.photoURL != null
                             ? Image.network(user!.photoURL!, fit: BoxFit.cover)
                             : const Icon(Icons.person_rounded,
-                                color: Colors.white, size: 40),
+                                color: AppTheme.primary, size: 40),
                       ),
                     ),
                     // 수정 버튼
@@ -84,16 +82,16 @@ class ProfileScreen extends ConsumerWidget {
                           width: 26,
                           height: 26,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppTheme.primary,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
+                                  color: AppTheme.primary.withValues(alpha: 0.3),
                                   blurRadius: 4)
                             ],
                           ),
                           child: const Icon(Icons.edit_rounded,
-                              size: 14, color: AppTheme.primary),
+                              size: 14, color: Colors.white),
                         ),
                       ),
                     ),
@@ -103,15 +101,15 @@ class ProfileScreen extends ConsumerWidget {
                 Text(
                   displayName,
                   style: const TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5),
                 ),
                 const SizedBox(height: 4),
                 Text(user?.email ?? '',
-                    style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary,
                         fontSize: 13)),
                 const SizedBox(height: 20),
 
@@ -397,21 +395,21 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Column(children: [
           Text(value,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: color,
                   fontSize: 12,
                   fontWeight: FontWeight.w800),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
           Text(label,
-              style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7), fontSize: 10)),
+              style: const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 10)),
         ]),
       );
 }

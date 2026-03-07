@@ -119,15 +119,14 @@ class _StatsBody extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(
                 24, MediaQuery.paddingOf(context).top + 20, 24, 24),
             decoration: const BoxDecoration(
-              gradient: AppTheme.gradientPrimary,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+              color: Colors.white,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('통계',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.textPrimary,
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5)),
@@ -140,7 +139,7 @@ class _StatsBody extends StatelessWidget {
                   const SizedBox(width: 20),
                   Text('$selectedYear년',
                       style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.w700)),
                   const SizedBox(width: 20),
@@ -285,11 +284,13 @@ class _YearBtn extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: onTap != null ? 0.2 : 0.1),
+            color: onTap != null
+                ? AppTheme.primary.withValues(alpha: 0.1)
+                : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon,
-              color: Colors.white.withValues(alpha: onTap != null ? 1 : 0.3),
+              color: onTap != null ? AppTheme.primary : AppTheme.textHint,
               size: 20),
         ),
       );
@@ -309,16 +310,16 @@ class _YearSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Row(children: [
           Container(
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 16, color: color),
@@ -329,12 +330,12 @@ class _YearSummaryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary,
                       fontSize: 11)),
               Text(value,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: color,
                       fontSize: 13,
                       fontWeight: FontWeight.w700),
                   overflow: TextOverflow.ellipsis),
