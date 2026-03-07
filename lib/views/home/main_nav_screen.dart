@@ -90,12 +90,12 @@ class _BottomNav extends StatelessWidget {
           activeIcon: Icons.home_rounded,
           label: '홈'),
       _NavItem(
-          icon: Icons.receipt_long_outlined,
-          activeIcon: Icons.receipt_long_rounded,
-          label: '장부'),
+          icon: Icons.calendar_month_outlined,
+          activeIcon: Icons.calendar_month_rounded,
+          label: '캘린더'),
       _NavItem(
-          icon: Icons.receipt_long_outlined, // FAB 자리 (표시 안 됨)
-          activeIcon: Icons.receipt_long_rounded,
+          icon: Icons.calendar_month_outlined, // FAB 자리 (표시 안 됨)
+          activeIcon: Icons.calendar_month_rounded,
           label: ''),
       _NavItem(
           icon: Icons.bar_chart_outlined,
@@ -125,11 +125,11 @@ class _BottomNav extends StatelessWidget {
               // 중앙 FAB 자리 비우기
               if (i == 2) return const SizedBox(width: 70);
               final item = items[i];
-              // i=0→홈(0), i=1→장부(2), i=3→통계(3), i=4→프로필(4)
+              // i=0→홈(0), i=1→캘린더(1), i=3→통계(3), i=4→프로필(4)
               final screenIdx = i == 0
                   ? 0
                   : i == 1
-                      ? 2
+                      ? 1
                       : i == 3
                           ? 3
                           : 4;

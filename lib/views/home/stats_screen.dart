@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
+import '../calendar/event_bottom_sheet.dart';
 import '../common/app_theme.dart';
+import '../person/person_history_screen.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -21,6 +23,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    _tab.addListener(() => setState(() {}));
   }
 
   @override
@@ -166,102 +169,157 @@ class _StatsBody extends StatelessWidget {
                           icon: Icons.arrow_upward_rounded,
                           color: AppTheme.expense)),
                 ]),
-              ],
-            ),
-          ),
-        ),
-
-        // 월별 바 차트
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _ChartTitle(title: '월별 수입/지출'),
                 const SizedBox(height: 16),
-                // 범례
-                const Row(children: [
-                  _Legend(color: AppTheme.income, label: '수입'),
-                  SizedBox(width: 16),
-                  _Legend(color: AppTheme.expense, label: '지출'),
-                ]),
-                const SizedBox(height: 16),
-                // 바 차트
-                SizedBox(
-                  height: 180,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: monthlyData
-                        .map((d) => Expanded(
-                              child: _BarGroup(
-                                  data: d, maxVal: maxVal == 0 ? 1 : maxVal),
-                            ))
-                        .toList(),
+                // ── 통계 / 장부 탭 선택 ──────────────────────
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TabBar(
+                    controller: tab,
+                    indicator: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: AppTheme.textSecondary,
+                    labelStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700),
+                    tabs: const [
+                      Tab(text: '📊  통계'),
+                      Tab(text: '📋  장부'),
+                    ],
                   ),
                 ),
-                // 월 라벨
-                const SizedBox(height: 6),
-                Row(
-                  children: List.generate(
-                      12,
-                      (i) => Expanded(
-                            child: Text('${i + 1}',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    fontSize: 10,
-                                    color: AppTheme.textSecondary)),
-                          )),
+              ],
+            ),
+          ),
+        ),
+
+        // ── 통계 탭 콘텐츠 ──────────────────────────────────
+        if (tab.index == 0) ...[
+          // 월별 바 차트
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _ChartTitle(title: '월별 수입/지출'),
+                  const SizedBox(height: 16),
+                  const Row(children: [
+                    _Legend(color: AppTheme.income, label: '수입'),
+                    SizedBox(width: 16),
+                    _Legend(color: AppTheme.expense, label: '지출'),
+                  ]),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 180,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: monthlyData
+                          .map((d) => Expanded(
+                                child: _BarGroup(
+                                    data: d, maxVal: maxVal == 0 ? 1 : maxVal),
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: List.generate(
+                        12,
+                        (i) => Expanded(
+                              child: Text('${i + 1}',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AppTheme.textSecondary)),
+                            )),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 경조사별 / 관계별
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _ChartTitle(title: '경조사별'),
+                  const SizedBox(height: 12),
+                  if (sortedCats.isEmpty)
+                    const Center(
+                        child: Text('데이터 없음',
+                            style: TextStyle(color: AppTheme.textSecondary)))
+                  else
+                    ...sortedCats.map((e) => _CategoryBar(
+                          emoji: e.key.emoji,
+                          label: e.key.label,
+                          amount: e.value,
+                          total: total == 0 ? 1 : total,
+                          color: AppTheme.primary,
+                        )),
+                  const SizedBox(height: 24),
+                  const _ChartTitle(title: '관계별'),
+                  const SizedBox(height: 12),
+                  if (sortedRels.isEmpty)
+                    const Center(
+                        child: Text('데이터 없음',
+                            style: TextStyle(color: AppTheme.textSecondary)))
+                  else
+                    ...sortedRels.map((e) => _CategoryBar(
+                          emoji: _relationEmoji(e.key),
+                          label: e.key.label,
+                          amount: e.value,
+                          total: total == 0 ? 1 : total,
+                          color: AppTheme.secondary,
+                        )),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
+        ],
+
+        // ── 장부 탭 콘텐츠 ──────────────────────────────────
+        if (tab.index == 1) ...[
+          if (events.isEmpty)
+            const SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('📭', style: TextStyle(fontSize: 48)),
+                    SizedBox(height: 12),
+                    Text('이 연도의 내역이 없어요',
+                        style: TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 15)),
+                  ],
                 ),
-              ],
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) {
+                    final sorted = [...events]
+                      ..sort((a, b) => b.date.compareTo(a.date));
+                    return _StatsLedgerItem(event: sorted[i]);
+                  },
+                  childCount: events.length,
+                ),
+              ),
             ),
-          ),
-        ),
-
-        // 탭 (경조사별 / 관계별)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 경조사별
-                const _ChartTitle(title: '경조사별'),
-                const SizedBox(height: 12),
-                if (sortedCats.isEmpty)
-                  const Center(
-                      child: Text('데이터 없음',
-                          style: TextStyle(color: AppTheme.textSecondary)))
-                else
-                  ...sortedCats.map((e) => _CategoryBar(
-                        emoji: e.key.emoji,
-                        label: e.key.label,
-                        amount: e.value,
-                        total: total == 0 ? 1 : total,
-                        color: AppTheme.primary,
-                      )),
-
-                const SizedBox(height: 24),
-                // 관계별
-                const _ChartTitle(title: '관계별'),
-                const SizedBox(height: 12),
-                if (sortedRels.isEmpty)
-                  const Center(
-                      child: Text('데이터 없음',
-                          style: TextStyle(color: AppTheme.textSecondary)))
-                else
-                  ...sortedRels.map((e) => _CategoryBar(
-                        emoji: _relationEmoji(e.key),
-                        label: e.key.label,
-                        amount: e.value,
-                        total: total == 0 ? 1 : total,
-                        color: AppTheme.secondary,
-                      )),
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
-        ),
+        ],
       ],
     );
   }
@@ -495,4 +553,134 @@ class _MonthData {
   final int month, income, expense;
   const _MonthData(
       {required this.month, required this.income, required this.expense});
+}
+
+// ── 장부 탭 아이템 ─────────────────────────────────────────────
+class _StatsLedgerItem extends StatelessWidget {
+  final EventModel event;
+  const _StatsLedgerItem({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    final inc = event.isIncome;
+    final isScheduled = event.amount == 0;
+    final dateFmt = DateFormat('M월 d일 (E)', 'ko_KR');
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PersonHistoryScreen(personName: event.personName),
+        ),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 1)),
+          ],
+        ),
+        child: Row(children: [
+          // 이모지 아이콘
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isScheduled
+                  ? const Color(0xFFF5F3FF)
+                  : inc
+                      ? AppTheme.income.withValues(alpha: 0.1)
+                      : AppTheme.expense.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+                child: Text(event.ceremonyType.emoji,
+                    style: const TextStyle(fontSize: 20))),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(event.personName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppTheme.textPrimary)),
+                    if (isScheduled)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('예정',
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF7C3AED))),
+                      )
+                    else
+                      Text(event.formattedAmount,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color:
+                                  inc ? AppTheme.income : AppTheme.expense)),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                        '${event.ceremonyType.label} · ${event.relation.label}',
+                        style: const TextStyle(
+                            fontSize: 12, color: AppTheme.textSecondary)),
+                    Text(dateFmt.format(event.date),
+                        style: const TextStyle(
+                            fontSize: 11, color: AppTheme.textHint)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          // 수정 버튼
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              shape: const RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(20))),
+              builder: (_) =>
+                  EventBottomSheet(initialDate: event.date, eventToEdit: event),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.edit_outlined,
+                  size: 15, color: AppTheme.primary),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
 }
