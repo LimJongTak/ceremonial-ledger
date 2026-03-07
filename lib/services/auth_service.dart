@@ -200,10 +200,10 @@ class AuthService {
           db.collection('users').doc(uid).collection('profile').doc('data'));
       await batch.commit();
 
-      // 3. 소셜 로그아웃
+      // 3. 소셜 로그아웃 (각각 오류 무시 - 소셜 로그아웃 실패가 계정 삭제를 막으면 안 됨)
       await Future.wait([
-        _googleSignIn.signOut(),
-        FlutterNaverLogin.logOut(),
+        _googleSignIn.signOut().catchError((_) {}),
+        FlutterNaverLogin.logOut().catchError((_) {}),
       ]);
       try {
         await UserApi.instance.logout();
