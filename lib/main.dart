@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
@@ -29,6 +30,7 @@ void main() async {
   } catch (e) {
     // 이미 초기화된 경우 무시
   }
+  await GoogleSignIn.instance.initialize();
   await HomeWidgetService.instance.initialize();
   await NotificationService.instance.initialize();
   KakaoSdk.init(nativeAppKey: '9e8cb74d18d1c54a5a7be9cd53461b56');

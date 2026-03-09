@@ -7,7 +7,6 @@ import 'package:flutter_naver_login/interface/types/naver_login_status.dart';
 
 class AuthService {
   final _auth = FirebaseAuth.instance;
-  final _googleSignIn = GoogleSignIn();
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
@@ -15,14 +14,15 @@ class AuthService {
   // ── Google 로그인 ───────────────────────────────────────────
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
-      final googleAuth = await googleUser.authentication;
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final auth = googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+        idToken: auth.idToken,
       );
       return await _auth.signInWithCredential(credential);
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return null;
+      throw AuthException('Google 로그인 실패: $e');
     } catch (e) {
       throw AuthException('Google 로그인 실패: $e');
     }
@@ -99,6 +99,7 @@ class AuthService {
       final account =
           result.account ?? await FlutterNaverLogin.getCurrentAccount();
       final naverId = account.id ?? '';
+      if (naverId.isEmpty) throw AuthException('네이버 계정 정보를 가져올 수 없습니다.');
       final nickname =
           (account.nickname?.isNotEmpty == true)
               ? account.nickname!
@@ -139,7 +140,7 @@ class AuthService {
       return cred;
     } catch (e) {
       if (e is AuthException) rethrow;
-      throw AuthException('네이버 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      throw AuthException('네이버 오류: $e');
     }
   }
 
@@ -168,11 +169,9 @@ class AuthService {
 
   // ── 로그아웃 (모든 소셜 동시 처리) ──────────────────────────
   Future<void> signOut() async {
-    await Future.wait([
-      _auth.signOut(),
-      _googleSignIn.signOut(),
-      FlutterNaverLogin.logOut(),
-    ]);
+    await _auth.signOut();
+    await GoogleSignIn.instance.signOut();
+    await FlutterNaverLogin.logOut();
     // 카카오 로그아웃 (오류 무시)
     try {
       await UserApi.instance.logout();
@@ -201,10 +200,8 @@ class AuthService {
       await batch.commit();
 
       // 3. 소셜 로그아웃
-      await Future.wait([
-        _googleSignIn.signOut(),
-        FlutterNaverLogin.logOut(),
-      ]);
+      await GoogleSignIn.instance.signOut();
+      await FlutterNaverLogin.logOut();
       try {
         await UserApi.instance.logout();
       } catch (_) {}

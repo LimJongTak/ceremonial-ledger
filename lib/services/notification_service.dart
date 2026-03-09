@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import '../models/event_model.dart';
+import '../models/notification_settings.dart';
+import 'notification_settings_service.dart';
 
 class NotificationService {
   NotificationService._();
@@ -56,57 +58,60 @@ class NotificationService {
       );
 
   // ── 예정 이벤트 알림 스케줄 ──────────────────────────────────
-  Future<void> scheduleEventNotifications(EventModel event) async {
+  /// [days]가 null이면 저장된 사용자 설정에서 읽어옴
+  Future<void> scheduleEventNotifications(EventModel event,
+      {List<int>? days}) async {
     if (!_initialized) await initialize();
+
+    final notifDays = days ??
+        (await NotificationSettingsService.instance.load()).notificationDays;
 
     final now = DateTime.now();
 
-    // D-7 알림
-    final d7 = event.date.subtract(const Duration(days: 7));
-    if (d7.isAfter(now)) {
-      await _scheduleNotification(
-        id: _notifId(event, 7),
-        title: '📅 D-7 | ${event.ceremonyType.emoji} ${event.personName}',
-        body: '${event.personName}님의 ${event.ceremonyType.label}이 7일 후입니다!',
-        scheduledDate: d7,
-        payload: 'event_${event.id}',
-      );
-      debugPrint('📅 D-7 알림 예약: ${event.personName} - $d7');
-    }
+    for (final daysBefore in notifDays) {
+      final DateTime scheduledDate;
+      final String title;
+      final String body;
 
-    // D-1 알림
-    final d1 = event.date.subtract(const Duration(days: 1));
-    if (d1.isAfter(now)) {
-      await _scheduleNotification(
-        id: _notifId(event, 1),
-        title: '🔔 내일! | ${event.ceremonyType.emoji} ${event.personName}',
-        body:
-            '${event.personName}님의 ${event.ceremonyType.label}이 내일입니다! 준비하셨나요?',
-        scheduledDate: d1,
-        payload: 'event_${event.id}',
-      );
-      debugPrint('🔔 D-1 알림 예약: ${event.personName} - $d1');
-    }
+      if (daysBefore == 0) {
+        // D-day 당일 오전 9시
+        scheduledDate =
+            DateTime(event.date.year, event.date.month, event.date.day, 9, 0);
+        title = '🎉 오늘! | ${event.ceremonyType.emoji} ${event.personName}';
+        body = '오늘은 ${event.personName}님의 ${event.ceremonyType.label} 날입니다!';
+      } else {
+        scheduledDate = event.date.subtract(Duration(days: daysBefore));
+        title =
+            '📅 D-$daysBefore | ${event.ceremonyType.emoji} ${event.personName}';
+        body = daysBefore == 1
+            ? '${event.personName}님의 ${event.ceremonyType.label}이 내일입니다! 준비하셨나요?'
+            : '${event.personName}님의 ${event.ceremonyType.label}이 $daysBefore일 후입니다!';
+      }
 
-    // D-day 당일 오전 9시
-    final dDay =
-        DateTime(event.date.year, event.date.month, event.date.day, 9, 0);
-    if (dDay.isAfter(now)) {
-      await _scheduleNotification(
-        id: _notifId(event, 0),
-        title: '🎉 오늘! | ${event.ceremonyType.emoji} ${event.personName}',
-        body: '오늘은 ${event.personName}님의 ${event.ceremonyType.label} 날입니다!',
-        scheduledDate: dDay,
-        payload: 'event_${event.id}',
-      );
+      if (scheduledDate.isAfter(now)) {
+        await _scheduleNotification(
+          id: _notifId(event, daysBefore),
+          title: title,
+          body: body,
+          scheduledDate: scheduledDate,
+          payload: 'event_${event.id}',
+        );
+        debugPrint('📅 D-$daysBefore 알림 예약: ${event.personName} - $scheduledDate');
+      }
     }
   }
 
   // ── 이벤트 알림 취소 ──────────────────────────────────────────
   Future<void> cancelEventNotifications(EventModel event) async {
-    await _plugin.cancel(_notifId(event, 7));
-    await _plugin.cancel(_notifId(event, 1));
-    await _plugin.cancel(_notifId(event, 0));
+    // 현재 스킴: 모든 가능한 알림일 취소
+    for (final day in NotificationSettings.availableDays) {
+      await _plugin.cancel(_notifId(event, day));
+    }
+    // 이전 스킴 호환: D-7, D-1, D-0
+    final oldBase = (event.id.abs() % 100000) * 10;
+    await _plugin.cancel(oldBase + 7);
+    await _plugin.cancel(oldBase + 1);
+    await _plugin.cancel(oldBase);
   }
 
   // ── 모든 알림 취소 ────────────────────────────────────────────
@@ -120,15 +125,19 @@ class NotificationService {
   }
 
   // ── 이벤트 목록으로 전체 재스케줄 ──────────────────────────────
-  Future<void> rescheduleAll(List<EventModel> events) async {
+  Future<void> rescheduleAll(List<EventModel> events,
+      {List<int>? days}) async {
     await cancelAll();
+    final notifDays = days ??
+        (await NotificationSettingsService.instance.load()).notificationDays;
     final upcoming = events.where(
       (e) => e.date.isAfter(DateTime.now()) && e.amount >= 0,
     );
     for (final event in upcoming) {
-      await scheduleEventNotifications(event);
+      await scheduleEventNotifications(event, days: notifDays);
     }
-    debugPrint('✅ ${upcoming.length}개 이벤트 알림 재스케줄 완료');
+    debugPrint(
+        '✅ ${upcoming.length}개 이벤트 알림 재스케줄 완료 (days: $notifDays)');
   }
 
   // ── 즉시 테스트 알림 ──────────────────────────────────────────
@@ -170,13 +179,7 @@ class NotificationService {
   }
 
   int _notifId(EventModel event, int daysBefore) {
-    // 고유 ID: eventId * 10 + daysBefore (0, 1, 7)
-    final base = (event.id.abs() % 100000) * 10;
-    return base +
-        (daysBefore == 7
-            ? 7
-            : daysBefore == 1
-                ? 1
-                : 0);
+    // 고유 ID: (eventId % 10000) * 100 + daysBefore (0~99)
+    return (event.id.abs() % 10000) * 100 + daysBefore.clamp(0, 99);
   }
 }
