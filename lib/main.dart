@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'views/home/main_nav_screen.dart';
 import 'views/auth/login_screen.dart';
 import 'views/auth/profile_setup_screen.dart';
@@ -41,6 +42,7 @@ class CeremonialLedgerApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp(
       title: '경조사 장부',
@@ -52,6 +54,8 @@ class CeremonialLedgerApp extends ConsumerWidget {
       ],
       supportedLocales: const [Locale('ko', 'KR')],
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       home: authState.when(
         data: (user) {
           if (user == null) return const LoginScreen();

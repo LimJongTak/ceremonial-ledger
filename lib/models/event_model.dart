@@ -39,6 +39,7 @@ class Events extends Table {
   TextColumn get eventType => textEnum<EventType>()();
   TextColumn get memo => text().nullable()();
   TextColumn get userId => text()();
+  TextColumn get photoPath => text().nullable()(); // 첨부 사진 로컬 경로
 }
 
 class EventModel {
@@ -52,6 +53,7 @@ class EventModel {
   final String? memo;
   final String userId;
   final String? firestoreId;
+  final String? photoPath; // 첨부 사진 경로
 
   EventModel({
     required this.id,
@@ -64,6 +66,7 @@ class EventModel {
     this.memo,
     required this.userId,
     this.firestoreId,
+    this.photoPath,
   });
 
   bool get isIncome => eventType == EventType.income;

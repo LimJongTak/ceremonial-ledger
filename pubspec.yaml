@@ -59,9 +59,16 @@ dependencies:
 
   # 기타
   path_provider: ^2.1.4
+  path: ^1.9.0
   intl: ^0.20.2
   cupertino_icons: ^1.0.2
   home_widget: ^0.6.0
+
+  # 설정 저장 (다크모드, 예산)
+  shared_preferences: ^2.3.0
+
+  # 연락처 연동
+  flutter_contacts: ^1.1.7+1
 
 dev_dependencies:
   flutter_test:

@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/event_provider.dart';
+import '../../providers/budget_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../services/auth_service.dart';
-// TODO: OCR 기능 준비 중 - import '../calendar/ocr_register_screen.dart';
 import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
 import '../common/app_theme.dart';
+import '../settings/budget_setting_screen.dart';
 import 'profile_edit_screen.dart';
 import 'version_info_screen.dart';
 import 'legal_screen.dart';
@@ -162,11 +164,20 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
+                // 앱 설정
+                const _Section(
+                  title: '앱 설정',
+                  children: [
+                    _BudgetMenuItem(),
+                    _ThemeModeMenuItem(),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
                 // 데이터 관리
                 _Section(
                   title: '데이터 관리',
                   children: [
-                    // TODO: OCR 기능 준비 중 - 카메라 일괄 등록 메뉴
                     _MenuItem(
                       icon: Icons.table_view_outlined,
                       iconColor: AppTheme.secondary,
@@ -513,4 +524,165 @@ class _MenuItem extends StatelessWidget {
           ]),
         ),
       );
+}
+
+// ── 예산 설정 메뉴 아이템 ─────────────────────────────────────
+class _BudgetMenuItem extends ConsumerWidget {
+  const _BudgetMenuItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final budget = ref.watch(monthlyBudgetProvider);
+    final fmt = NumberFormat('#,###');
+    final subtitle = budget > 0 ? '월 ${fmt.format(budget)}원 설정됨' : '미설정';
+
+    return InkWell(
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const BudgetSettingScreen())),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppTheme.gold.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.account_balance_wallet_outlined,
+                color: AppTheme.gold, size: 18),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+              child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('월별 예산 설정',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary)),
+              Text(subtitle,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: budget > 0
+                          ? AppTheme.income
+                          : AppTheme.textSecondary)),
+            ],
+          )),
+          const Icon(Icons.chevron_right_rounded,
+              color: AppTheme.textHint, size: 20),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── 다크모드 메뉴 아이템 ──────────────────────────────────────
+class _ThemeModeMenuItem extends ConsumerWidget {
+  const _ThemeModeMenuItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(themeModeProvider);
+    final labels = {
+      ThemeMode.system: '시스템',
+      ThemeMode.light: '라이트',
+      ThemeMode.dark: '다크',
+    };
+
+    return InkWell(
+      onTap: () => _showThemePicker(context, ref, mode),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppTheme.secondary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              mode == ThemeMode.dark
+                  ? Icons.dark_mode_outlined
+                  : mode == ThemeMode.light
+                      ? Icons.light_mode_outlined
+                      : Icons.brightness_auto_outlined,
+              color: AppTheme.secondary,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+              child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('화면 모드',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary)),
+              Text('${labels[mode]}',
+                  style: const TextStyle(
+                      fontSize: 12, color: AppTheme.textSecondary)),
+            ],
+          )),
+          const Icon(Icons.chevron_right_rounded,
+              color: AppTheme.textHint, size: 20),
+        ]),
+      ),
+    );
+  }
+
+  void _showThemePicker(
+      BuildContext context, WidgetRef ref, ThemeMode current) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(height: 8),
+          Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 12),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Text('화면 모드 선택',
+                style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          ),
+          for (final entry in {
+            ThemeMode.system: ('시스템 설정 따르기', Icons.brightness_auto_outlined),
+            ThemeMode.light: ('라이트 모드', Icons.light_mode_outlined),
+            ThemeMode.dark: ('다크 모드', Icons.dark_mode_outlined),
+          }.entries)
+            ListTile(
+              leading: Icon(entry.value.$2,
+                  color: current == entry.key
+                      ? AppTheme.primary
+                      : AppTheme.textSecondary),
+              title: Text(entry.value.$1),
+              trailing: current == entry.key
+                  ? const Icon(Icons.check_rounded, color: AppTheme.primary)
+                  : null,
+              onTap: () {
+                ref
+                    .read(themeModeProvider.notifier)
+                    .setMode(entry.key);
+                Navigator.pop(context);
+              },
+            ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+  }
 }

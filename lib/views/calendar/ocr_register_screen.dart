@@ -92,29 +92,33 @@ class _OcrRegisterScreenState extends ConsumerState<OcrRegisterScreen> {
     CeremonyType ceremony = CeremonyType.other;
     if (line.contains('결혼') || line.contains('웨딩')) {
       ceremony = CeremonyType.wedding;
-    } else if (line.contains('부고') || line.contains('장례') || line.contains('조의'))
+    } else if (line.contains('부고') || line.contains('장례') || line.contains('조의')) {
       ceremony = CeremonyType.funeral;
-    else if (line.contains('돌') || line.contains('백일'))
+    } else if (line.contains('돌') || line.contains('백일')) {
       ceremony = CeremonyType.babyShower;
-    else if (line.contains('생일'))
+    } else if (line.contains('생일')) {
       ceremony = CeremonyType.birthday;
-    else if (line.contains('졸업'))
+    } else if (line.contains('졸업')) {
       ceremony = CeremonyType.graduation;
-    else if (line.contains('집들이'))
+    } else if (line.contains('집들이')) {
       ceremony = CeremonyType.houseWarming;
-    else if (line.contains('승진')) ceremony = CeremonyType.promotion;
+    } else if (line.contains('승진')) {
+      ceremony = CeremonyType.promotion;
+    }
 
     // 관계 추출
     RelationType relation = RelationType.other;
     if (line.contains('가족') || line.contains('부모') || line.contains('형제')) {
       relation = RelationType.family;
-    } else if (line.contains('친척') || line.contains('친인척'))
+    } else if (line.contains('친척') || line.contains('친인척')) {
       relation = RelationType.relative;
-    else if (line.contains('친구') || line.contains('동창') || line.contains('동기'))
+    } else if (line.contains('친구') || line.contains('동창') || line.contains('동기')) {
       relation = RelationType.friend;
-    else if (line.contains('직장') || line.contains('회사') || line.contains('동료'))
+    } else if (line.contains('직장') || line.contains('회사') || line.contains('동료')) {
       relation = RelationType.colleague;
-    else if (line.contains('이웃')) relation = RelationType.neighbor;
+    } else if (line.contains('이웃')) {
+      relation = RelationType.neighbor;
+    }
 
     // 수입/지출 추출
     EventType eventType = EventType.expense; // 기본값: 지출
@@ -556,7 +560,6 @@ class _EditEntrySheetState extends State<_EditEntrySheet> {
   late CeremonyType _ceremony;
   late RelationType _relation;
   late EventType _eventType;
-  late DateTime _date;
 
   @override
   void initState() {
@@ -566,7 +569,6 @@ class _EditEntrySheetState extends State<_EditEntrySheet> {
     _ceremony = widget.entry.ceremony;
     _relation = widget.entry.relation;
     _eventType = widget.entry.eventType;
-    _date = widget.entry.date;
   }
 
   @override

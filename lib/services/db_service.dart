@@ -9,7 +9,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            // v2: photoPath 컬럼 추가
+            await m.addColumn(events, events.photoPath);
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'ceremonial_ledger');
@@ -28,6 +39,7 @@ class AppDatabase extends _$AppDatabase {
         eventType: Value(event.eventType),
         memo: Value(event.memo),
         userId: Value(event.userId),
+        photoPath: Value(event.photoPath),
       ),
     );
   }
@@ -57,6 +69,7 @@ class AppDatabase extends _$AppDatabase {
       eventType: row.eventType,
       memo: row.memo,
       userId: row.userId,
+      photoPath: row.photoPath,
     );
   }
 }
