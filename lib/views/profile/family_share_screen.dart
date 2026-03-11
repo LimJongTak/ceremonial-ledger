@@ -38,6 +38,10 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen>
   }
 
   String get _displayName {
+    // 앱 프로필 닉네임 우선
+    final profile = ref.read(userProfileProvider).value;
+    if (profile != null && profile.nickname.isNotEmpty) return profile.nickname;
+    // 소셜 로그인 displayName 차선
     final user = ref.read(authStateProvider).value;
     return user?.displayName?.isNotEmpty == true
         ? user!.displayName!
@@ -503,6 +507,37 @@ class _FamilyView extends ConsumerStatefulWidget {
 }
 
 class _FamilyViewState extends ConsumerState<_FamilyView> {
+  @override
+  void initState() {
+    super.initState();
+    // 프레임 이후 본인 memberName을 최신 프로필 닉네임으로 동기화
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncMemberName());
+  }
+
+  /// 가족 문서의 memberNames[uid]를 현재 프로필 닉네임과 맞춤.
+  /// 이미 정확한 이름이면 불필요한 쓰기를 하지 않음.
+  void _syncMemberName() {
+    if (!mounted) return;
+    final uid = widget.uid;
+    final family = widget.family;
+
+    final profile = ref.read(userProfileProvider).value;
+    String latestName;
+    if (profile != null && profile.nickname.isNotEmpty) {
+      latestName = profile.nickname;
+    } else {
+      final user = ref.read(authStateProvider).value;
+      latestName = user?.displayName?.isNotEmpty == true
+          ? user!.displayName!
+          : user?.email?.split('@').first ?? '';
+    }
+
+    final stored = family.memberNames[uid] ?? '';
+    if (latestName.isNotEmpty && stored != latestName) {
+      FamilyService.instance.updateMemberName(family.id, uid, latestName);
+    }
+  }
+
   // 별칭 수정 바텀시트
   void _showAliasEditor(String memberId, String currentName) {
     showModalBottomSheet(

@@ -87,6 +87,14 @@ class FamilyService {
     }
   }
 
+  // ── 멤버 실제 이름 갱신 (본인 프로필 동기화용) ──────────────
+  Future<void> updateMemberName(
+      String familyId, String uid, String name) async {
+    await _families.doc(familyId).update({
+      'memberNames.$uid': name,
+    });
+  }
+
   // ── 멤버 별칭 설정 ───────────────────────────────────────────
   Future<void> updateMemberAlias(
       String familyId, String uid, String alias) async {
