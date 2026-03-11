@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event_model.dart';
 import '../models/family_model.dart';
+import 'profile_service.dart';
 
 class FamilyService {
   FamilyService._();
@@ -93,6 +94,22 @@ class FamilyService {
     await _families.doc(familyId).update({
       'memberNames.$uid': name,
     });
+  }
+
+  // ── 이름 없는 멤버들 프로필에서 일괄 동기화 ─────────────────
+  Future<void> syncMemberNames(
+      String familyId, List<String> memberIds) async {
+    if (memberIds.isEmpty) return;
+    final updates = <String, dynamic>{};
+    for (final uid in memberIds) {
+      final profile = await ProfileService.instance.getProfile(uid);
+      if (profile != null && profile.nickname.isNotEmpty) {
+        updates['memberNames.$uid'] = profile.nickname;
+      }
+    }
+    if (updates.isNotEmpty) {
+      await _families.doc(familyId).update(updates);
+    }
   }
 
   // ── 멤버 별칭 설정 ───────────────────────────────────────────

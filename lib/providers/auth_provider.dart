@@ -55,6 +55,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         () => _s.createAccount(email, pw).then((c) => c.user));
   }
 
+  // 비밀번호 재설정 이메일 전송
   Future<void> sendPasswordReset(String email) async {
     await _s.sendPasswordReset(email);
   }

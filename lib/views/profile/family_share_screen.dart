@@ -510,8 +510,11 @@ class _FamilyViewState extends ConsumerState<_FamilyView> {
   @override
   void initState() {
     super.initState();
-    // 프레임 이후 본인 memberName을 최신 프로필 닉네임으로 동기화
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncMemberName());
+    // 프레임 이후 memberName 동기화 (자신 + 이름 없는 다른 멤버)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncMemberName();
+      _syncAllMemberNames();
+    });
   }
 
   /// 가족 문서의 memberNames[uid]를 현재 프로필 닉네임과 맞춤.
@@ -536,6 +539,18 @@ class _FamilyViewState extends ConsumerState<_FamilyView> {
     if (latestName.isNotEmpty && stored != latestName) {
       FamilyService.instance.updateMemberName(family.id, uid, latestName);
     }
+  }
+
+  /// 이름이 없는 다른 멤버들의 프로필을 Firestore에서 읽어 family 문서에 갱신
+  Future<void> _syncAllMemberNames() async {
+    if (!mounted) return;
+    final family = widget.family;
+    final uid = widget.uid;
+    final missing = family.memberIds
+        .where((id) => id != uid && (family.memberNames[id] ?? '').isEmpty)
+        .toList();
+    if (missing.isEmpty) return;
+    await FamilyService.instance.syncMemberNames(family.id, missing);
   }
 
   // 별칭 수정 바텀시트

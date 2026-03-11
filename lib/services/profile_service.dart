@@ -23,6 +23,13 @@ class ProfileService {
     await _ref(profile.uid).set(profile.toMap());
   }
 
+  // 프로필 단건 읽기 (다른 멤버 이름 동기화용)
+  Future<UserProfile?> getProfile(String uid) async {
+    final doc = await _ref(uid).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return UserProfile.fromMap(doc.data()!);
+  }
+
   // 프로필 존재 여부 확인
   Future<bool> hasProfile(String uid) async {
     final doc = await _ref(uid).get();
