@@ -120,7 +120,7 @@ class _State extends ConsumerState<EventBottomSheet>
   void _showPhotoOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: context.cardColor,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(
@@ -170,7 +170,7 @@ class _State extends ConsumerState<EventBottomSheet>
         labelText: label,
         prefixIcon: Icon(icon, size: 20, color: const Color(0xFF64748B)),
         filled: true,
-        fillColor: context.inputFillColor,
+        fillColor: const Color(0xFFF1F5F9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -206,7 +206,7 @@ class _State extends ConsumerState<EventBottomSheet>
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: context.cardColor,
+            color: Colors.white,
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -240,7 +240,7 @@ class _State extends ConsumerState<EventBottomSheet>
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: context.textPrimaryColor,
+                          color: AppTheme.textPrimary,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -253,7 +253,7 @@ class _State extends ConsumerState<EventBottomSheet>
                           ),
                         IconButton(
                           icon: Icon(Icons.close_rounded,
-                              color: context.textSecondaryColor),
+                              color: AppTheme.textSecondary),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ]),
@@ -266,7 +266,7 @@ class _State extends ConsumerState<EventBottomSheet>
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: context.inputFillColor,
+                        color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(children: [
@@ -414,20 +414,20 @@ class _State extends ConsumerState<EventBottomSheet>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 14),
                       decoration: BoxDecoration(
-                        color: context.inputFillColor,
+                        color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(children: [
                         Icon(Icons.calendar_today_outlined,
                             size: 20,
-                            color: context.textSecondaryColor),
+                            color: AppTheme.textSecondary),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             '${_date.year}년 ${_date.month}월 ${_date.day}일',
                             style: TextStyle(
                                 fontSize: 14,
-                                color: context.textPrimaryColor),
+                                color: AppTheme.textPrimary),
                           ),
                         ),
                         _date.isAfter(DateTime.now())
@@ -448,7 +448,7 @@ class _State extends ConsumerState<EventBottomSheet>
                                 ),
                               )
                             : Icon(Icons.chevron_right_rounded,
-                                color: context.textSecondaryColor, size: 20),
+                                color: AppTheme.textSecondary, size: 20),
                       ]),
                     ),
                   ),
@@ -527,7 +527,7 @@ class _State extends ConsumerState<EventBottomSheet>
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: context.inputFillColor,
+                        color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(12),
                         border: _photoPath != null
                             ? Border.all(
@@ -548,7 +548,7 @@ class _State extends ConsumerState<EventBottomSheet>
                                   errorBuilder: (_, __, ___) => Container(
                                     width: 56,
                                     height: 56,
-                                    color: context.inputFillColor,
+                                    color: const Color(0xFFF1F5F9),
                                     child: const Icon(Icons.broken_image,
                                         color: AppTheme.textSecondary),
                                   ),
@@ -560,7 +560,7 @@ class _State extends ConsumerState<EventBottomSheet>
                                   '사진 첨부됨\n탭하여 변경 또는 삭제',
                                   style: TextStyle(
                                       fontSize: 13,
-                                      color: context.textSecondaryColor,
+                                      color: AppTheme.textSecondary,
                                       height: 1.4),
                                 ),
                               ),
@@ -573,14 +573,14 @@ class _State extends ConsumerState<EventBottomSheet>
                             ])
                           : Row(children: [
                               Icon(Icons.add_photo_alternate_outlined,
-                                  color: context.textSecondaryColor,
+                                  color: AppTheme.textSecondary,
                                   size: 22),
                               const SizedBox(width: 10),
                               Text(
                                 '사진 첨부 (청첩장·부고 등)',
                                 style: TextStyle(
                                     fontSize: 14,
-                                    color: context.textSecondaryColor),
+                                    color: AppTheme.textSecondary),
                               ),
                             ]),
                     ),
@@ -776,7 +776,7 @@ class _ContactAutocomplete extends StatelessWidget {
         child: Material(
           elevation: 4,
           borderRadius: BorderRadius.circular(12),
-          color: context.cardColor,
+          color: Colors.white,
           child: ConstrainedBox(
             constraints:
                 const BoxConstraints(maxHeight: 180, maxWidth: 280),
@@ -793,7 +793,7 @@ class _ContactAutocomplete extends StatelessWidget {
                   title: Text(opt,
                       style: TextStyle(
                           fontSize: 14,
-                          color: context.textPrimaryColor)),
+                          color: AppTheme.textPrimary)),
                   onTap: () => onSelected(opt),
                 );
               },
@@ -831,7 +831,7 @@ class _ModeTab extends StatelessWidget {
             margin: const EdgeInsets.all(3),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: isActive ? context.cardColor : Colors.transparent,
+              color: isActive ? Colors.white : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
               boxShadow: isActive
                   ? [

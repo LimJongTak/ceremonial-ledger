@@ -34,21 +34,20 @@ class _BudgetSettingScreenState extends ConsumerState<BudgetSettingScreen> {
   Widget build(BuildContext context) {
     final budget = ref.watch(monthlyBudgetProvider);
     final fmt = NumberFormat('#,###');
-    final isDark = context.isDark;
 
     return Scaffold(
-      backgroundColor: context.surfaceColor,
+      backgroundColor: AppTheme.bgLight,
       appBar: AppBar(
         title: const Text('월별 예산 설정'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        titleTextStyle: TextStyle(
-          color: context.textPrimaryColor,
+        titleTextStyle: const TextStyle(
+          color: AppTheme.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.5,
         ),
-        iconTheme: IconThemeData(color: context.textPrimaryColor),
+        iconTheme: const IconThemeData(color: AppTheme.textPrimary),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -75,7 +74,7 @@ class _BudgetSettingScreenState extends ConsumerState<BudgetSettingScreen> {
                       '월별 경조사비 예산을 설정하면\n지출이 예산을 초과할 때 경고를 표시합니다.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: isDark ? AppTheme.primaryLight : AppTheme.primary,
+                        color: AppTheme.primary,
                         height: 1.5,
                       ),
                     ),
@@ -89,10 +88,10 @@ class _BudgetSettingScreenState extends ConsumerState<BudgetSettingScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: context.cardColor,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border:
-                        Border.all(color: context.dividerColor),
+                        Border.all(color: const Color(0xFFF1F5F9)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -100,7 +99,7 @@ class _BudgetSettingScreenState extends ConsumerState<BudgetSettingScreen> {
                       Text('현재 예산',
                           style: TextStyle(
                               fontSize: 14,
-                              color: context.textSecondaryColor)),
+                              color: AppTheme.textSecondary)),
                       Text(
                         '${fmt.format(budget)}원',
                         style: const TextStyle(
@@ -121,7 +120,7 @@ class _BudgetSettingScreenState extends ConsumerState<BudgetSettingScreen> {
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: context.textSecondaryColor),
+                    color: AppTheme.textSecondary),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -131,15 +130,15 @@ class _BudgetSettingScreenState extends ConsumerState<BudgetSettingScreen> {
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: context.textPrimaryColor),
+                    color: AppTheme.textPrimary),
                 decoration: InputDecoration(
                   hintText: '0',
-                  hintStyle: TextStyle(color: context.textSecondaryColor),
+                  hintStyle: TextStyle(color: AppTheme.textSecondary),
                   suffixText: '원',
                   suffixStyle: TextStyle(
-                      fontSize: 16, color: context.textSecondaryColor),
+                      fontSize: 16, color: AppTheme.textSecondary),
                   filled: true,
-                  fillColor: context.inputFillColor,
+                  fillColor: const Color(0xFFF1F5F9),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
@@ -163,7 +162,7 @@ class _BudgetSettingScreenState extends ConsumerState<BudgetSettingScreen> {
               Text(
                 '비워두면 예산이 삭제됩니다.',
                 style: TextStyle(
-                    fontSize: 12, color: context.textSecondaryColor),
+                    fontSize: 12, color: AppTheme.textSecondary),
               ),
 
               // 빠른 금액 선택 칩
@@ -179,17 +178,17 @@ class _BudgetSettingScreenState extends ConsumerState<BudgetSettingScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: context.inputFillColor,
+                              color: const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                  color: context.dividerColor),
+                                  color: const Color(0xFFF1F5F9)),
                             ),
                             child: Text(
                               '${fmt.format(v)}원',
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: context.textPrimaryColor),
+                                  color: AppTheme.textPrimary),
                             ),
                           ),
                         ))
