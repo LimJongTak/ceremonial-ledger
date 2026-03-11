@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/family_model.dart';
+import '../../models/event_model.dart';
 import '../../providers/family_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/event_provider.dart';
 import '../../services/family_service.dart';
 import '../common/app_theme.dart';
 
@@ -35,11 +37,17 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen>
     super.dispose();
   }
 
+  String get _displayName {
+    final user = ref.read(authStateProvider).value;
+    return user?.displayName?.isNotEmpty == true
+        ? user!.displayName!
+        : user?.email?.split('@').first ?? '멤버';
+  }
+
   @override
   Widget build(BuildContext context) {
     final familyAsync = ref.watch(familyProvider);
     final uid = ref.watch(currentUserIdProvider);
-    final nicknamesAsync = ref.watch(familyMemberNicknamesProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
@@ -73,7 +81,6 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen>
             return _FamilyView(
               family: family,
               uid: uid,
-              nicknames: nicknamesAsync.valueOrNull ?? {},
               loading: _loading,
               onLeave: () => _handleLeave(uid, family),
             );
@@ -83,14 +90,11 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen>
             nameCtrl: _nameCtrl,
             codeCtrl: _codeCtrl,
             loading: _loading,
-            onCreateFamily:
-                uid != null ? () => _createFamily(uid) : null,
-            onJoinFamily:
-                uid != null ? () => _joinFamily(uid) : null,
+            onCreateFamily: uid != null ? () => _createFamily(uid) : null,
+            onJoinFamily: uid != null ? () => _joinFamily(uid) : null,
           );
         },
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('오류: $e')),
       ),
     );
@@ -104,7 +108,7 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen>
     }
     setState(() => _loading = true);
     try {
-      await FamilyService.instance.createFamily(uid, name);
+      await FamilyService.instance.createFamily(uid, name, _displayName);
       if (mounted) _showSnack('가족 그룹이 생성됐습니다 🎉', success: true);
     } catch (e) {
       if (mounted) _showSnack('오류: $e');
@@ -121,7 +125,7 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen>
     }
     setState(() => _loading = true);
     try {
-      await FamilyService.instance.joinByCode(uid, code);
+      await FamilyService.instance.joinByCode(uid, code, _displayName);
       if (mounted) _showSnack('가족 그룹에 참여했습니다 🎉', success: true);
     } catch (e) {
       if (mounted) _showSnack('$e');
@@ -141,8 +145,8 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(title,
             style: const TextStyle(fontWeight: FontWeight.w700)),
         content: Text(content),
@@ -353,6 +357,10 @@ class _NoFamilyView extends StatelessWidget {
                         text: '코드를 가족에게 공유해 초대하세요'),
                     const SizedBox(height: 8),
                     _InfoItem(
+                        icon: Icons.sync_outlined,
+                        text: '경조사 내역이 가족 모두에게 실시간 공유됩니다'),
+                    const SizedBox(height: 8),
+                    _InfoItem(
                         icon: Icons.group_outlined,
                         text: '최대 10명까지 함께 사용할 수 있습니다'),
                     const Spacer(),
@@ -476,30 +484,180 @@ class _NoFamilyView extends StatelessWidget {
   }
 }
 
-// ── 가족 있을 때: 그룹 정보 표시 ────────────────────────────
-class _FamilyView extends StatelessWidget {
+// ── 가족 있을 때: 그룹 정보 + 공유 장부 ─────────────────────
+class _FamilyView extends ConsumerStatefulWidget {
   final FamilyModel family;
   final String uid;
-  final Map<String, String> nicknames;
   final bool loading;
   final VoidCallback? onLeave;
 
   const _FamilyView({
     required this.family,
     required this.uid,
-    required this.nicknames,
     required this.loading,
     required this.onLeave,
   });
 
   @override
+  ConsumerState<_FamilyView> createState() => _FamilyViewState();
+}
+
+class _FamilyViewState extends ConsumerState<_FamilyView> {
+  // 별칭 수정 바텀시트
+  Future<void> _showAliasEditor(String memberId, String currentName) async {
+    final ctrl = TextEditingController(
+        text: widget.family.memberAliases[memberId] ?? '');
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                '\'$currentName\'의 별칭 설정',
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '내가 알아보기 쉽게 이름을 붙여두세요.',
+                style: TextStyle(
+                    fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                maxLength: 10,
+                decoration: InputDecoration(
+                  hintText: '예) 남편, 아내, 엄마',
+                  filled: true,
+                  fillColor: const Color(0xFFF1F5F9),
+                  counterText: '',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: AppTheme.primary, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 14),
+                  suffixIcon: ctrl.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          onPressed: () {
+                            ctrl.clear();
+                            setModalState(() {});
+                          })
+                      : null,
+                ),
+                onChanged: (_) => setModalState(() {}),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  if (widget.family.memberAliases[memberId]?.isNotEmpty == true)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          await FamilyService.instance.updateMemberAlias(
+                              widget.family.id, memberId, '');
+                          if (mounted) Navigator.pop(context);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.textSecondary,
+                          side: BorderSide(
+                              color: Colors.black.withValues(alpha: 0.12)),
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('별칭 삭제'),
+                      ),
+                    ),
+                  if (widget.family.memberAliases[memberId]?.isNotEmpty == true)
+                    const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: () async {
+                        final alias = ctrl.text.trim();
+                        await FamilyService.instance.updateMemberAlias(
+                            widget.family.id, memberId, alias);
+                        if (mounted) Navigator.pop(context);
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('저장'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    ctrl.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final family = widget.family;
+    final uid = widget.uid;
     final isOwner = family.ownerId == uid;
+    final eventsAsync = ref.watch(allEventsProvider);
+    final events = eventsAsync.valueOrNull ?? [];
+
+    // 이달 요약
+    final now = DateTime.now();
+    final monthEvents = events
+        .where((e) => e.date.year == now.year && e.date.month == now.month)
+        .toList();
+    final totalIncome =
+        monthEvents.where((e) => e.isIncome).fold(0, (s, e) => s + e.amount);
+    final totalExpense =
+        monthEvents.where((e) => !e.isIncome).fold(0, (s, e) => s + e.amount);
+    final recentEvents = events.take(5).toList();
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // 그룹 정보 카드
+        // ── 그룹 정보 카드 ───────────────────────────────────
         _Card(
           child: Row(
             children: [
@@ -526,7 +684,7 @@ class _FamilyView extends StatelessWidget {
                           color: AppTheme.textPrimary),
                     ),
                     Text(
-                      '멤버 ${family.memberIds.length}명',
+                      '멤버 ${family.memberIds.length}명 함께 공유 중',
                       style: const TextStyle(
                           fontSize: 13, color: AppTheme.textSecondary),
                     ),
@@ -555,7 +713,279 @@ class _FamilyView extends StatelessWidget {
 
         const SizedBox(height: 14),
 
-        // 초대 코드 카드
+        // ── 이달 공유 장부 요약 카드 (NEW) ───────────────────
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    '이달의 공유 장부',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textSecondary,
+                        letterSpacing: 0.3),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${now.month}월',
+                    style: const TextStyle(
+                        fontSize: 12, color: AppTheme.textSecondary),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _SummaryTile(
+                      label: '수입',
+                      amount: totalIncome,
+                      color: AppTheme.income,
+                      icon: Icons.arrow_downward_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _SummaryTile(
+                      label: '지출',
+                      amount: totalExpense,
+                      color: AppTheme.expense,
+                      icon: Icons.arrow_upward_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _SummaryTile(
+                      label: '잔액',
+                      amount: totalIncome - totalExpense,
+                      color: AppTheme.primary,
+                      icon: Icons.account_balance_wallet_outlined,
+                    ),
+                  ),
+                ],
+              ),
+              if (monthEvents.isEmpty) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    '이달 등록된 공유 내역이 없습니다',
+                    style: TextStyle(
+                        fontSize: 12, color: AppTheme.textSecondary),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // ── 최근 공유 내역 카드 (NEW) ─────────────────────────
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '최근 공유 내역',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textSecondary,
+                    letterSpacing: 0.3),
+              ),
+              const SizedBox(height: 12),
+              if (recentEvents.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.receipt_long_outlined,
+                            size: 36,
+                            color: AppTheme.textSecondary
+                                .withValues(alpha: 0.3)),
+                        const SizedBox(height: 8),
+                        Text(
+                          '아직 공유된 내역이 없습니다\n새 일정을 등록하면 여기에 표시됩니다',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                              height: 1.6),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ...recentEvents.asMap().entries.map((entry) {
+                  final e = entry.value;
+                  final isLast = entry.key == recentEvents.length - 1;
+                  final memberName = family.displayNameFor(e.userId);
+                  return Column(
+                    children: [
+                      _EventRow(
+                        event: e,
+                        memberName: memberName,
+                        isMe: e.userId == uid,
+                      ),
+                      if (!isLast)
+                        Divider(
+                            height: 16,
+                            color: Colors.black.withValues(alpha: 0.05)),
+                    ],
+                  );
+                }),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // ── 멤버 목록 카드 ───────────────────────────────────
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '멤버',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textSecondary,
+                        letterSpacing: 0.3),
+                  ),
+                  Text(
+                    '${family.memberIds.length} / 10',
+                    style: const TextStyle(
+                        fontSize: 12, color: AppTheme.textSecondary),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '이름 옆 ✏️를 눌러 별칭을 설정할 수 있습니다',
+                style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary.withValues(alpha: 0.7)),
+              ),
+              const SizedBox(height: 14),
+              ...family.memberIds.asMap().entries.map((entry) {
+                final memberId = entry.value;
+                final isMe = memberId == uid;
+                final isMemberOwner = memberId == family.ownerId;
+                final baseName = family.memberNames[memberId] ?? '멤버';
+                final alias = family.memberAliases[memberId] ?? '';
+                final displayName = alias.isNotEmpty ? alias : baseName;
+                final hasAlias = alias.isNotEmpty;
+                final isLast = entry.key == family.memberIds.length - 1;
+
+                // 아바타 이니셜
+                final initial =
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
+                return Column(
+                  children: [
+                    InkWell(
+                      onTap: () => _showAliasEditor(memberId, baseName),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            // 아바타
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: isMe
+                                    ? AppTheme.primary.withValues(alpha: 0.12)
+                                    : const Color(0xFFF1F5F9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  initial,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: isMe
+                                        ? AppTheme.primary
+                                        : AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        isMe
+                                            ? '$displayName (나)'
+                                            : displayName,
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.textPrimary),
+                                      ),
+                                      if (hasAlias) ...[
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          baseName,
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: AppTheme.textSecondary
+                                                  .withValues(alpha: 0.6)),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  if (isMemberOwner)
+                                    Text(
+                                      '방장',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppTheme.primary
+                                              .withValues(alpha: 0.8)),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            // 별칭 편집 버튼
+                            Icon(
+                              Icons.edit_outlined,
+                              size: 16,
+                              color:
+                                  AppTheme.textSecondary.withValues(alpha: 0.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (!isLast)
+                      Divider(
+                          height: 16,
+                          color: Colors.black.withValues(alpha: 0.05)),
+                  ],
+                );
+              }),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // ── 초대 코드 카드 ───────────────────────────────────
         _Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,10 +993,10 @@ class _FamilyView extends StatelessWidget {
               const Text(
                 '초대 코드',
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textSecondary,
-                    letterSpacing: 0.5),
+                    letterSpacing: 0.3),
               ),
               const SizedBox(height: 12),
               Row(
@@ -628,97 +1058,11 @@ class _FamilyView extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 14),
-
-        // 멤버 목록 카드
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    '멤버',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textSecondary,
-                        letterSpacing: 0.5),
-                  ),
-                  Text(
-                    '${family.memberIds.length} / 10',
-                    style: const TextStyle(
-                        fontSize: 12, color: AppTheme.textSecondary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              ...family.memberIds.asMap().entries.map((entry) {
-                final memberId = entry.value;
-                final isMe = memberId == uid;
-                final isMemberOwner = memberId == family.ownerId;
-                final name = nicknames[memberId] ?? '멤버';
-                final isLast = entry.key == family.memberIds.length - 1;
-
-                return Column(
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.person_rounded,
-                              color: AppTheme.primary, size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            isMe ? '$name (나)' : name,
-                            style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.textPrimary),
-                          ),
-                        ),
-                        if (isMemberOwner)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              '방장',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primary),
-                            ),
-                          ),
-                      ],
-                    ),
-                    if (!isLast)
-                      Divider(
-                          height: 20,
-                          color: Colors.black.withValues(alpha: 0.05)),
-                  ],
-                );
-              }),
-            ],
-          ),
-        ),
-
         const SizedBox(height: 28),
 
-        // 나가기 / 해산 버튼
+        // ── 나가기 / 해산 버튼 ───────────────────────────────
         OutlinedButton.icon(
-          onPressed: loading ? null : onLeave,
+          onPressed: widget.loading ? null : widget.onLeave,
           icon: Icon(
             isOwner
                 ? Icons.delete_outline_rounded
@@ -728,7 +1072,8 @@ class _FamilyView extends StatelessWidget {
           label: Text(isOwner ? '그룹 해산' : '그룹 나가기'),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppTheme.expense,
-            side: BorderSide(color: AppTheme.expense.withValues(alpha: 0.4)),
+            side: BorderSide(
+                color: AppTheme.expense.withValues(alpha: 0.4)),
             minimumSize: const Size(double.infinity, 48),
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12)),
@@ -747,6 +1092,145 @@ class _FamilyView extends StatelessWidget {
         ),
 
         const SizedBox(height: 30),
+      ],
+    );
+  }
+}
+
+// ── 요약 타일 ────────────────────────────────────────────────
+class _SummaryTile extends StatelessWidget {
+  final String label;
+  final int amount;
+  final Color color;
+  final IconData icon;
+
+  const _SummaryTile({
+    required this.label,
+    required this.amount,
+    required this.color,
+    required this.icon,
+  });
+
+  String _fmt(int v) => v
+      .abs()
+      .toString()
+      .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding:
+            const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(height: 6),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 11,
+                    color: color,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(
+              '${_fmt(amount)}원',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      );
+}
+
+// ── 이벤트 행 ─────────────────────────────────────────────────
+class _EventRow extends StatelessWidget {
+  final EventModel event;
+  final String memberName;
+  final bool isMe;
+
+  const _EventRow({
+    required this.event,
+    required this.memberName,
+    required this.isMe,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        event.isIncome ? AppTheme.income : AppTheme.expense;
+    final initial =
+        memberName.isNotEmpty ? memberName[0].toUpperCase() : '?';
+
+    return Row(
+      children: [
+        // 멤버 아바타
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isMe
+                ? AppTheme.primary.withValues(alpha: 0.1)
+                : const Color(0xFFF1F5F9),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              initial,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: isMe ? AppTheme.primary : AppTheme.textSecondary,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    isMe ? '$memberName (나)' : memberName,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textSecondary),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    event.ceremonyType.emoji,
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ],
+              ),
+              Text(
+                event.personName,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          event.formattedAmount,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
       ],
     );
   }
@@ -786,10 +1270,14 @@ class _InfoItem extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: AppTheme.textSecondary),
           const SizedBox(width: 8),
-          Text(
-            text,
-            style: const TextStyle(
-                fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                  height: 1.4),
+            ),
           ),
         ],
       );

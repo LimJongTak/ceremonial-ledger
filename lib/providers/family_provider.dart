@@ -9,11 +9,3 @@ final familyProvider = StreamProvider<FamilyModel?>((ref) {
   if (uid == null) return Stream.value(null);
   return FamilyService.instance.watchUserFamily(uid);
 });
-
-// 가족 멤버 닉네임 맵 (비동기)
-final familyMemberNicknamesProvider =
-    FutureProvider<Map<String, String>>((ref) async {
-  final family = ref.watch(familyProvider).valueOrNull;
-  if (family == null) return {};
-  return FamilyService.instance.getMemberNicknames(family.memberIds);
-});

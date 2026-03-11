@@ -20,7 +20,8 @@ class FamilyService {
   }
 
   // ── 가족 그룹 생성 ───────────────────────────────────────────
-  Future<FamilyModel> createFamily(String userId, String name) async {
+  Future<FamilyModel> createFamily(
+      String userId, String name, String displayName) async {
     final code = _generateCode();
     final ref = _families.doc();
     final family = FamilyModel(
@@ -29,6 +30,8 @@ class FamilyService {
       ownerId: userId,
       inviteCode: code,
       memberIds: [userId],
+      memberNames: {userId: displayName},
+      memberAliases: const {},
       createdAt: DateTime.now(),
     );
     await ref.set(family.toMap());
@@ -36,7 +39,8 @@ class FamilyService {
   }
 
   // ── 초대 코드로 가족 참여 ────────────────────────────────────
-  Future<FamilyModel> joinByCode(String userId, String code) async {
+  Future<FamilyModel> joinByCode(
+      String userId, String code, String displayName) async {
     final snap = await _families
         .where('inviteCode', isEqualTo: code.trim().toUpperCase())
         .limit(1)
@@ -54,6 +58,7 @@ class FamilyService {
 
     await doc.reference.update({
       'memberIds': FieldValue.arrayUnion([userId]),
+      'memberNames.$userId': displayName,
     });
 
     return family.copyWith(memberIds: [...family.memberIds, userId]);
@@ -64,6 +69,8 @@ class FamilyService {
     final ref = _families.doc(familyId);
     await ref.update({
       'memberIds': FieldValue.arrayRemove([userId]),
+      'memberNames.$userId': FieldValue.delete(),
+      'memberAliases.$userId': FieldValue.delete(),
     });
 
     // 남은 멤버 확인
@@ -78,6 +85,14 @@ class FamilyService {
       // 방장이 나가면 다음 멤버에게 방장 이전
       await ref.update({'ownerId': remaining.first});
     }
+  }
+
+  // ── 멤버 별칭 설정 ───────────────────────────────────────────
+  Future<void> updateMemberAlias(
+      String familyId, String uid, String alias) async {
+    await _families.doc(familyId).update({
+      'memberAliases.$uid': alias,
+    });
   }
 
   // ── 가족 그룹 해산 (방장 전용) ────────────────────────────────
@@ -166,25 +181,5 @@ class FamilyService {
         .collection('events')
         .doc(firestoreId)
         .delete();
-  }
-
-  // ── 멤버 닉네임 일괄 조회 ────────────────────────────────────
-  Future<Map<String, String>> getMemberNicknames(
-      List<String> memberIds) async {
-    final result = <String, String>{};
-    for (final id in memberIds) {
-      try {
-        final doc = await _db
-            .collection('users')
-            .doc(id)
-            .collection('profile')
-            .doc('data')
-            .get();
-        if (doc.exists && doc.data() != null) {
-          result[id] = doc.data()!['nickname'] as String? ?? '멤버';
-        }
-      } catch (_) {}
-    }
-    return result;
   }
 }
