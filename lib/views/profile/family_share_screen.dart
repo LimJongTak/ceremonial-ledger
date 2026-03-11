@@ -504,135 +504,31 @@ class _FamilyView extends ConsumerStatefulWidget {
 
 class _FamilyViewState extends ConsumerState<_FamilyView> {
   // 별칭 수정 바텀시트
-  Future<void> _showAliasEditor(String memberId, String currentName) async {
-    final ctrl = TextEditingController(
-        text: widget.family.memberAliases[memberId] ?? '');
-    await showModalBottomSheet(
+  void _showAliasEditor(String memberId, String currentName) {
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setModalState) => Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-            left: 24,
-            right: 24,
-            top: 24,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                '\'$currentName\'의 별칭 설정',
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '내가 알아보기 쉽게 이름을 붙여두세요.',
-                style: TextStyle(
-                    fontSize: 13, color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: ctrl,
-                autofocus: true,
-                maxLength: 10,
-                decoration: InputDecoration(
-                  hintText: '예) 남편, 아내, 엄마',
-                  filled: true,
-                  fillColor: const Color(0xFFF1F5F9),
-                  counterText: '',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: AppTheme.primary, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 14),
-                  suffixIcon: ctrl.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear_rounded, size: 18),
-                          onPressed: () {
-                            ctrl.clear();
-                            setModalState(() {});
-                          })
-                      : null,
-                ),
-                onChanged: (_) => setModalState(() {}),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  if (widget.family.memberAliases[memberId]?.isNotEmpty == true)
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          await FamilyService.instance.updateMemberAlias(
-                              widget.family.id, memberId, '');
-                          if (mounted) Navigator.pop(context);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.textSecondary,
-                          side: BorderSide(
-                              color: Colors.black.withValues(alpha: 0.12)),
-                          minimumSize: const Size(0, 48),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text('별칭 삭제'),
-                      ),
-                    ),
-                  if (widget.family.memberAliases[memberId]?.isNotEmpty == true)
-                    const SizedBox(width: 10),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      onPressed: () async {
-                        final alias = ctrl.text.trim();
-                        await FamilyService.instance.updateMemberAlias(
-                            widget.family.id, memberId, alias);
-                        if (mounted) Navigator.pop(context);
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('저장'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      builder: (_) => _AliasEditorSheet(
+        family: widget.family,
+        memberId: memberId,
+        currentName: currentName,
       ),
     );
-    ctrl.dispose();
+  }
+
+  // 이벤트 상세 바텀시트
+  void _showEventDetail(EventModel event, String memberName, bool isMe) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EventDetailSheet(
+        event: event,
+        memberName: memberName,
+        isMe: isMe,
+      ),
+    );
   }
 
   @override
@@ -831,6 +727,8 @@ class _FamilyViewState extends ConsumerState<_FamilyView> {
                         event: e,
                         memberName: memberName,
                         isMe: e.userId == uid,
+                        onTap: () => _showEventDetail(
+                            e, memberName, e.userId == uid),
                       ),
                       if (!isLast)
                         Divider(
@@ -1155,11 +1053,13 @@ class _EventRow extends StatelessWidget {
   final EventModel event;
   final String memberName;
   final bool isMe;
+  final VoidCallback? onTap;
 
   const _EventRow({
     required this.event,
     required this.memberName,
     required this.isMe,
+    this.onTap,
   });
 
   @override
@@ -1169,69 +1069,73 @@ class _EventRow extends StatelessWidget {
     final initial =
         memberName.isNotEmpty ? memberName[0].toUpperCase() : '?';
 
-    return Row(
-      children: [
-        // 멤버 아바타
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: isMe
-                ? AppTheme.primary.withValues(alpha: 0.1)
-                : const Color(0xFFF1F5F9),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              initial,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: isMe ? AppTheme.primary : AppTheme.textSecondary,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Row(
+        children: [
+          // 멤버 아바타
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isMe
+                  ? AppTheme.primary.withValues(alpha: 0.1)
+                  : const Color(0xFFF1F5F9),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                initial,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isMe ? AppTheme.primary : AppTheme.textSecondary,
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    isMe ? '$memberName (나)' : memberName,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textSecondary),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    event.ceremonyType.emoji,
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                ],
-              ),
-              Text(
-                event.personName,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary),
-              ),
-            ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      isMe ? '$memberName (나)' : memberName,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textSecondary),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      event.ceremonyType.emoji,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
+                Text(
+                  event.personName,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary),
+                ),
+              ],
+            ),
           ),
-        ),
-        Text(
-          event.formattedAmount,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: color,
+          Text(
+            event.formattedAmount,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1280,6 +1184,288 @@ class _InfoItem extends StatelessWidget {
             ),
           ),
         ],
+      );
+}
+
+// ── 별칭 편집 바텀시트 ─────────────────────────────────────────
+class _AliasEditorSheet extends StatefulWidget {
+  final FamilyModel family;
+  final String memberId;
+  final String currentName;
+
+  const _AliasEditorSheet({
+    required this.family,
+    required this.memberId,
+    required this.currentName,
+  });
+
+  @override
+  State<_AliasEditorSheet> createState() => _AliasEditorSheetState();
+}
+
+class _AliasEditorSheetState extends State<_AliasEditorSheet> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(
+        text: widget.family.memberAliases[widget.memberId] ?? '');
+    _ctrl.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAlias =
+        widget.family.memberAliases[widget.memberId]?.isNotEmpty == true;
+    return Padding(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 36),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '\'${widget.currentName}\'의 별칭 설정',
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '내가 알아보기 쉽게 이름을 붙여두세요.',
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _ctrl,
+              autofocus: true,
+              maxLength: 10,
+              decoration: InputDecoration(
+                hintText: '예) 남편, 아내, 엄마',
+                filled: true,
+                fillColor: const Color(0xFFF1F5F9),
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: AppTheme.primary, width: 1.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 14),
+                suffixIcon: _ctrl.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded, size: 18),
+                        onPressed: _ctrl.clear,
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                if (hasAlias) ...[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        await FamilyService.instance.updateMemberAlias(
+                            widget.family.id, widget.memberId, '');
+                        if (mounted) Navigator.pop(context);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.textSecondary,
+                        side: BorderSide(
+                            color: Colors.black.withValues(alpha: 0.12)),
+                        minimumSize: const Size(0, 48),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('별칭 삭제'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    onPressed: () async {
+                      final alias = _ctrl.text.trim();
+                      await FamilyService.instance.updateMemberAlias(
+                          widget.family.id, widget.memberId, alias);
+                      if (mounted) Navigator.pop(context);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('저장'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── 이벤트 상세 바텀시트 ──────────────────────────────────────
+class _EventDetailSheet extends StatelessWidget {
+  final EventModel event;
+  final String memberName;
+  final bool isMe;
+
+  const _EventDetailSheet({
+    required this.event,
+    required this.memberName,
+    required this.isMe,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = event.isIncome ? AppTheme.income : AppTheme.expense;
+    final dateStr =
+        '${event.date.year}.${event.date.month.toString().padLeft(2, '0')}.${event.date.day.toString().padLeft(2, '0')}';
+
+    return Container(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 36,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 드래그 핸들
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // 상단: 이모지 + 이름 + 금액
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(event.ceremonyType.emoji,
+                  style: const TextStyle(fontSize: 32)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.personName,
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary),
+                    ),
+                    Text(
+                      '${event.ceremonyType.label} · ${event.relation.label}',
+                      style: const TextStyle(
+                          fontSize: 13, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                event.formattedAmount,
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: color),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Divider(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+          const SizedBox(height: 16),
+          // 상세 정보 행들
+          _DetailRow(label: '날짜', value: dateStr),
+          _DetailRow(label: '유형', value: event.eventType.label),
+          _DetailRow(
+              label: '등록자',
+              value: isMe ? '$memberName (나)' : memberName),
+          if (event.memo != null && event.memo!.isNotEmpty)
+            _DetailRow(label: '메모', value: event.memo!),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 상세 정보 행 ──────────────────────────────────────────────
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetailRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 56,
+              child: Text(
+                label,
+                style: const TextStyle(
+                    fontSize: 13, color: AppTheme.textSecondary),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                value,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary),
+              ),
+            ),
+          ],
+        ),
       );
 }
 

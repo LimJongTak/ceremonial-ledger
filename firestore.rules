@@ -10,17 +10,22 @@ service cloud.firestore {
 
     // ── 가족 공유 장부 ──────────────────────────────────────────
     match /families/{familyId} {
-      // 멤버만 읽기 가능
-      allow read: if request.auth != null &&
+      // 단건 조회: 멤버만 가능
+      allow get: if request.auth != null &&
         request.auth.uid in resource.data.memberIds;
+
+      // 목록 조회(쿼리): 인증된 사용자 허용 (초대 코드 검색에 필요)
+      allow list: if request.auth != null;
 
       // 인증된 사용자가 자신을 포함해서 생성 가능
       allow create: if request.auth != null &&
         request.auth.uid in request.resource.data.memberIds;
 
-      // 멤버만 수정 가능 (초대 코드 참여, 나가기 등)
-      allow update: if request.auth != null &&
-        request.auth.uid in resource.data.memberIds;
+      // 멤버만 수정 가능 + 비멤버도 자신을 memberIds에 추가하는 것은 허용 (초대 코드 참여)
+      allow update: if request.auth != null && (
+        request.auth.uid in resource.data.memberIds ||
+        request.auth.uid in request.resource.data.memberIds
+      );
 
       // 멤버만 삭제 가능 (그룹 해산)
       allow delete: if request.auth != null &&
