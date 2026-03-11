@@ -318,9 +318,15 @@ class _State extends ConsumerState<EventBottomSheet>
                                   const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: sel
-                                    ? color
-                                    : color.withValues(alpha: 0.08),
+                                    ? color.withValues(alpha: 0.07)
+                                    : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: sel
+                                      ? color.withValues(alpha: 0.6)
+                                      : const Color(0xFFE2E8F0),
+                                  width: 1.5,
+                                ),
                               ),
                               child: Column(children: [
                                 Icon(
@@ -328,7 +334,7 @@ class _State extends ConsumerState<EventBottomSheet>
                                       ? Icons.arrow_downward_rounded
                                       : Icons.arrow_upward_rounded,
                                   size: 18,
-                                  color: sel ? Colors.white : color,
+                                  color: sel ? color : AppTheme.textSecondary,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -337,7 +343,7 @@ class _State extends ConsumerState<EventBottomSheet>
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
-                                    color: sel ? Colors.white : color,
+                                    color: sel ? color : AppTheme.textSecondary,
                                   ),
                                 ),
                                 Text(
@@ -346,8 +352,9 @@ class _State extends ConsumerState<EventBottomSheet>
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: sel
-                                        ? Colors.white.withValues(alpha: 0.8)
-                                        : color.withValues(alpha: 0.7),
+                                        ? color.withValues(alpha: 0.7)
+                                        : AppTheme.textSecondary
+                                            .withValues(alpha: 0.6),
                                   ),
                                 ),
                               ]),
@@ -590,25 +597,11 @@ class _State extends ConsumerState<EventBottomSheet>
                   // ── 저장 버튼 ────────────────────────────────
                   Container(
                     decoration: BoxDecoration(
-                      gradient: isScheduled
-                          ? const LinearGradient(
-                              colors: [Color(0xFF7C3AED), Color(0xFF2563EB)],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            )
-                          : LinearGradient(
-                              colors: _type == EventType.income
-                                  ? [
-                                      const Color(0xFF10B981),
-                                      const Color(0xFF06B6D4)
-                                    ]
-                                  : [
-                                      const Color(0xFFEF4444),
-                                      const Color(0xFFF59E0B)
-                                    ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                      color: isScheduled
+                          ? const Color(0xFF7C3AED)
+                          : _type == EventType.income
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFEF4444),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
@@ -617,9 +610,9 @@ class _State extends ConsumerState<EventBottomSheet>
                                   : _type == EventType.income
                                       ? const Color(0xFF10B981)
                                       : const Color(0xFFEF4444))
-                              .withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                              .withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
