@@ -55,6 +55,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         () => _s.createAccount(email, pw).then((c) => c.user));
   }
 
+  Future<void> sendPasswordReset(String email) async {
+    await _s.sendPasswordReset(email);
+  }
+
   Future<void> signOut() async {
     await _s.signOut();
     state = const AsyncValue.data(null);

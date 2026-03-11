@@ -166,6 +166,15 @@ class AuthService {
     }
   }
 
+  // ── 비밀번호 재설정 이메일 전송 ─────────────────────────────
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_message(e.code));
+    }
+  }
+
   // ── 로그아웃 (모든 소셜 동시 처리) ──────────────────────────
   Future<void> signOut() async {
     await Future.wait([
@@ -233,6 +242,13 @@ class AuthService {
         return '이미 사용 중인 이메일입니다';
       case 'weak-password':
         return '비밀번호는 6자 이상이어야 합니다';
+      case 'invalid-email':
+        return '유효하지 않은 이메일 형식입니다';
+      case 'invalid-credential':
+      case 'INVALID_LOGIN_CREDENTIALS':
+        return '이메일 또는 비밀번호가 올바르지 않습니다';
+      case 'too-many-requests':
+        return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요';
       default:
         return '로그인에 실패했습니다';
     }

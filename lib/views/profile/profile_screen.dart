@@ -9,9 +9,11 @@ import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
 import '../common/app_theme.dart';
 import '../settings/budget_setting_screen.dart';
+import 'family_share_screen.dart';
 import 'profile_edit_screen.dart';
 import 'version_info_screen.dart';
 import 'legal_screen.dart';
+import '../../providers/family_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -173,6 +175,7 @@ class ProfileScreen extends ConsumerWidget {
                   title: '앱 설정',
                   children: [
                     _BudgetMenuItem(),
+                    _FamilyMenuItem(),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -580,3 +583,78 @@ class _BudgetMenuItem extends ConsumerWidget {
   }
 }
 
+// ── 가족 공유 메뉴 아이템 ─────────────────────────────────────
+class _FamilyMenuItem extends ConsumerWidget {
+  const _FamilyMenuItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final family = ref.watch(familyProvider).valueOrNull;
+    final subtitle = family != null
+        ? '${family.name} · ${family.memberIds.length}명'
+        : '부부·가족이 함께 사용';
+    final iconColor = family != null ? AppTheme.income : AppTheme.primary;
+
+    return InkWell(
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const FamilyShareScreen())),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              family != null
+                  ? Icons.people_alt_rounded
+                  : Icons.people_alt_outlined,
+              color: iconColor,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+              child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('가족 공유 장부',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary)),
+              Text(subtitle,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: family != null
+                          ? AppTheme.income
+                          : AppTheme.textSecondary)),
+            ],
+          )),
+          if (family != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppTheme.income.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                '공유 중',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.income),
+              ),
+            )
+          else
+            const Icon(Icons.chevron_right_rounded,
+                color: AppTheme.textHint, size: 20),
+        ]),
+      ),
+    );
+  }
+}
