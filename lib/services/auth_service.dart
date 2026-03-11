@@ -166,7 +166,7 @@ class AuthService {
     }
   }
 
-  // ── 비밀번호 재설정 이메일 전송 ─────────────────────────────
+  // ── 비밀번호 재설정 이메일 전송 ──────────────────────────────
   Future<void> sendPasswordReset(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
