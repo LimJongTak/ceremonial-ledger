@@ -49,44 +49,40 @@ class VersionInfoScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
             decoration: BoxDecoration(
-              gradient: AppTheme.gradientPrimary,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.12)),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 2)),
+              ],
             ),
             child: Column(
               children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Image.asset(
+                    'assets/images/app_icon.jpg',
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.cover,
                   ),
-                  child: const Icon(Icons.book_rounded,
-                      color: Colors.white, size: 36),
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  '오고가고',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5),
-                ),
-                const SizedBox(height: 6),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: AppTheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     '최신 버전 v$_currentVersion',
                     style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.primary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600),
                   ),

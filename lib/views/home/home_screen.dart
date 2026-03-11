@@ -145,9 +145,15 @@ class _Header extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(
           24, MediaQuery.paddingOf(context).top + 20, 24, 28),
-      decoration: const BoxDecoration(
-        gradient: AppTheme.gradientPrimary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 4)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,13 +165,12 @@ class _Header extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(greeting,
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 13)),
+                      style: const TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 13)),
                   const SizedBox(height: 2),
                   Text('$nickname 님',
                       style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.textPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5)),
@@ -173,7 +178,8 @@ class _Header extends StatelessWidget {
               ),
               Row(children: [
                 IconButton(
-                  icon: const Icon(Icons.search_rounded, color: Colors.white),
+                  icon: const Icon(Icons.search_rounded,
+                      color: AppTheme.textPrimary),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const SearchScreen()),
@@ -189,33 +195,33 @@ class _Header extends StatelessWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: AppTheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.notifications_outlined,
-                        color: Colors.white, size: 20),
+                        color: AppTheme.primary, size: 20),
                   ),
                 ),
               ]),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // 잔액 카드
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: AppTheme.primary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.12)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('이번 달 잔액',
+                const Text('이번 달 잔액',
                     style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13)),
+                        color: AppTheme.textSecondary, fontSize: 13)),
                 const SizedBox(height: 8),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -223,7 +229,7 @@ class _Header extends StatelessWidget {
                     Text(
                       fmt.format(balance.abs()),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.textPrimary,
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -1,
@@ -233,7 +239,7 @@ class _Header extends StatelessWidget {
                       padding: EdgeInsets.only(bottom: 4, left: 4),
                       child: Text('원',
                           style: TextStyle(
-                              color: Colors.white,
+                              color: AppTheme.textPrimary,
                               fontSize: 16,
                               fontWeight: FontWeight.w600)),
                     ),
@@ -244,21 +250,20 @@ class _Header extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppTheme.expense.withValues(alpha: 0.3),
+                            color: AppTheme.expense.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text('지출 초과',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 11)),
+                              style: TextStyle(
+                                  color: AppTheme.expense, fontSize: 11)),
                         ),
                       ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(DateFormat('yyyy년 M월', 'ko_KR').format(DateTime.now()),
-                    style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 12)),
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 12)),
               ],
             ),
           ),
@@ -284,7 +289,7 @@ class _MonthSummaryCards extends StatelessWidget {
             child: _SummaryMini(
           label: '수입',
           value: '${fmt.format(income)}원',
-          gradient: AppTheme.gradientIncome,
+          color: AppTheme.income,
           icon: Icons.arrow_downward_rounded,
         )),
         const SizedBox(width: 12),
@@ -292,7 +297,7 @@ class _MonthSummaryCards extends StatelessWidget {
             child: _SummaryMini(
           label: '지출',
           value: '${fmt.format(expense)}원',
-          gradient: AppTheme.gradientExpense,
+          color: AppTheme.expense,
           icon: Icons.arrow_upward_rounded,
         )),
         const SizedBox(width: 12),
@@ -300,11 +305,7 @@ class _MonthSummaryCards extends StatelessWidget {
             child: _SummaryMini(
           label: '건수',
           value: '$count건',
-          gradient: const LinearGradient(
-            colors: [Color(0xFF7C3AED), Color(0xFF2563EB)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: AppTheme.secondary,
           icon: Icons.receipt_long_outlined,
         )),
       ]),
@@ -314,43 +315,51 @@ class _MonthSummaryCards extends StatelessWidget {
 
 class _SummaryMini extends StatelessWidget {
   final String label, value;
-  final LinearGradient gradient;
+  final Color color;
   final IconData icon;
   const _SummaryMini(
       {required this.label,
       required this.value,
-      required this.gradient,
+      required this.color,
       required this.icon});
 
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          gradient: gradient,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-                color: gradient.colors.first.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4)),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 18),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 16, color: color),
+            ),
             const SizedBox(height: 8),
             Text(value,
                 style: const TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.3),
                 overflow: TextOverflow.ellipsis),
             const SizedBox(height: 2),
             Text(label,
-                style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 11)),
           ],
         ),
       );
@@ -482,8 +491,8 @@ class _RecentItem extends ConsumerWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              gradient:
-                  inc ? AppTheme.gradientIncome : AppTheme.gradientExpense,
+              color: (inc ? AppTheme.income : AppTheme.expense)
+                  .withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
