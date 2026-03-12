@@ -160,7 +160,7 @@ class _SummaryBanner extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   pendingCount > 0
-                      ? 'D-7, D-1, D-day 알림이 예약되어 있어요'
+                      ? 'D-30, D-7, D-3, D-1, D-day 알림이 예약되어 있어요'
                       : '예약된 알림이 없어요. 재설정해 보세요',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
@@ -188,7 +188,9 @@ class _EventNotifCard extends StatelessWidget {
     final fmt = DateFormat('yyyy년 M월 d일', 'ko_KR');
 
     final notifDays = <int>[];
+    if (event.date.subtract(const Duration(days: 30)).isAfter(now)) notifDays.add(30);
     if (event.date.subtract(const Duration(days: 7)).isAfter(now)) notifDays.add(7);
+    if (event.date.subtract(const Duration(days: 3)).isAfter(now)) notifDays.add(3);
     if (event.date.subtract(const Duration(days: 1)).isAfter(now)) notifDays.add(1);
     if (DateTime(event.date.year, event.date.month, event.date.day, 9, 0).isAfter(now)) notifDays.add(0);
 

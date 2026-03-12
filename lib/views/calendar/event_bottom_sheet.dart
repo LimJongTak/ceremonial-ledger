@@ -488,6 +488,59 @@ class _State extends ConsumerState<EventBottomSheet>
                       return null;
                     },
                   ),
+                  // ── 빠른 금액 버튼 (확정 모드) ───────────────
+                  if (!isScheduled) ...[
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          // +금액 버튼 (누적)
+                          ...[50000, 100000, 200000, 300000].map((amt) =>
+                              _QuickAmountBtn(
+                                amount: amt,
+                                onTap: () => setState(() {
+                                  final current =
+                                      int.tryParse(_amtCtrl.text) ?? 0;
+                                  _amtCtrl.text = (current + amt).toString();
+                                }),
+                              )),
+                          // 초기화 버튼
+                          GestureDetector(
+                            onTap: () =>
+                                setState(() => _amtCtrl.text = ''),
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 13, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEF4444)
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: const Color(0xFFEF4444)
+                                        .withValues(alpha: 0.25)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.refresh_rounded,
+                                      size: 13, color: Color(0xFFEF4444)),
+                                  SizedBox(width: 4),
+                                  Text('초기화',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFFEF4444),
+                                      )),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
 
                   // ── 관계 + 경조사 ────────────────────────────
@@ -806,6 +859,41 @@ class _ContactAutocomplete extends StatelessWidget {
                 );
               },
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── 빠른 금액 버튼 위젯 ───────────────────────────────────────
+class _QuickAmountBtn extends StatelessWidget {
+  final int amount;
+  final VoidCallback onTap;
+  const _QuickAmountBtn({required this.amount, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = amount >= 10000
+        ? '${amount ~/ 10000}만'
+        : '${amount ~/ 1000}천';
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+              color: const Color(0xFF2563EB).withValues(alpha: 0.25)),
+        ),
+        child: Text(
+          '+$label',
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF2563EB),
           ),
         ),
       ),

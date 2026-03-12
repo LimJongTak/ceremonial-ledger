@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/images/app_icon.png" width="110" style="border-radius:22px;" alt="오고가고 앱 아이콘">
+
 # 오고가고
 ### 스마트한 경조사 장부
 

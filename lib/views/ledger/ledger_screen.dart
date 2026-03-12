@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../calendar/event_bottom_sheet.dart';
+import '../person/person_history_screen.dart';
 
 class LedgerScreen extends ConsumerWidget {
   const LedgerScreen({super.key});
@@ -584,13 +585,12 @@ class _LedgerItem extends ConsumerWidget {
           .read(eventNotifierProvider.notifier)
           .deleteEvent(event.id, firestoreId: event.firestoreId),
       child: GestureDetector(
-        onTap: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-          builder: (_) =>
-              EventBottomSheet(initialDate: event.date, eventToEdit: event),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                PersonHistoryScreen(personName: event.personName),
+          ),
         ),
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
@@ -654,6 +654,29 @@ class _LedgerItem extends ConsumerWidget {
                 ),
               ],
             )),
+            const SizedBox(width: 8),
+            // 수정 버튼 (인물별 히스토리 탭과 분리)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20))),
+                builder: (_) =>
+                    EventBottomSheet(initialDate: event.date, eventToEdit: event),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.edit_outlined,
+                    size: 15, color: Color(0xFF2563EB)),
+              ),
+            ),
           ]),
         ),
       ),

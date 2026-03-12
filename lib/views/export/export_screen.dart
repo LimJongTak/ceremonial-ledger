@@ -238,7 +238,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
                     // 알림 정보
                     const _InfoRow(
+                        icon: Icons.alarm_outlined, text: 'D-30: 30일 전 오전 9시 알림'),
+                    const _InfoRow(
                         icon: Icons.alarm_outlined, text: 'D-7: 7일 전 오전 9시 알림'),
+                    const _InfoRow(
+                        icon: Icons.alarm_outlined, text: 'D-3: 3일 전 오전 9시 알림'),
                     const _InfoRow(
                         icon: Icons.alarm_outlined, text: 'D-1: 하루 전 오전 9시 알림'),
                     const _InfoRow(

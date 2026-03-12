@@ -65,7 +65,7 @@ class VersionInfoScreen extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(18),
                   child: Image.asset(
-                    'assets/images/app_icon.jpg',
+                    'assets/images/app_icon.png',
                     width: 72,
                     height: 72,
                     fit: BoxFit.cover,
@@ -87,8 +87,8 @@ class VersionInfoScreen extends StatelessWidget {
                         fontWeight: FontWeight.w600),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 28),
 

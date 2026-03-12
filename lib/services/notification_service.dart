@@ -61,6 +61,19 @@ class NotificationService {
 
     final now = DateTime.now();
 
+    // D-30 알림
+    final d30 = event.date.subtract(const Duration(days: 30));
+    if (d30.isAfter(now)) {
+      await _scheduleNotification(
+        id: _notifId(event, 30),
+        title: '📆 D-30 | ${event.ceremonyType.emoji} ${event.personName}',
+        body: '${event.personName}님의 ${event.ceremonyType.label}이 30일 후입니다!',
+        scheduledDate: d30,
+        payload: 'event_${event.id}',
+      );
+      debugPrint('📆 D-30 알림 예약: ${event.personName} - $d30');
+    }
+
     // D-7 알림
     final d7 = event.date.subtract(const Duration(days: 7));
     if (d7.isAfter(now)) {
@@ -72,6 +85,19 @@ class NotificationService {
         payload: 'event_${event.id}',
       );
       debugPrint('📅 D-7 알림 예약: ${event.personName} - $d7');
+    }
+
+    // D-3 알림
+    final d3 = event.date.subtract(const Duration(days: 3));
+    if (d3.isAfter(now)) {
+      await _scheduleNotification(
+        id: _notifId(event, 3),
+        title: '⏰ D-3 | ${event.ceremonyType.emoji} ${event.personName}',
+        body: '${event.personName}님의 ${event.ceremonyType.label}이 3일 후입니다! 준비하셨나요?',
+        scheduledDate: d3,
+        payload: 'event_${event.id}',
+      );
+      debugPrint('⏰ D-3 알림 예약: ${event.personName} - $d3');
     }
 
     // D-1 알림
@@ -104,9 +130,17 @@ class NotificationService {
 
   // ── 이벤트 알림 취소 ──────────────────────────────────────────
   Future<void> cancelEventNotifications(EventModel event) async {
+    // 현재 ID 취소 (base * 100)
+    await _plugin.cancel(_notifId(event, 30));
     await _plugin.cancel(_notifId(event, 7));
+    await _plugin.cancel(_notifId(event, 3));
     await _plugin.cancel(_notifId(event, 1));
     await _plugin.cancel(_notifId(event, 0));
+    // 이전 ID 취소 (base * 10, 하위 호환)
+    final oldBase = (event.id.abs() % 100000) * 10;
+    await _plugin.cancel(oldBase + 7);
+    await _plugin.cancel(oldBase + 1);
+    await _plugin.cancel(oldBase + 0);
   }
 
   // ── 모든 알림 취소 ────────────────────────────────────────────
@@ -170,13 +204,8 @@ class NotificationService {
   }
 
   int _notifId(EventModel event, int daysBefore) {
-    // 고유 ID: eventId * 10 + daysBefore (0, 1, 7)
-    final base = (event.id.abs() % 100000) * 10;
-    return base +
-        (daysBefore == 7
-            ? 7
-            : daysBefore == 1
-                ? 1
-                : 0);
+    // 고유 ID: eventId * 100 + daysBefore (0, 1, 3, 7, 30)
+    final base = (event.id.abs() % 100000) * 100;
+    return base + daysBefore.clamp(0, 99);
   }
 }

@@ -75,7 +75,14 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       child: ClipOval(
                         child: user?.photoURL != null
-                            ? Image.network(user!.photoURL!, fit: BoxFit.cover)
+                            ? Image.network(
+                                user!.photoURL!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.person_rounded,
+                                    color: AppTheme.primary,
+                                    size: 40),
+                              )
                             : const Icon(Icons.person_rounded,
                                 color: AppTheme.primary, size: 40),
                       ),
@@ -93,16 +100,16 @@ class ProfileScreen extends ConsumerWidget {
                           width: 26,
                           height: 26,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppTheme.primary,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
+                                  color: AppTheme.primary.withValues(alpha: 0.3),
                                   blurRadius: 4)
                             ],
                           ),
                           child: const Icon(Icons.edit_rounded,
-                              size: 14, color: AppTheme.primary),
+                              size: 14, color: Colors.white),
                         ),
                       ),
                     ),
