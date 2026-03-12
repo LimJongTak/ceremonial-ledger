@@ -87,8 +87,8 @@ class VersionInfoScreen extends StatelessWidget {
                         fontWeight: FontWeight.w600),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 28),
 
