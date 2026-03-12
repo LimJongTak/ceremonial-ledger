@@ -24,9 +24,9 @@
 
 ## 📱 주요 화면
 
-| 로그인 | 홈 | 캘린더 | 장부 | 통계 | 프로필 |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| <img src="assets/images/screenshot_login.png" width="130"> | <img src="assets/images/screenshot_home.png" width="130"> | <img src="assets/images/screenshot_calendar.png" width="130"> | <img src="assets/images/screenshot_ledger.png" width="130"> | <img src="assets/images/screenshot_stats.png" width="130"> | <img src="assets/images/screenshot_profile.png" width="130"> |
+| 홈 | 캘린더 | 내역 추가 | 통계 | 프로필 |
+|:---:|:---:|:---:|:---:|:---:|
+| <img src="assets/images/home.png" width="150"> | <img src="assets/images/calendar.png" width="150"> | <img src="assets/images/add.png" width="150"> | <img src="assets/images/chart.png" width="150"> | <img src="assets/images/profile.png" width="150"> |
 
 <br>
 
