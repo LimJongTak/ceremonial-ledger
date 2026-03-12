@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/event_model.dart';
 import '../services/db_service.dart';
 import '../services/firestore_service.dart';
+import '../services/family_service.dart';
 import 'auth_provider.dart';
+import 'family_provider.dart';
 import '../services/notification_service.dart';
 import '../services/home_widget_service.dart';
 
@@ -11,10 +13,15 @@ final focusedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 final filterYearProvider = StateProvider<int>((ref) => DateTime.now().year);
 final filterMonthProvider = StateProvider<int?>((ref) => DateTime.now().month);
 
-// Firestore 실시간 스트림
+// 가족 여부에 따라 적절한 컬렉션에서 이벤트 스트림 제공
 final allEventsProvider = StreamProvider<List<EventModel>>((ref) {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return Stream.value([]);
+
+  final family = ref.watch(familyProvider).valueOrNull;
+  if (family != null) {
+    return FamilyService.instance.watchFamilyEvents(family.id);
+  }
   return FirestoreService.instance.watchEvents(userId);
 });
 
@@ -53,11 +60,22 @@ class EventNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
+
+    final family = ref.read(familyProvider).valueOrNull;
+
     state = await AsyncValue.guard(() async {
       await db.saveEvent(event);
-      await FirestoreService.instance.saveEvent(event, userId);
+      if (family != null) {
+        // 가족 공유 컬렉션에 저장
+        await FamilyService.instance
+            .saveFamilyEvent(event, family.id, userId);
+      } else {
+        // 개인 컬렉션에 저장
+        await FirestoreService.instance.saveEvent(event, userId);
+      }
       if (event.date.isAfter(DateTime.now())) {
-        await NotificationService.instance.scheduleEventNotifications(event);
+        await NotificationService.instance
+            .scheduleEventNotifications(event);
       }
       final allEvents = ref.read(allEventsProvider).valueOrNull ?? [];
       await HomeWidgetService.instance.updateWidget(allEvents);
@@ -67,12 +85,19 @@ class EventNotifier extends AsyncNotifier<void> {
   Future<void> deleteEvent(int id, {String? firestoreId}) async {
     state = const AsyncLoading();
     final userId = ref.read(currentUserIdProvider);
+    final family = ref.read(familyProvider).valueOrNull;
+
     state = await AsyncValue.guard(() async {
-      // 로컬 삭제
       await db.deleteEvent(id);
-      // Firestore 삭제
-      if (userId != null && firestoreId != null) {
-        await FirestoreService.instance.deleteEvent(userId, firestoreId);
+      if (firestoreId != null) {
+        if (family != null) {
+          // 가족 공유 컬렉션에서 삭제
+          await FamilyService.instance
+              .deleteFamilyEvent(family.id, firestoreId);
+        } else if (userId != null) {
+          // 개인 컬렉션에서 삭제
+          await FirestoreService.instance.deleteEvent(userId, firestoreId);
+        }
       }
       final allEvents = ref.read(allEventsProvider).valueOrNull ?? [];
       await HomeWidgetService.instance.updateWidget(allEvents);

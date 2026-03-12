@@ -49,29 +49,34 @@ class _FAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 58,
-        height: 58,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
-          gradient: AppTheme.gradientPrimary,
+          color: AppTheme.primary,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-                color: AppTheme.primary.withValues(alpha: 0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 6)),
+                color: AppTheme.primary.withValues(alpha: 0.28),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4)),
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 6,
+                offset: const Offset(0, 2)),
           ],
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(29),
+            borderRadius: BorderRadius.circular(28),
             onTap: () => showModalBottomSheet(
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
               builder: (_) => EventBottomSheet(initialDate: selectedDate),
             ),
-            child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+            child: const Icon(Icons.add_rounded, color: Colors.white, size: 26),
           ),
         ),
       );

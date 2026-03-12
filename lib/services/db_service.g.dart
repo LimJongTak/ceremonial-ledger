@@ -34,8 +34,11 @@ late final GeneratedColumn<String> memo = GeneratedColumn<String>('memo', aliase
 static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
 @override
 late final GeneratedColumn<String> userId = GeneratedColumn<String>('user_id', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+static const VerificationMeta _photoPathMeta = const VerificationMeta('photoPath');
 @override
-List<GeneratedColumn> get $columns => [id, date, personName, relation, ceremonyType, amount, eventType, memo, userId];
+late final GeneratedColumn<String> photoPath = GeneratedColumn<String>('photo_path', aliasedName, true, type: DriftSqlType.string, requiredDuringInsert: false);
+@override
+List<GeneratedColumn> get $columns => [id, date, personName, relation, ceremonyType, amount, eventType, memo, userId, photoPath];
 @override
 String get aliasedName => _alias ?? actualTableName;
 @override
@@ -63,12 +66,13 @@ context.handle(_memoMeta, memo.isAcceptableOrUnknown(data['memo']!, _memoMeta));
 context.handle(_userIdMeta, userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));} else if (isInserting) {
 context.missing(_userIdMeta);
 }
-return context;
+if (data.containsKey('photo_path')) {
+context.handle(_photoPathMeta, photoPath.isAcceptableOrUnknown(data['photo_path']!, _photoPathMeta));}return context;
 }
 @override
 Set<GeneratedColumn> get $primaryKey => {id};
 @override Event map(Map<String, dynamic> data, {String? tablePrefix})  {
-final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';return Event(id: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}id'])!, date: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!, personName: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}person_name'])!, relation: $EventsTable.$converterrelation.fromSql(attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}relation'])!), ceremonyType: $EventsTable.$converterceremonyType.fromSql(attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}ceremony_type'])!), amount: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}amount'])!, eventType: $EventsTable.$convertereventType.fromSql(attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}event_type'])!), memo: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}memo']), userId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}user_id'])!, );
+final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';return Event(id: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}id'])!, date: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!, personName: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}person_name'])!, relation: $EventsTable.$converterrelation.fromSql(attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}relation'])!), ceremonyType: $EventsTable.$converterceremonyType.fromSql(attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}ceremony_type'])!), amount: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}amount'])!, eventType: $EventsTable.$convertereventType.fromSql(attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}event_type'])!), memo: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}memo']), userId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}user_id'])!, photoPath: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}photo_path']), );
 }
 @override
 $EventsTable createAlias(String alias) {
@@ -83,7 +87,8 @@ final int amount;
 final EventType eventType;
 final String? memo;
 final String userId;
-const Event({required this.id, required this.date, required this.personName, required this.relation, required this.ceremonyType, required this.amount, required this.eventType, this.memo, required this.userId});@override
+final String? photoPath;
+const Event({required this.id, required this.date, required this.personName, required this.relation, required this.ceremonyType, required this.amount, required this.eventType, this.memo, required this.userId, this.photoPath});@override
 Map<String, Expression> toColumns(bool nullToAbsent) {
 final map = <String, Expression> {};map['id'] = Variable<int>(id);
 map['date'] = Variable<DateTime>(date);
@@ -94,26 +99,27 @@ map['person_name'] = Variable<String>(personName);
 {map['event_type'] = Variable<String>($EventsTable.$convertereventType.toSql(eventType));
 }if (!nullToAbsent || memo != null){map['memo'] = Variable<String>(memo);
 }map['user_id'] = Variable<String>(userId);
-return map; 
+if (!nullToAbsent || photoPath != null){map['photo_path'] = Variable<String>(photoPath);
+}return map; 
 }
 EventsCompanion toCompanion(bool nullToAbsent) {
-return EventsCompanion(id: Value(id),date: Value(date),personName: Value(personName),relation: Value(relation),ceremonyType: Value(ceremonyType),amount: Value(amount),eventType: Value(eventType),memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),userId: Value(userId),);
+return EventsCompanion(id: Value(id),date: Value(date),personName: Value(personName),relation: Value(relation),ceremonyType: Value(ceremonyType),amount: Value(amount),eventType: Value(eventType),memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),userId: Value(userId),photoPath: photoPath == null && nullToAbsent ? const Value.absent() : Value(photoPath),);
 }
 factory Event.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
 serializer ??= driftRuntimeOptions.defaultSerializer;
-return Event(id: serializer.fromJson<int>(json['id']),date: serializer.fromJson<DateTime>(json['date']),personName: serializer.fromJson<String>(json['personName']),relation: $EventsTable.$converterrelation.fromJson(serializer.fromJson<String>(json['relation'])),ceremonyType: $EventsTable.$converterceremonyType.fromJson(serializer.fromJson<String>(json['ceremonyType'])),amount: serializer.fromJson<int>(json['amount']),eventType: $EventsTable.$convertereventType.fromJson(serializer.fromJson<String>(json['eventType'])),memo: serializer.fromJson<String?>(json['memo']),userId: serializer.fromJson<String>(json['userId']),);}
+return Event(id: serializer.fromJson<int>(json['id']),date: serializer.fromJson<DateTime>(json['date']),personName: serializer.fromJson<String>(json['personName']),relation: $EventsTable.$converterrelation.fromJson(serializer.fromJson<String>(json['relation'])),ceremonyType: $EventsTable.$converterceremonyType.fromJson(serializer.fromJson<String>(json['ceremonyType'])),amount: serializer.fromJson<int>(json['amount']),eventType: $EventsTable.$convertereventType.fromJson(serializer.fromJson<String>(json['eventType'])),memo: serializer.fromJson<String?>(json['memo']),userId: serializer.fromJson<String>(json['userId']),photoPath: serializer.fromJson<String?>(json['photoPath']),);}
 @override Map<String, dynamic> toJson({ValueSerializer? serializer}) {
 serializer ??= driftRuntimeOptions.defaultSerializer;
 return <String, dynamic>{
-'id': serializer.toJson<int>(id),'date': serializer.toJson<DateTime>(date),'personName': serializer.toJson<String>(personName),'relation': serializer.toJson<String>($EventsTable.$converterrelation.toJson(relation)),'ceremonyType': serializer.toJson<String>($EventsTable.$converterceremonyType.toJson(ceremonyType)),'amount': serializer.toJson<int>(amount),'eventType': serializer.toJson<String>($EventsTable.$convertereventType.toJson(eventType)),'memo': serializer.toJson<String?>(memo),'userId': serializer.toJson<String>(userId),};}Event copyWith({int? id,DateTime? date,String? personName,RelationType? relation,CeremonyType? ceremonyType,int? amount,EventType? eventType,Value<String?> memo = const Value.absent(),String? userId}) => Event(id: id ?? this.id,date: date ?? this.date,personName: personName ?? this.personName,relation: relation ?? this.relation,ceremonyType: ceremonyType ?? this.ceremonyType,amount: amount ?? this.amount,eventType: eventType ?? this.eventType,memo: memo.present ? memo.value : this.memo,userId: userId ?? this.userId,);Event copyWithCompanion(EventsCompanion data) {
+'id': serializer.toJson<int>(id),'date': serializer.toJson<DateTime>(date),'personName': serializer.toJson<String>(personName),'relation': serializer.toJson<String>($EventsTable.$converterrelation.toJson(relation)),'ceremonyType': serializer.toJson<String>($EventsTable.$converterceremonyType.toJson(ceremonyType)),'amount': serializer.toJson<int>(amount),'eventType': serializer.toJson<String>($EventsTable.$convertereventType.toJson(eventType)),'memo': serializer.toJson<String?>(memo),'userId': serializer.toJson<String>(userId),'photoPath': serializer.toJson<String?>(photoPath),};}Event copyWith({int? id,DateTime? date,String? personName,RelationType? relation,CeremonyType? ceremonyType,int? amount,EventType? eventType,Value<String?> memo = const Value.absent(),String? userId,Value<String?> photoPath = const Value.absent()}) => Event(id: id ?? this.id,date: date ?? this.date,personName: personName ?? this.personName,relation: relation ?? this.relation,ceremonyType: ceremonyType ?? this.ceremonyType,amount: amount ?? this.amount,eventType: eventType ?? this.eventType,memo: memo.present ? memo.value : this.memo,userId: userId ?? this.userId,photoPath: photoPath.present ? photoPath.value : this.photoPath,);Event copyWithCompanion(EventsCompanion data) {
 return Event(
-id: data.id.present ? data.id.value : this.id,date: data.date.present ? data.date.value : this.date,personName: data.personName.present ? data.personName.value : this.personName,relation: data.relation.present ? data.relation.value : this.relation,ceremonyType: data.ceremonyType.present ? data.ceremonyType.value : this.ceremonyType,amount: data.amount.present ? data.amount.value : this.amount,eventType: data.eventType.present ? data.eventType.value : this.eventType,memo: data.memo.present ? data.memo.value : this.memo,userId: data.userId.present ? data.userId.value : this.userId,);
+id: data.id.present ? data.id.value : this.id,date: data.date.present ? data.date.value : this.date,personName: data.personName.present ? data.personName.value : this.personName,relation: data.relation.present ? data.relation.value : this.relation,ceremonyType: data.ceremonyType.present ? data.ceremonyType.value : this.ceremonyType,amount: data.amount.present ? data.amount.value : this.amount,eventType: data.eventType.present ? data.eventType.value : this.eventType,memo: data.memo.present ? data.memo.value : this.memo,userId: data.userId.present ? data.userId.value : this.userId,photoPath: data.photoPath.present ? data.photoPath.value : this.photoPath,);
 }
 @override
-String toString() {return (StringBuffer('Event(')..write('id: $id, ')..write('date: $date, ')..write('personName: $personName, ')..write('relation: $relation, ')..write('ceremonyType: $ceremonyType, ')..write('amount: $amount, ')..write('eventType: $eventType, ')..write('memo: $memo, ')..write('userId: $userId')..write(')')).toString();}
+String toString() {return (StringBuffer('Event(')..write('id: $id, ')..write('date: $date, ')..write('personName: $personName, ')..write('relation: $relation, ')..write('ceremonyType: $ceremonyType, ')..write('amount: $amount, ')..write('eventType: $eventType, ')..write('memo: $memo, ')..write('userId: $userId, ')..write('photoPath: $photoPath')..write(')')).toString();}
 @override
- int get hashCode => Object.hash(id, date, personName, relation, ceremonyType, amount, eventType, memo, userId);@override
-bool operator ==(Object other) => identical(this, other) || (other is Event && other.id == this.id && other.date == this.date && other.personName == this.personName && other.relation == this.relation && other.ceremonyType == this.ceremonyType && other.amount == this.amount && other.eventType == this.eventType && other.memo == this.memo && other.userId == this.userId);
+ int get hashCode => Object.hash(id, date, personName, relation, ceremonyType, amount, eventType, memo, userId, photoPath);@override
+bool operator ==(Object other) => identical(this, other) || (other is Event && other.id == this.id && other.date == this.date && other.personName == this.personName && other.relation == this.relation && other.ceremonyType == this.ceremonyType && other.amount == this.amount && other.eventType == this.eventType && other.memo == this.memo && other.userId == this.userId && other.photoPath == this.photoPath);
 }class EventsCompanion extends UpdateCompanion<Event> {
 final Value<int> id;
 final Value<DateTime> date;
@@ -124,8 +130,9 @@ final Value<int> amount;
 final Value<EventType> eventType;
 final Value<String?> memo;
 final Value<String> userId;
-const EventsCompanion({this.id = const Value.absent(),this.date = const Value.absent(),this.personName = const Value.absent(),this.relation = const Value.absent(),this.ceremonyType = const Value.absent(),this.amount = const Value.absent(),this.eventType = const Value.absent(),this.memo = const Value.absent(),this.userId = const Value.absent(),});
-EventsCompanion.insert({this.id = const Value.absent(),required DateTime date,required String personName,required RelationType relation,required CeremonyType ceremonyType,required int amount,required EventType eventType,this.memo = const Value.absent(),required String userId,}): date = Value(date), personName = Value(personName), relation = Value(relation), ceremonyType = Value(ceremonyType), amount = Value(amount), eventType = Value(eventType), userId = Value(userId);
+final Value<String?> photoPath;
+const EventsCompanion({this.id = const Value.absent(),this.date = const Value.absent(),this.personName = const Value.absent(),this.relation = const Value.absent(),this.ceremonyType = const Value.absent(),this.amount = const Value.absent(),this.eventType = const Value.absent(),this.memo = const Value.absent(),this.userId = const Value.absent(),this.photoPath = const Value.absent(),});
+EventsCompanion.insert({this.id = const Value.absent(),required DateTime date,required String personName,required RelationType relation,required CeremonyType ceremonyType,required int amount,required EventType eventType,this.memo = const Value.absent(),required String userId,this.photoPath = const Value.absent(),}): date = Value(date), personName = Value(personName), relation = Value(relation), ceremonyType = Value(ceremonyType), amount = Value(amount), eventType = Value(eventType), userId = Value(userId);
 static Insertable<Event> custom({Expression<int>? id, 
 Expression<DateTime>? date, 
 Expression<String>? personName, 
@@ -135,10 +142,11 @@ Expression<int>? amount,
 Expression<String>? eventType, 
 Expression<String>? memo, 
 Expression<String>? userId, 
+Expression<String>? photoPath, 
 }) {
-return RawValuesInsertable({if (id != null)'id': id,if (date != null)'date': date,if (personName != null)'person_name': personName,if (relation != null)'relation': relation,if (ceremonyType != null)'ceremony_type': ceremonyType,if (amount != null)'amount': amount,if (eventType != null)'event_type': eventType,if (memo != null)'memo': memo,if (userId != null)'user_id': userId,});
-}EventsCompanion copyWith({Value<int>? id, Value<DateTime>? date, Value<String>? personName, Value<RelationType>? relation, Value<CeremonyType>? ceremonyType, Value<int>? amount, Value<EventType>? eventType, Value<String?>? memo, Value<String>? userId}) {
-return EventsCompanion(id: id ?? this.id,date: date ?? this.date,personName: personName ?? this.personName,relation: relation ?? this.relation,ceremonyType: ceremonyType ?? this.ceremonyType,amount: amount ?? this.amount,eventType: eventType ?? this.eventType,memo: memo ?? this.memo,userId: userId ?? this.userId,);
+return RawValuesInsertable({if (id != null)'id': id,if (date != null)'date': date,if (personName != null)'person_name': personName,if (relation != null)'relation': relation,if (ceremonyType != null)'ceremony_type': ceremonyType,if (amount != null)'amount': amount,if (eventType != null)'event_type': eventType,if (memo != null)'memo': memo,if (userId != null)'user_id': userId,if (photoPath != null)'photo_path': photoPath,});
+}EventsCompanion copyWith({Value<int>? id, Value<DateTime>? date, Value<String>? personName, Value<RelationType>? relation, Value<CeremonyType>? ceremonyType, Value<int>? amount, Value<EventType>? eventType, Value<String?>? memo, Value<String>? userId, Value<String?>? photoPath}) {
+return EventsCompanion(id: id ?? this.id,date: date ?? this.date,personName: personName ?? this.personName,relation: relation ?? this.relation,ceremonyType: ceremonyType ?? this.ceremonyType,amount: amount ?? this.amount,eventType: eventType ?? this.eventType,memo: memo ?? this.memo,userId: userId ?? this.userId,photoPath: photoPath ?? this.photoPath,);
 }
 @override
 Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -160,10 +168,12 @@ if (memo.present) {
 map['memo'] = Variable<String>(memo.value);}
 if (userId.present) {
 map['user_id'] = Variable<String>(userId.value);}
+if (photoPath.present) {
+map['photo_path'] = Variable<String>(photoPath.value);}
 return map; 
 }
 @override
-String toString() {return (StringBuffer('EventsCompanion(')..write('id: $id, ')..write('date: $date, ')..write('personName: $personName, ')..write('relation: $relation, ')..write('ceremonyType: $ceremonyType, ')..write('amount: $amount, ')..write('eventType: $eventType, ')..write('memo: $memo, ')..write('userId: $userId')..write(')')).toString();}
+String toString() {return (StringBuffer('EventsCompanion(')..write('id: $id, ')..write('date: $date, ')..write('personName: $personName, ')..write('relation: $relation, ')..write('ceremonyType: $ceremonyType, ')..write('amount: $amount, ')..write('eventType: $eventType, ')..write('memo: $memo, ')..write('userId: $userId, ')..write('photoPath: $photoPath')..write(')')).toString();}
 }
 abstract class _$AppDatabase extends GeneratedDatabase{
 _$AppDatabase(QueryExecutor e): super(e);
@@ -174,8 +184,8 @@ Iterable<TableInfo<Table, Object?>> get allTables => allSchemaEntities.whereType
 @override
 List<DatabaseSchemaEntity> get allSchemaEntities => [events];
 }
-typedef $$EventsTableCreateCompanionBuilder = EventsCompanion Function({Value<int> id,required DateTime date,required String personName,required RelationType relation,required CeremonyType ceremonyType,required int amount,required EventType eventType,Value<String?> memo,required String userId,});
-typedef $$EventsTableUpdateCompanionBuilder = EventsCompanion Function({Value<int> id,Value<DateTime> date,Value<String> personName,Value<RelationType> relation,Value<CeremonyType> ceremonyType,Value<int> amount,Value<EventType> eventType,Value<String?> memo,Value<String> userId,});
+typedef $$EventsTableCreateCompanionBuilder = EventsCompanion Function({Value<int> id,required DateTime date,required String personName,required RelationType relation,required CeremonyType ceremonyType,required int amount,required EventType eventType,Value<String?> memo,required String userId,Value<String?> photoPath,});
+typedef $$EventsTableUpdateCompanionBuilder = EventsCompanion Function({Value<int> id,Value<DateTime> date,Value<String> personName,Value<RelationType> relation,Value<CeremonyType> ceremonyType,Value<int> amount,Value<EventType> eventType,Value<String?> memo,Value<String> userId,Value<String?> photoPath,});
 class $$EventsTableFilterComposer extends Composer<
         _$AppDatabase,
         $EventsTable> {
@@ -228,6 +238,11 @@ ColumnFilters<String> get memo => $composableBuilder(
       
 ColumnFilters<String> get userId => $composableBuilder(
       column: $table.userId,
+      builder: (column) => 
+      ColumnFilters(column));
+      
+ColumnFilters<String> get photoPath => $composableBuilder(
+      column: $table.photoPath,
       builder: (column) => 
       ColumnFilters(column));
       
@@ -287,6 +302,11 @@ ColumnOrderings<String> get userId => $composableBuilder(
       builder: (column) => 
       ColumnOrderings(column));
       
+ColumnOrderings<String> get photoPath => $composableBuilder(
+      column: $table.photoPath,
+      builder: (column) => 
+      ColumnOrderings(column));
+      
         }
       class $$EventsTableAnnotationComposer extends Composer<
         _$AppDatabase,
@@ -334,6 +354,10 @@ GeneratedColumn<String> get userId => $composableBuilder(
       column: $table.userId,
       builder: (column) => column);
       
+GeneratedColumn<String> get photoPath => $composableBuilder(
+      column: $table.photoPath,
+      builder: (column) => column);
+      
         }
       class $$EventsTableTableManager extends RootTableManager    <_$AppDatabase,
     $EventsTable,
@@ -354,8 +378,8 @@ GeneratedColumn<String> get userId => $composableBuilder(
         createFilteringComposer: () => $$EventsTableFilterComposer($db: db,$table:table),
         createOrderingComposer: () => $$EventsTableOrderingComposer($db: db,$table:table),
         createComputedFieldComposer: () => $$EventsTableAnnotationComposer($db: db,$table:table),
-        updateCompanionCallback: ({Value<int> id = const Value.absent(),Value<DateTime> date = const Value.absent(),Value<String> personName = const Value.absent(),Value<RelationType> relation = const Value.absent(),Value<CeremonyType> ceremonyType = const Value.absent(),Value<int> amount = const Value.absent(),Value<EventType> eventType = const Value.absent(),Value<String?> memo = const Value.absent(),Value<String> userId = const Value.absent(),})=> EventsCompanion(id: id,date: date,personName: personName,relation: relation,ceremonyType: ceremonyType,amount: amount,eventType: eventType,memo: memo,userId: userId,),
-        createCompanionCallback: ({Value<int> id = const Value.absent(),required DateTime date,required String personName,required RelationType relation,required CeremonyType ceremonyType,required int amount,required EventType eventType,Value<String?> memo = const Value.absent(),required String userId,})=> EventsCompanion.insert(id: id,date: date,personName: personName,relation: relation,ceremonyType: ceremonyType,amount: amount,eventType: eventType,memo: memo,userId: userId,),
+        updateCompanionCallback: ({Value<int> id = const Value.absent(),Value<DateTime> date = const Value.absent(),Value<String> personName = const Value.absent(),Value<RelationType> relation = const Value.absent(),Value<CeremonyType> ceremonyType = const Value.absent(),Value<int> amount = const Value.absent(),Value<EventType> eventType = const Value.absent(),Value<String?> memo = const Value.absent(),Value<String> userId = const Value.absent(),Value<String?> photoPath = const Value.absent(),})=> EventsCompanion(id: id,date: date,personName: personName,relation: relation,ceremonyType: ceremonyType,amount: amount,eventType: eventType,memo: memo,userId: userId,photoPath: photoPath,),
+        createCompanionCallback: ({Value<int> id = const Value.absent(),required DateTime date,required String personName,required RelationType relation,required CeremonyType ceremonyType,required int amount,required EventType eventType,Value<String?> memo = const Value.absent(),required String userId,Value<String?> photoPath = const Value.absent(),})=> EventsCompanion.insert(id: id,date: date,personName: personName,relation: relation,ceremonyType: ceremonyType,amount: amount,eventType: eventType,memo: memo,userId: userId,photoPath: photoPath,),
         withReferenceMapper: (p0) => p0
               .map(
                   (e) =>

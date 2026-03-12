@@ -11,7 +11,7 @@
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
 [![Riverpod](https://img.shields.io/badge/Riverpod-2.x-006AC1?style=for-the-badge)](https://riverpod.dev)
-[![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen?style=for-the-badge)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.1.0-brightgreen?style=for-the-badge)](./CHANGELOG.md)
 
 <br>
 
@@ -26,9 +26,9 @@
 
 ## 📱 주요 화면
 
-> 📸 스크린샷은 추후 업데이트 예정입니다.
-
-**화면 구성:** 로그인 · 홈(최근 내역 요약) · 캘린더(월별 경조사) · 장부(전체 목록) · 통계(월별 차트) · 프로필(계정·데이터 관리)
+| 홈 | 캘린더 | 내역 추가 | 통계 | 프로필 |
+|:---:|:---:|:---:|:---:|:---:|
+| <img src="assets/images/home.png" width="150"> | <img src="assets/images/calendar.png" width="150"> | <img src="assets/images/add.png" width="150"> | <img src="assets/images/chart.png" width="150"> | <img src="assets/images/profile.png" width="150"> |
 
 <br>
 
@@ -51,8 +51,22 @@
 |---|---|
 | **상세 기록** | 날짜 · 이름 · 관계(가족/친구/직장 등) · 경조사 종류(결혼/장례/생일 등) · 금액 · 메모 |
 | **수입/지출 구분** | 받은 마음(수입)과 보낸 마음(지출)을 명확히 분리 |
+| **사진 첨부** | 청첩장·부고 등 사진 첨부, 썸네일 탭으로 전체 화면 보기 (핀치줌 지원) |
 | **실시간 동기화** | Cloud Firestore 기반 실시간 데이터 스트리밍 |
 | **로컬 캐시** | Drift(SQLite) 로컬 DB로 오프라인에서도 데이터 접근 가능 |
+
+### 👨‍👩‍👧‍👦 가족 공유장부
+
+| 기능 | 설명 |
+|---|---|
+| **그룹 생성** | 방장으로 가족 그룹 생성 및 6자리 초대코드 발급 |
+| **초대코드 참여** | 방장에게 받은 코드 입력으로 즉시 그룹 합류 (최대 10명) |
+| **실시간 공유** | 모든 멤버가 동일한 장부 실시간 조회 및 등록 가능 |
+| **별칭 설정** | 멤버별 표시 이름 커스터마이징 |
+| **멤버 추방** | 방장이 특정 멤버를 그룹에서 즉시 추방 |
+| **그룹 해산** | 방장이 그룹 전체 해산 (모든 멤버 퇴장) |
+| **나가기** | 일반 멤버 자유 탈퇴 (방장 나가면 소유권 자동 이전) |
+| **초대코드 복사** | 초대코드 탭 한 번으로 클립보드 복사 |
 
 ### 📊 대시보드 & 통계
 
@@ -109,8 +123,9 @@
 │  │  · Google    │        │  users/{uid}/          │  │
 │  │  · 카카오    │        │    profile/data        │  │
 │  │  · 네이버    │        │    events/{eventId}    │  │
-│  │  · 이메일    │        └────────────────────────┘  │
-│  └──────────────┘                                    │
+│  │  · 이메일    │        │  families/{familyId}/  │  │
+│  └──────────────┘        │    events/{eventId}    │  │
+│                          └────────────────────────┘  │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -147,21 +162,29 @@ lib/
 │
 ├── models/
 │   ├── event_model.dart          # 경조사 내역 모델 (EventModel, RelationType, CeremonyType 등)
-│   └── user_profile.dart        # 사용자 프로필 모델 (UserProfile)
+│   ├── family_model.dart         # 가족 그룹 모델 (FamilyModel, 멤버/별칭 관리)
+│   ├── notification_settings.dart # 알림 설정 모델
+│   └── user_profile.dart         # 사용자 프로필 모델 (UserProfile)
 │
 ├── providers/
 │   ├── auth_provider.dart        # 인증 상태 관리 (AuthNotifier, userProfileProvider)
-│   └── event_provider.dart      # 이벤트 CRUD 및 통계 (EventNotifier, ledgerSummaryProvider)
+│   ├── budget_provider.dart      # 예산 관리 Provider
+│   ├── contact_provider.dart     # 연락처 Provider
+│   ├── event_provider.dart       # 이벤트 CRUD 및 통계 (EventNotifier, ledgerSummaryProvider)
+│   ├── family_provider.dart      # 가족 그룹 실시간 스트림 Provider
+│   └── notification_settings_provider.dart # 알림 설정 Provider
 │
 ├── services/
 │   ├── auth_service.dart         # Firebase Auth + 소셜 로그인 + 회원탈퇴
 │   ├── profile_service.dart      # Firestore 프로필 CRUD
-│   ├── firestore_service.dart    # Firestore 이벤트 CRUD
+│   ├── firestore_service.dart    # Firestore 개인 이벤트 CRUD
+│   ├── family_service.dart       # 가족 그룹 CRUD (생성/참여/추방/해산/공유장부)
 │   ├── db_service.dart           # Drift 로컬 SQLite
 │   ├── export_service.dart       # Excel/PDF 내보내기
 │   ├── excel_template_service.dart # 엑셀 양식 생성
 │   ├── pdf_report_service.dart   # PDF 보고서 생성
 │   ├── notification_service.dart # 로컬 푸시 알림
+│   ├── notification_settings_service.dart # 알림 설정 관리
 │   └── home_widget_service.dart  # 홈 위젯 업데이트
 │
 └── views/
@@ -174,7 +197,7 @@ lib/
     │   └── stats_screen.dart         # 통계 화면
     ├── calendar/
     │   ├── calendar_screen.dart      # 캘린더 뷰
-    │   ├── event_bottom_sheet.dart   # 내역 등록/수정 바텀시트
+    │   ├── event_bottom_sheet.dart   # 내역 등록/수정 바텀시트 (사진 첨부 + 전체 화면 보기)
     │   └── ocr_register_screen.dart  # OCR 스캔 화면 (준비 중)
     ├── ledger/
     │   └── ledger_screen.dart        # 장부 목록 화면
@@ -187,6 +210,7 @@ lib/
     │   └── notification_screen.dart  # 알림 목록
     ├── profile/
     │   ├── profile_screen.dart       # 프로필 탭 메인
+    │   ├── family_share_screen.dart  # 가족 공유장부 (그룹 생성/참여/멤버 관리/추방)
     │   ├── profile_edit_screen.dart  # 닉네임/이름 수정
     │   ├── version_info_screen.dart  # 버전 정보 & 업데이트 내역
     │   └── legal_screen.dart         # 이용약관 / 개인정보처리방침
@@ -235,9 +259,33 @@ flutter pub get
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // 개인 데이터: 본인만 접근
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null
                         && request.auth.uid == userId;
+    }
+    // 프로필 닉네임: 가족 멤버 이름 표시를 위해 인증 사용자 읽기 허용
+    match /users/{userId}/profile/data {
+      allow read: if request.auth != null;
+    }
+    // 가족 공유장부
+    match /families/{familyId} {
+      allow get: if request.auth != null &&
+        request.auth.uid in resource.data.memberIds;
+      allow list: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.auth.uid in request.resource.data.memberIds;
+      allow update: if request.auth != null && (
+        request.auth.uid in resource.data.memberIds ||
+        request.auth.uid in request.resource.data.memberIds
+      );
+      allow delete: if request.auth != null &&
+        request.auth.uid in resource.data.memberIds;
+      match /events/{eventId} {
+        allow read, write: if request.auth != null &&
+          request.auth.uid in
+            get(/databases/$(database)/documents/families/$(familyId)).data.memberIds;
+      }
     }
   }
 }
@@ -296,10 +344,15 @@ dart run flutter_native_splash:create
             │                └─ 최초 로그인 → 프로필 설정 화면 (닉네임 입력)
             └─ 로그인됨 → 메인 화면 (하단 탭 네비게이션)
                               ├─ 홈       : 최근 내역 + 월 요약
-                              ├─ 캘린더   : 달력 뷰 + 내역 등록/수정
+                              ├─ 캘린더   : 달력 뷰 + 내역 등록/수정 + 사진 첨부
                               ├─ 장부     : 전체 목록 + 검색
                               ├─ 통계     : 월별/연별 차트
-                              └─ 프로필   : 계정 관리 + 데이터 관리 + 앱 정보
+                              └─ 프로필   : 계정 관리 + 가족 공유장부 + 데이터 관리 + 앱 정보
+                                                └─ 가족 공유장부
+                                                      ├─ 그룹 없음 → 생성 또는 코드로 참여
+                                                      └─ 그룹 있음 → 공유 장부 + 멤버 목록
+                                                                        ├─ 방장: 멤버 추방 / 그룹 해산
+                                                                        └─ 멤버: 그룹 나가기
 ```
 
 <br>
@@ -310,6 +363,7 @@ dart run flutter_native_splash:create
 
 | 버전 | 출시일 | 주요 변경사항 |
 |---|---|---|
+| **v1.1.0** | 2026년 3월 | 가족 공유장부 (그룹 생성/참여/추방/해산), 사진 전체 화면 보기, 알림 설정 커스터마이징 |
 | **v1.0.0** | 2025년 3월 | 최초 출시 — 경조사 기록, 소셜 로그인, 캘린더, 통계, 엑셀 가져오기/내보내기, 홈 위젯, 알림, 프로필 수정, 회원탈퇴 |
 
 <br>
@@ -319,7 +373,8 @@ dart run flutter_native_splash:create
 ## 🔒 보안 및 개인정보
 
 - 모든 사용자 데이터는 Firebase Auth UID 기반으로 격리 저장
-- Firestore 보안 규칙으로 본인 데이터만 접근 가능
+- Firestore 보안 규칙으로 본인 데이터 및 가족 그룹 멤버 데이터만 접근 가능
+- 가족 그룹 추방/해산은 방장만 실행 가능하며 서버 측에서 이중 검증
 - 소셜 로그인 시 외부 서버에 비밀번호 미전송
 - 회원탈퇴 시 Firestore 데이터 즉시 일괄 삭제
 
@@ -336,6 +391,6 @@ dart run flutter_native_splash:create
 
 <div align="center">
 
-**오고가고** · ⓒ 2025 All rights reserved.
+**오고가고** · ⓒ 2026 All rights reserved.
 
 </div>

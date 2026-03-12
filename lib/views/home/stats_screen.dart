@@ -121,8 +121,16 @@ class _StatsBody extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.fromLTRB(
                 24, MediaQuery.paddingOf(context).top + 20, 24, 24),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(32)),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4)),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,13 +350,13 @@ class _YearBtn extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: onTap != null
-                ? AppTheme.primary.withValues(alpha: 0.1)
-                : const Color(0xFFF1F5F9),
+            color: AppTheme.primary
+                .withValues(alpha: onTap != null ? 0.1 : 0.04),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon,
-              color: onTap != null ? AppTheme.primary : AppTheme.textHint,
+              color: AppTheme.primary
+                  .withValues(alpha: onTap != null ? 1 : 0.3),
               size: 20),
         ),
       );
@@ -368,7 +376,7 @@ class _YearSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
+          color: AppTheme.bgLight,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
@@ -377,7 +385,7 @@ class _YearSummaryCard extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 16, color: color),
@@ -392,8 +400,8 @@ class _YearSummaryCard extends StatelessWidget {
                       color: AppTheme.textSecondary,
                       fontSize: 11)),
               Text(value,
-                  style: TextStyle(
-                      color: color,
+                  style: const TextStyle(
+                      color: AppTheme.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.w700),
                   overflow: TextOverflow.ellipsis),

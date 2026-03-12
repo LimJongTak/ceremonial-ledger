@@ -8,3 +8,8 @@
 -dontwarn com.google.mlkit.vision.text.devanagari.**
 -dontwarn com.google.mlkit.vision.text.japanese.**
 -dontwarn com.google.mlkit.vision.text.korean.**
+
+# OkHttp3 관련 누락 클래스 무시 규칙
+-dontwarn org.conscrypt.**
+-dontwarn org.openjsse.**
+-dontwarn org.apache.harmony.**

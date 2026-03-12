@@ -11,7 +11,7 @@ class AppTheme {
   static const expense = Color(0xFFEF4444); // 레드
   static const gold = Color(0xFFF59E0B); // 앰버
 
-  // 배경
+  // 배경 (라이트)
   static const bgLight = Color(0xFFF8FAFF);
   static const bgCard = Color(0xFFFFFFFF);
   static const bgDark = Color(0xFF0F172A);
@@ -113,6 +113,7 @@ class AppTheme {
           elevation: 0,
         ),
       );
+
 }
 
 // ── 유틸 익스텐션 ────────────────────────────────────────────────

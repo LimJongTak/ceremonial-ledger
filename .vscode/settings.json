@@ -1,3 +1,6 @@
 {
-    "cmake.sourceDirectory": "C:/Users/User/Desktop/ceremonial_ledger/linux"
+    "cmake.sourceDirectory": "C:/Users/User/Desktop/ceremonial_ledger/linux",
+    "dart.analysisExcludedFolders": [
+        ".claude"
+    ]
 }

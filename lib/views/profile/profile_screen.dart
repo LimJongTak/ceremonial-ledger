@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/event_provider.dart';
+import '../../providers/budget_provider.dart';
 import '../../services/auth_service.dart';
-// TODO: OCR 기능 준비 중 - import '../calendar/ocr_register_screen.dart';
 import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
 import '../common/app_theme.dart';
+import '../settings/budget_setting_screen.dart';
+import 'family_share_screen.dart';
 import 'profile_edit_screen.dart';
 import 'version_info_screen.dart';
 import 'legal_screen.dart';
+import '../../providers/family_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -45,8 +48,16 @@ class ProfileScreen extends ConsumerWidget {
             child: Container(
               padding: EdgeInsets.fromLTRB(
                   24, MediaQuery.paddingOf(context).top + 20, 24, 28),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
+                borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(32)),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4)),
+                ],
               ),
               child: Column(children: [
                 // 아바타 + 수정 버튼
@@ -57,7 +68,7 @@ class ProfileScreen extends ConsumerWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        color: AppTheme.primary.withValues(alpha: 0.1),
                         border: Border.all(
                             color: AppTheme.primary.withValues(alpha: 0.2),
                             width: 2),
@@ -116,8 +127,7 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(user?.email ?? '',
                     style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 13)),
+                        color: AppTheme.textSecondary, fontSize: 13)),
                 const SizedBox(height: 20),
 
                 // 총계 칩
@@ -167,11 +177,20 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
+                // 앱 설정
+                const _Section(
+                  title: '앱 설정',
+                  children: [
+                    _BudgetMenuItem(),
+                    _FamilyMenuItem(),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
                 // 데이터 관리
                 _Section(
                   title: '데이터 관리',
                   children: [
-                    // TODO: OCR 기능 준비 중 - 카메라 일괄 등록 메뉴
                     _MenuItem(
                       icon: Icons.table_view_outlined,
                       iconColor: AppTheme.secondary,
@@ -402,16 +421,14 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
+          color: AppTheme.bgLight,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(children: [
           Text(value,
               style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800),
+                  color: color, fontSize: 12, fontWeight: FontWeight.w800),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
           Text(label,
@@ -518,4 +535,133 @@ class _MenuItem extends StatelessWidget {
           ]),
         ),
       );
+}
+
+// ── 예산 설정 메뉴 아이템 ─────────────────────────────────────
+class _BudgetMenuItem extends ConsumerWidget {
+  const _BudgetMenuItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final budget = ref.watch(monthlyBudgetProvider);
+    final fmt = NumberFormat('#,###');
+    final subtitle = budget > 0 ? '월 ${fmt.format(budget)}원 설정됨' : '미설정';
+
+    return InkWell(
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const BudgetSettingScreen())),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppTheme.gold.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.account_balance_wallet_outlined,
+                color: AppTheme.gold, size: 18),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+              child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('월별 예산 설정',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary)),
+              Text(subtitle,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: budget > 0
+                          ? AppTheme.income
+                          : AppTheme.textSecondary)),
+            ],
+          )),
+          const Icon(Icons.chevron_right_rounded,
+              color: AppTheme.textHint, size: 20),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── 가족 공유 메뉴 아이템 ─────────────────────────────────────
+class _FamilyMenuItem extends ConsumerWidget {
+  const _FamilyMenuItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final family = ref.watch(familyProvider).valueOrNull;
+    final subtitle = family != null
+        ? '${family.name} · ${family.memberIds.length}명'
+        : '부부·가족이 함께 사용';
+    final iconColor = family != null ? AppTheme.income : AppTheme.primary;
+
+    return InkWell(
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const FamilyShareScreen())),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              family != null
+                  ? Icons.people_alt_rounded
+                  : Icons.people_alt_outlined,
+              color: iconColor,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+              child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('가족 공유 장부',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary)),
+              Text(subtitle,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: family != null
+                          ? AppTheme.income
+                          : AppTheme.textSecondary)),
+            ],
+          )),
+          if (family != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppTheme.income.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                '공유 중',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.income),
+              ),
+            )
+          else
+            const Icon(Icons.chevron_right_rounded,
+                color: AppTheme.textHint, size: 20),
+        ]),
+      ),
+    );
+  }
 }

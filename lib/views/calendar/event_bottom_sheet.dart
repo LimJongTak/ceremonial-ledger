@@ -1,9 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/contact_provider.dart';
+import '../common/app_theme.dart';
 
 // 등록 모드
 enum _EntryMode { scheduled, confirmed }
@@ -34,6 +40,7 @@ class _State extends ConsumerState<EventBottomSheet>
   CeremonyType _cer = CeremonyType.wedding;
   late DateTime _date;
   _EntryMode _mode = _EntryMode.confirmed;
+  String? _photoPath; // 첨부 사진 경로
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -57,10 +64,9 @@ class _State extends ConsumerState<EventBottomSheet>
       _rel = e.relation;
       _cer = e.ceremonyType;
       _date = e.date;
-      // 금액이 0이면 예정 모드로
+      _photoPath = e.photoPath;
       _mode = e.amount == 0 ? _EntryMode.scheduled : _EntryMode.confirmed;
     } else {
-      // 미래 날짜면 예정 모드 기본값
       if (widget.initialDate.isAfter(DateTime.now())) {
         _mode = _EntryMode.scheduled;
       }
@@ -94,6 +100,82 @@ class _State extends ConsumerState<EventBottomSheet>
     if (picked != null) setState(() => _date = picked);
   }
 
+  // ── 사진 선택 ────────────────────────────────────────────────
+  Future<void> _pickPhoto(ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+        source: source, imageQuality: 80, maxWidth: 1200);
+    if (picked == null) return;
+
+    // 앱 문서 디렉토리에 복사해 영구 보관
+    final docsDir = await getApplicationDocumentsDirectory();
+    final fileName =
+        'photo_${DateTime.now().millisecondsSinceEpoch}${p.extension(picked.path)}';
+    final destPath = p.join(docsDir.path, fileName);
+    await File(picked.path).copy(destPath);
+
+    setState(() => _photoPath = destPath);
+  }
+
+  // ── 사진 전체 화면 보기 ──────────────────────────────────────
+  void _showFullScreenPhoto(String path) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => _FullScreenPhotoPage(path: path),
+      ),
+    );
+  }
+
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(height: 8),
+          Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
+          ListTile(
+            leading: const Icon(Icons.camera_alt_outlined,
+                color: AppTheme.primary),
+            title: const Text('카메라로 촬영'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickPhoto(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined,
+                color: AppTheme.secondary),
+            title: const Text('갤러리에서 선택'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickPhoto(ImageSource.gallery);
+            },
+          ),
+          if (_photoPath != null)
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: AppTheme.expense),
+              title: const Text('사진 삭제'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => _photoPath = null);
+              },
+            ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+  }
+
   InputDecoration _deco(String label, IconData icon) => InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20, color: const Color(0xFF64748B)),
@@ -124,6 +206,7 @@ class _State extends ConsumerState<EventBottomSheet>
   Widget build(BuildContext context) {
     final isEdit = widget.eventToEdit != null;
     final isScheduled = _mode == _EntryMode.scheduled;
+    final contactNames = ref.watch(contactNamesProvider).valueOrNull ?? [];
 
     return FadeTransition(
       opacity: _fadeAnim,
@@ -132,9 +215,10 @@ class _State extends ConsumerState<EventBottomSheet>
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
           child: Form(
@@ -163,10 +247,10 @@ class _State extends ConsumerState<EventBottomSheet>
                     children: [
                       Text(
                         isEdit ? '내역 수정' : '내역 추가',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: AppTheme.textPrimary,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -178,8 +262,8 @@ class _State extends ConsumerState<EventBottomSheet>
                             onPressed: _delete,
                           ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded,
-                              color: Color(0xFF64748B)),
+                          icon: Icon(Icons.close_rounded,
+                              color: AppTheme.textSecondary),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ]),
@@ -238,12 +322,21 @@ class _State extends ConsumerState<EventBottomSheet>
                             onTap: () => setState(() => _type = t),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color:
-                                    sel ? color : color.withValues(alpha: 0.08),
+                                color: sel
+                                    ? color.withValues(alpha: 0.07)
+                                    : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: sel
+                                      ? color.withValues(alpha: 0.6)
+                                      : const Color(0xFFE2E8F0),
+                                  width: 1.5,
+                                ),
                               ),
                               child: Column(children: [
                                 Icon(
@@ -251,7 +344,7 @@ class _State extends ConsumerState<EventBottomSheet>
                                       ? Icons.arrow_downward_rounded
                                       : Icons.arrow_upward_rounded,
                                   size: 18,
-                                  color: sel ? Colors.white : color,
+                                  color: sel ? color : AppTheme.textSecondary,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -260,7 +353,7 @@ class _State extends ConsumerState<EventBottomSheet>
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
-                                    color: sel ? Colors.white : color,
+                                    color: sel ? color : AppTheme.textSecondary,
                                   ),
                                 ),
                                 Text(
@@ -269,8 +362,9 @@ class _State extends ConsumerState<EventBottomSheet>
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: sel
-                                        ? Colors.white.withValues(alpha: 0.8)
-                                        : color.withValues(alpha: 0.7),
+                                        ? color.withValues(alpha: 0.7)
+                                        : AppTheme.textSecondary
+                                            .withValues(alpha: 0.6),
                                   ),
                                 ),
                               ]),
@@ -290,8 +384,8 @@ class _State extends ConsumerState<EventBottomSheet>
                         color: const Color(0xFFF5F3FF),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color:
-                                const Color(0xFF7C3AED).withValues(alpha: 0.2)),
+                            color: const Color(0xFF7C3AED)
+                                .withValues(alpha: 0.2)),
                       ),
                       child: Row(children: [
                         const Icon(Icons.info_outline_rounded,
@@ -313,12 +407,21 @@ class _State extends ConsumerState<EventBottomSheet>
                     const SizedBox(height: 14),
                   ],
 
-                  // ── 이름 ────────────────────────────────────
-                  TextFormField(
-                    controller: _nameCtrl,
-                    decoration: _deco('이름 *', Icons.person_outline_rounded),
-                    validator: (v) => v?.isEmpty == true ? '이름을 입력해주세요' : null,
-                  ),
+                  // ── 이름 (연락처 자동완성) ───────────────────
+                  if (contactNames.isNotEmpty)
+                    _ContactAutocomplete(
+                      nameCtrl: _nameCtrl,
+                      contactNames: contactNames,
+                      decoration: _deco('이름 *', Icons.person_outline_rounded),
+                    )
+                  else
+                    TextFormField(
+                      controller: _nameCtrl,
+                      decoration:
+                          _deco('이름 *', Icons.person_outline_rounded),
+                      validator: (v) =>
+                          v?.isEmpty == true ? '이름을 입력해주세요' : null,
+                    ),
                   const SizedBox(height: 12),
 
                   // ── 날짜 선택 버튼 ───────────────────────────
@@ -332,14 +435,16 @@ class _State extends ConsumerState<EventBottomSheet>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(children: [
-                        const Icon(Icons.calendar_today_outlined,
-                            size: 20, color: Color(0xFF64748B)),
+                        Icon(Icons.calendar_today_outlined,
+                            size: 20,
+                            color: AppTheme.textSecondary),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             '${_date.year}년 ${_date.month}월 ${_date.day}일',
-                            style: const TextStyle(
-                                fontSize: 14, color: Color(0xFF0F172A)),
+                            style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textPrimary),
                           ),
                         ),
                         _date.isAfter(DateTime.now())
@@ -359,14 +464,14 @@ class _State extends ConsumerState<EventBottomSheet>
                                       fontWeight: FontWeight.w700),
                                 ),
                               )
-                            : const Icon(Icons.chevron_right_rounded,
-                                color: Color(0xFF94A3B8), size: 20),
+                            : Icon(Icons.chevron_right_rounded,
+                                color: AppTheme.textSecondary, size: 20),
                       ]),
                     ),
                   ),
                   const SizedBox(height: 12),
 
-                  // ── 금액 (확정은 필수, 예정은 선택) ──────────
+                  // ── 금액 ─────────────────────────────────────
                   TextFormField(
                     controller: _amtCtrl,
                     keyboardType: TextInputType.number,
@@ -443,13 +548,15 @@ class _State extends ConsumerState<EventBottomSheet>
                     Expanded(
                       child: DropdownButtonFormField<RelationType>(
                         initialValue: _rel,
-                        decoration: _deco('관계', Icons.people_outline_rounded),
+                        decoration:
+                            _deco('관계', Icons.people_outline_rounded),
                         isExpanded: true,
                         items: RelationType.values
                             .map((r) => DropdownMenuItem(
                                   value: r,
                                   child: Text(r.label,
-                                      style: const TextStyle(fontSize: 14)),
+                                      style:
+                                          const TextStyle(fontSize: 14)),
                                 ))
                             .toList(),
                         onChanged: (v) => setState(() => _rel = v!),
@@ -459,13 +566,15 @@ class _State extends ConsumerState<EventBottomSheet>
                     Expanded(
                       child: DropdownButtonFormField<CeremonyType>(
                         initialValue: _cer,
-                        decoration: _deco('경조사', Icons.celebration_outlined),
+                        decoration:
+                            _deco('경조사', Icons.celebration_outlined),
                         isExpanded: true,
                         items: CeremonyType.values
                             .map((c) => DropdownMenuItem(
                                   value: c,
                                   child: Text('${c.emoji} ${c.label}',
-                                      style: const TextStyle(fontSize: 13)),
+                                      style:
+                                          const TextStyle(fontSize: 13)),
                                 ))
                             .toList(),
                         onChanged: (v) => setState(() => _cer = v!),
@@ -480,30 +589,87 @@ class _State extends ConsumerState<EventBottomSheet>
                     decoration: _deco('메모 (선택사항)', Icons.note_outlined),
                     maxLines: 2,
                   ),
+                  const SizedBox(height: 12),
+
+                  // ── 사진 첨부 ────────────────────────────────
+                  GestureDetector(
+                    onTap: _showPhotoOptions,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: _photoPath != null
+                            ? Border.all(
+                                color:
+                                    AppTheme.primary.withValues(alpha: 0.4),
+                                width: 1.5)
+                            : null,
+                      ),
+                      child: _photoPath != null
+                          ? Row(children: [
+                              // 썸네일 탭 → 전체 화면 보기
+                              GestureDetector(
+                                onTap: () =>
+                                    _showFullScreenPhoto(_photoPath!),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    File(_photoPath!),
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 56,
+                                      height: 56,
+                                      color: const Color(0xFFF1F5F9),
+                                      child: const Icon(Icons.broken_image,
+                                          color: AppTheme.textSecondary),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  '사진 첨부됨\n이미지 탭: 보기 / 여기 탭: 변경',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textSecondary,
+                                      height: 1.4),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded,
+                                    size: 18, color: AppTheme.expense),
+                                onPressed: () =>
+                                    setState(() => _photoPath = null),
+                              ),
+                            ])
+                          : Row(children: [
+                              Icon(Icons.add_photo_alternate_outlined,
+                                  color: AppTheme.textSecondary,
+                                  size: 22),
+                              const SizedBox(width: 10),
+                              Text(
+                                '사진 첨부 (청첩장·부고 등)',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.textSecondary),
+                              ),
+                            ]),
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
                   // ── 저장 버튼 ────────────────────────────────
                   Container(
                     decoration: BoxDecoration(
-                      gradient: isScheduled
-                          ? const LinearGradient(
-                              colors: [Color(0xFF7C3AED), Color(0xFF2563EB)],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            )
-                          : LinearGradient(
-                              colors: _type == EventType.income
-                                  ? [
-                                      const Color(0xFF10B981),
-                                      const Color(0xFF06B6D4)
-                                    ]
-                                  : [
-                                      const Color(0xFFEF4444),
-                                      const Color(0xFFF59E0B)
-                                    ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                      color: isScheduled
+                          ? const Color(0xFF7C3AED)
+                          : _type == EventType.income
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFEF4444),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
@@ -512,9 +678,9 @@ class _State extends ConsumerState<EventBottomSheet>
                                   : _type == EventType.income
                                       ? const Color(0xFF10B981)
                                       : const Color(0xFFEF4444))
-                              .withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                              .withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -586,6 +752,7 @@ class _State extends ConsumerState<EventBottomSheet>
       memo: _memoCtrl.text.isEmpty ? null : _memoCtrl.text.trim(),
       userId: uid,
       firestoreId: widget.eventToEdit?.firestoreId,
+      photoPath: _photoPath,
     );
 
     await ref.read(eventNotifierProvider.notifier).addEvent(e);
@@ -596,10 +763,12 @@ class _State extends ConsumerState<EventBottomSheet>
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title:
-            const Text('삭제 확인', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Text('${widget.eventToEdit?.personName ?? ''} 내역을 삭제할까요?'),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+        title: const Text('삭제 확인',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content:
+            Text('${widget.eventToEdit?.personName ?? ''} 내역을 삭제할까요?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -624,6 +793,76 @@ class _State extends ConsumerState<EventBottomSheet>
           );
       if (mounted) Navigator.pop(context);
     }
+  }
+}
+
+// ── 연락처 자동완성 위젯 ──────────────────────────────────────
+class _ContactAutocomplete extends StatelessWidget {
+  final TextEditingController nameCtrl;
+  final List<String> contactNames;
+  final InputDecoration decoration;
+
+  const _ContactAutocomplete({
+    required this.nameCtrl,
+    required this.contactNames,
+    required this.decoration,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Autocomplete<String>(
+      initialValue: TextEditingValue(text: nameCtrl.text),
+      optionsBuilder: (textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return const Iterable<String>.empty();
+        }
+        return contactNames.where((name) => name
+            .toLowerCase()
+            .contains(textEditingValue.text.toLowerCase()));
+      },
+      onSelected: (selected) => nameCtrl.text = selected,
+      fieldViewBuilder: (ctx, ctrl, focusNode, onFieldSubmitted) {
+        // Autocomplete 내부 컨트롤러와 nameCtrl 동기화
+        if (ctrl.text != nameCtrl.text) ctrl.text = nameCtrl.text;
+        ctrl.addListener(() => nameCtrl.text = ctrl.text);
+        return TextFormField(
+          controller: ctrl,
+          focusNode: focusNode,
+          decoration: decoration,
+          validator: (v) => v?.isEmpty == true ? '이름을 입력해주세요' : null,
+        );
+      },
+      optionsViewBuilder: (ctx, onSelected, options) => Align(
+        alignment: Alignment.topLeft,
+        child: Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          child: ConstrainedBox(
+            constraints:
+                const BoxConstraints(maxHeight: 180, maxWidth: 280),
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: options.length,
+              itemBuilder: (_, i) {
+                final opt = options.elementAt(i);
+                return ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.person_outline_rounded,
+                      size: 18, color: AppTheme.primary),
+                  title: Text(opt,
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textPrimary)),
+                  onTap: () => onSelected(opt),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -702,13 +941,17 @@ class _ModeTab extends StatelessWidget {
             child: Column(children: [
               Icon(icon,
                   size: 20,
-                  color: isActive ? activeColor : const Color(0xFF94A3B8)),
+                  color: isActive
+                      ? activeColor
+                      : const Color(0xFF94A3B8)),
               const SizedBox(height: 4),
               Text(label,
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: isActive ? activeColor : const Color(0xFF94A3B8))),
+                      color: isActive
+                          ? activeColor
+                          : const Color(0xFF94A3B8))),
               Text(sublabel,
                   style: TextStyle(
                       fontSize: 10,
@@ -719,4 +962,39 @@ class _ModeTab extends StatelessWidget {
           ),
         ),
       );
+}
+
+// ── 전체 화면 사진 보기 ──────────────────────────────────────────
+
+class _FullScreenPhotoPage extends StatelessWidget {
+  final String path;
+  const _FullScreenPhotoPage({required this.path});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('사진 보기',
+            style: TextStyle(color: Colors.white, fontSize: 16)),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 5.0,
+          child: Image.file(
+            File(path),
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white54,
+              size: 64,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

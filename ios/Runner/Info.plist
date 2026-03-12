@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
+		<key>NSContactsUsageDescription</key>
+		<string>경조사 내역 등록 시 연락처에서 이름을 자동완성하기 위해 사용합니다.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>청첩장·부고 사진을 경조사 내역에 첨부하기 위해 사용합니다.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>청첩장·부고 사진을 촬영하여 경조사 내역에 첨부하기 위해 사용합니다.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
