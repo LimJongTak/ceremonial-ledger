@@ -93,44 +93,51 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
 
-  // 전체 1400ms: 타이틀 0~50%, 서브타이틀 30~70%, 인디케이터 65~100%
-  late final Animation<double> _titleFade;
-  late final Animation<double> _titleScale;
+  // 오고가고 4글자 각각 stagger
+  late final List<Animation<double>> _charFades;
+
+  // 경조사 장부 플랫폼: 마지막 글자가 나올 때쯤 함께 시작
   late final Animation<double> _subtitleFade;
   late final Animation<double> _subtitleOffset;
+
+  // 인디케이터
   late final Animation<double> _indicatorFade;
+
+  static const _titleChars = ['오', '고', '가', '고'];
+
+  // 각 글자: 0%, 12%, 24%, 36% 시작 → 각 15% 구간
+  static const _charStarts = [0.0, 0.12, 0.24, 0.36];
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1800),
     );
 
-    _titleFade = CurvedAnimation(
-      parent: _ctrl,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
-    );
-    _titleScale = Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _ctrl,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeOutBack),
-      ),
-    );
+    _charFades = _charStarts
+        .map((start) => CurvedAnimation(
+              parent: _ctrl,
+              curve: Interval(start, start + 0.16, curve: Curves.easeOut),
+            ))
+        .toList();
+
+    // 서브타이틀: 마지막 글자(36%)와 함께 시작, 70%까지
     _subtitleFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.3, 0.7, curve: Curves.easeOut),
+      curve: const Interval(0.38, 0.68, curve: Curves.easeOut),
     );
-    _subtitleOffset = Tween<double>(begin: 12.0, end: 0.0).animate(
+    _subtitleOffset = Tween<double>(begin: 22.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _ctrl,
-        curve: const Interval(0.3, 0.7, curve: Curves.easeOutCubic),
+        curve: const Interval(0.38, 0.68, curve: Curves.easeOutCubic),
       ),
     );
+
     _indicatorFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.65, 1.0, curve: Curves.easeIn),
+      curve: const Interval(0.72, 1.0, curve: Curves.easeIn),
     );
 
     _ctrl.forward();
@@ -153,21 +160,25 @@ class _SplashScreenState extends State<SplashScreen>
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                FadeTransition(
-                  opacity: _titleFade,
-                  child: ScaleTransition(
-                    scale: _titleScale,
-                    child: const Text(
-                      '오고가고',
-                      style: TextStyle(
-                        fontFamily: 'NanumMiraenamu',
-                        fontSize: 52,
-                        color: Color(0xFF9a30ae),
+                // 오고가고 - 한 글자씩 페이드인
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(_titleChars.length, (i) {
+                    return FadeTransition(
+                      opacity: _charFades[i],
+                      child: Text(
+                        _titleChars[i],
+                        style: const TextStyle(
+                          fontFamily: 'NanumMiraenamu',
+                          fontSize: 66,
+                          color: Color(0xFF9a30ae),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+                // 경조사 장부 플랫폼 - 위로 슬라이드 + 페이드인
                 Transform.translate(
                   offset: Offset(0, _subtitleOffset.value),
                   child: FadeTransition(
@@ -176,13 +187,13 @@ class _SplashScreenState extends State<SplashScreen>
                       '경조사 장부 플랫폼',
                       style: TextStyle(
                         fontFamily: 'GigiCheonnyeonBatang',
-                        fontSize: 18,
+                        fontSize: 22,
                         color: Color(0xFFb96bc6),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 56),
+                const SizedBox(height: 64),
                 FadeTransition(
                   opacity: _indicatorFade,
                   child: const SizedBox(
