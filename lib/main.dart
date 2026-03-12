@@ -13,9 +13,6 @@ import 'views/common/app_theme.dart';
 import 'services/notification_service.dart';
 import 'services/home_widget_service.dart';
 
-// 스플래시 최소 표시 시간이 지났는지 여부
-final _splashReadyProvider = StateProvider<bool>((ref) => false);
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -43,10 +40,6 @@ class CeremonialLedgerApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
-
-    final splashReady = ref.watch(_splashReadyProvider);
-
     return MaterialApp(
       title: '경조사 장부',
       debugShowCheckedModeBanner: false,
@@ -57,14 +50,38 @@ class CeremonialLedgerApp extends ConsumerWidget {
       ],
       supportedLocales: const [Locale('ko', 'KR')],
       theme: AppTheme.light,
-      home: !splashReady
-          ? const SplashScreen()
-          : authState.when(
-              data: (user) =>
-                  user == null ? const LoginScreen() : const _ProfileAwareHome(),
-              loading: () => const SplashScreen(),
-              error: (_, __) => const LoginScreen(),
-            ),
+      home: const _AppRoot(),
+    );
+  }
+}
+
+// 스플래시 완료 여부를 로컬 state로 관리 — 전역 provider 불필요
+class _AppRoot extends ConsumerStatefulWidget {
+  const _AppRoot();
+
+  @override
+  ConsumerState<_AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends ConsumerState<_AppRoot> {
+  bool _splashDone = false;
+
+  void _onSplashDone() {
+    if (mounted) setState(() => _splashDone = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_splashDone) {
+      return SplashScreen(onDone: _onSplashDone);
+    }
+
+    final authState = ref.watch(authStateProvider);
+    return authState.when(
+      data: (user) =>
+          user == null ? const LoginScreen() : const _ProfileAwareHome(),
+      loading: () => const Scaffold(backgroundColor: Colors.white),
+      error: (_, __) => const LoginScreen(),
     );
   }
 }
@@ -86,14 +103,16 @@ class _ProfileAwareHome extends ConsumerWidget {
   }
 }
 
-class SplashScreen extends ConsumerStatefulWidget {
-  const SplashScreen({super.key});
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key, required this.onDone});
+
+  final VoidCallback onDone;
 
   @override
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen>
+class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
 
@@ -106,7 +125,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   static const _titleChars = ['오', '고', '가', '고'];
 
-  // 서브타이틀(0~12%) 완료 후 글자 시작(10%), 각 10% 간격
+  // 서브타이틀(0~12%) 먼저 시작 → 글자 10%부터 순서대로
   static const _charStarts = [0.10, 0.20, 0.30, 0.40];
 
   @override
@@ -136,21 +155,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
 
-    // 애니메이션 완료 후 2초 뒤 화면 전환
+    // 애니메이션 완료 후 2초 뒤 홈 화면으로 전환
     _ctrl.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            ref.read(_splashReadyProvider.notifier).state = true;
-          }
+          if (mounted) widget.onDone();
         });
       }
     });
 
-    // 앱 시작 1초 후 애니메이션 시작
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) _ctrl.forward();
-    });
+    // 앱 실행 즉시 애니메이션 시작
+    _ctrl.forward();
   }
 
   @override
