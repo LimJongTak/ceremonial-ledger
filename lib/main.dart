@@ -136,10 +136,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
 
-    // 애니메이션 완료 후 1초 뒤 화면 전환 허용
+    // 애니메이션 완료 후 2초 뒤 화면 전환
     _ctrl.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        Future.delayed(const Duration(seconds: 1), () {
+        Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             ref.read(_splashReadyProvider.notifier).state = true;
           }
@@ -147,7 +147,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       }
     });
 
-    _ctrl.forward();
+    // 앱 시작 1초 후 애니메이션 시작
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) _ctrl.forward();
+    });
   }
 
   @override
