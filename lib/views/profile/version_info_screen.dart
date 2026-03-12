@@ -18,13 +18,21 @@ class _VersionEntry {
 class VersionInfoScreen extends StatelessWidget {
   const VersionInfoScreen({super.key});
 
-  static const _currentVersion = '1.0.0';
+  static const _currentVersion = '1.0.1';
 
   static const _history = [
     _VersionEntry(
+      version: '1.0.1',
+      date: '2026년 3월',
+      isCurrent: true,
+      changes: [
+        '🐛 소셜 로그인 오류 메시지 표시 버그 수정',
+        '앱 이름 변경: 오고가고',
+      ],
+    ),
+    _VersionEntry(
       version: '1.0.0',
       date: '2025년 3월',
-      isCurrent: true,
       changes: [
         '🎉 오고가고 첫 출시',
         '경조사 장부 기록 및 관리',
