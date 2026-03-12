@@ -108,9 +108,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final Animation<double> _subtitleFade;
   late final Animation<double> _subtitleOffset;
 
-  // 인디케이터
-  late final Animation<double> _indicatorFade;
-
   static const _titleChars = ['오', '고', '가', '고'];
 
   // 서브타이틀(0~12%) 완료 후 글자 시작(10%), 각 10% 간격
@@ -144,11 +141,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         parent: _ctrl,
         curve: const Interval(0.0, 0.16, curve: Curves.easeOutCubic),
       ),
-    );
-
-    _indicatorFade = CurvedAnimation(
-      parent: _ctrl,
-      curve: const Interval(0.65, 0.85, curve: Curves.easeIn),
     );
 
     _ctrl.forward();
@@ -208,18 +200,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         fontSize: 26,
                         color: Color(0xFF9a30ae),
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 64),
-                FadeTransition(
-                  opacity: _indicatorFade,
-                  child: const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Color(0xFF9a30ae),
                     ),
                   ),
                 ),
