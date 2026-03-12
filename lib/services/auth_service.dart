@@ -14,8 +14,9 @@ class AuthService {
 
   // ── Google 로그인 ───────────────────────────────────────────
   Future<UserCredential?> signInWithGoogle() async {
+    GoogleSignInAccount? googleUser;
     try {
-      final googleUser = await _googleSignIn.signIn();
+      googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -24,6 +25,23 @@ class AuthService {
       );
       return await _auth.signInWithCredential(credential);
     } catch (e) {
+      // google_sign_in 플러그인 내부 PigeonUserDetails 타입 캐스팅 버그:
+      // signIn()은 성공했지만 authentication 호출 시 예외가 발생하는 경우 복구 시도
+      final msg = e.toString();
+      if (msg.contains('PigeonUserDetails') || msg.contains('List<Object?>')) {
+        final user = googleUser ?? _googleSignIn.currentUser;
+        if (user != null) {
+          try {
+            final googleAuth = await user.authentication;
+            final credential = GoogleAuthProvider.credential(
+              accessToken: googleAuth.accessToken,
+              idToken: googleAuth.idToken,
+            );
+            return await _auth.signInWithCredential(credential);
+          } catch (_) {}
+        }
+        if (_auth.currentUser != null) return null;
+      }
       throw AuthException('Google 로그인 실패: $e');
     }
   }
