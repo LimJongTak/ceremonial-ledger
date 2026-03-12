@@ -102,7 +102,13 @@ class AuthService {
       return cred;
     } catch (e) {
       if (e is AuthException) rethrow;
-      // TODO: 배포 전 제거 - 디버그용 실제 오류 노출
+      // firebase_auth 플러그인 PigeonUserDetails 타입 캐스팅 버그:
+      // Firebase 로그인은 성공했으나 내부 업데이트 중 예외가 발생하는 경우 무시
+      final msg = e.toString();
+      if ((msg.contains('PigeonUserDetails') || msg.contains('List<Object?>')) &&
+          _auth.currentUser != null) {
+        return null;
+      }
       throw AuthException('카카오 오류: $e');
     }
   }
@@ -173,6 +179,13 @@ class AuthService {
       return cred;
     } catch (e) {
       if (e is AuthException) rethrow;
+      // firebase_auth 플러그인 PigeonUserDetails 타입 캐스팅 버그:
+      // Firebase 로그인은 성공했으나 내부 업데이트 중 예외가 발생하는 경우 무시
+      final msg = e.toString();
+      if ((msg.contains('PigeonUserDetails') || msg.contains('List<Object?>')) &&
+          _auth.currentUser != null) {
+        return null;
+      }
       throw AuthException('네이버 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
     }
   }
