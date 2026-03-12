@@ -113,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 2800),
     );
 
     _charFades = _charStarts
@@ -123,21 +123,21 @@ class _SplashScreenState extends State<SplashScreen>
             ))
         .toList();
 
-    // 서브타이틀: 마지막 글자(36%)와 함께 시작, 70%까지
+    // 서브타이틀: 첫 글자와 동시에 시작
     _subtitleFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.38, 0.68, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.30, curve: Curves.easeOut),
     );
     _subtitleOffset = Tween<double>(begin: 22.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _ctrl,
-        curve: const Interval(0.38, 0.68, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.30, curve: Curves.easeOutCubic),
       ),
     );
 
     _indicatorFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.72, 1.0, curve: Curves.easeIn),
+      curve: const Interval(0.60, 0.85, curve: Curves.easeIn),
     );
 
     _ctrl.forward();
@@ -187,8 +187,8 @@ class _SplashScreenState extends State<SplashScreen>
                       '경조사 장부 플랫폼',
                       style: TextStyle(
                         fontFamily: 'GigiCheonnyeonBatang',
-                        fontSize: 22,
-                        color: Color(0xFFb96bc6),
+                        fontSize: 26,
+                        color: Color(0xFF9a30ae),
                       ),
                     ),
                   ),
