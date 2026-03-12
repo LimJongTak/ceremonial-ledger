@@ -45,7 +45,7 @@ class VersionInfoScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // 앱 아이콘 + 현재 버전 배지
+          // 앱 브랜딩 + 현재 버전 배지
           Container(
             padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
             decoration: BoxDecoration(
@@ -62,16 +62,24 @@ class VersionInfoScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Image.asset(
-                    'assets/images/app_icon.png',
-                    width: 72,
-                    height: 72,
-                    fit: BoxFit.cover,
+                const Text(
+                  '오고가고',
+                  style: TextStyle(
+                    fontFamily: 'NanumMiraenamu',
+                    fontSize: 40,
+                    color: Color(0xFF9a30ae),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 6),
+                const Text(
+                  '경조사 장부 플랫폼',
+                  style: TextStyle(
+                    fontFamily: 'GigiCheonnyeonBatang',
+                    fontSize: 15,
+                    color: Color(0xFFb96bc6),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 5),

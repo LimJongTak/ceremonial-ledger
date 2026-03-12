@@ -88,39 +88,35 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // 순수 흰색 배경
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/images/splash_logo.jpg',
-              width: 200,
-              height: 200,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 32),
             const Text(
-              '경조사 장부',
+              '오고가고',
               style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: AppTheme.textPrimary,
-                letterSpacing: -1,
+                fontFamily: 'NanumMiraenamu',
+                fontSize: 48,
+                color: Color(0xFF9a30ae),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             const Text(
-              '소중한 인연을 기록하세요',
-              style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+              '경조사 장부 플랫폼',
+              style: TextStyle(
+                fontFamily: 'GigiCheonnyeonBatang',
+                fontSize: 18,
+                color: Color(0xFFb96bc6),
+              ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 48),
             const SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                color: AppTheme.primary,
+                color: Color(0xFF9a30ae),
               ),
             ),
           ],

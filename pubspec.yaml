@@ -116,3 +116,11 @@ flutter:
           weight: 500
         - asset: assets/fonts/Pretendard-Bold.ttf
           weight: 700
+    - family: GigiCheonnyeonBatang
+      fonts:
+        - asset: assets/fonts/경기천년바탕_Regular.ttf
+          weight: 400
+    - family: NanumMiraenamu
+      fonts:
+        - asset: assets/fonts/나눔손글씨 미래나무.ttf
+          weight: 400
