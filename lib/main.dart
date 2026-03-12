@@ -13,6 +13,9 @@ import 'views/common/app_theme.dart';
 import 'services/notification_service.dart';
 import 'services/home_widget_service.dart';
 
+// 스플래시 최소 표시 시간이 지났는지 여부
+final _splashReadyProvider = StateProvider<bool>((ref) => false);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -42,6 +45,8 @@ class CeremonialLedgerApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
 
+    final splashReady = ref.watch(_splashReadyProvider);
+
     return MaterialApp(
       title: '경조사 장부',
       debugShowCheckedModeBanner: false,
@@ -54,12 +59,15 @@ class CeremonialLedgerApp extends ConsumerWidget {
       theme: AppTheme.light,
       home: authState.when(
         data: (user) {
+          if (!splashReady) return const SplashScreen();
           if (user == null) return const LoginScreen();
-          // 로그인 됐으면 프로필 존재 여부 확인 후 분기
           return const _ProfileAwareHome();
         },
         loading: () => const SplashScreen(),
-        error: (_, __) => const LoginScreen(),
+        error: (_, __) {
+          if (!splashReady) return const SplashScreen();
+          return const LoginScreen();
+        },
       ),
     );
   }
@@ -82,21 +90,21 @@ class _ProfileAwareHome extends ConsumerWidget {
   }
 }
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
 
   // 오고가고 4글자 각각 stagger
   late final List<Animation<double>> _charFades;
 
-  // 경조사 장부 플랫폼: 마지막 글자가 나올 때쯤 함께 시작
+  // 경조사 장부 플랫폼: 글자보다 먼저 나타남
   late final Animation<double> _subtitleFade;
   late final Animation<double> _subtitleOffset;
 
@@ -105,42 +113,52 @@ class _SplashScreenState extends State<SplashScreen>
 
   static const _titleChars = ['오', '고', '가', '고'];
 
-  // 각 글자: 0%, 12%, 24%, 36% 시작 → 각 15% 구간
-  static const _charStarts = [0.0, 0.12, 0.24, 0.36];
+  // 서브타이틀(0~12%) 완료 후 글자 시작(10%), 각 10% 간격
+  static const _charStarts = [0.10, 0.20, 0.30, 0.40];
+
+  // 총 애니메이션 3200ms + 1초 대기 = 4200ms 후 화면 전환
+  static const _splashTotalMs = 4200;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 3200),
     );
 
     _charFades = _charStarts
         .map((start) => CurvedAnimation(
               parent: _ctrl,
-              curve: Interval(start, start + 0.16, curve: Curves.easeOut),
+              curve: Interval(start, start + 0.15, curve: Curves.easeOut),
             ))
         .toList();
 
-    // 서브타이틀: 첫 글자와 동시에 시작
+    // 서브타이틀: 글자보다 먼저 시작해 빠르게 완료
     _subtitleFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.0, 0.30, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.12, curve: Curves.easeOut),
     );
     _subtitleOffset = Tween<double>(begin: 22.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _ctrl,
-        curve: const Interval(0.0, 0.30, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.16, curve: Curves.easeOutCubic),
       ),
     );
 
     _indicatorFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.60, 0.85, curve: Curves.easeIn),
+      curve: const Interval(0.65, 0.85, curve: Curves.easeIn),
     );
 
     _ctrl.forward();
+
+    // 애니메이션 완료 후 1초 뒤 화면 전환 허용
+    Future.delayed(const Duration(milliseconds: _splashTotalMs), () {
+      if (mounted) {
+        ref.read(_splashReadyProvider.notifier).state = true;
+      }
+    });
   }
 
   @override
