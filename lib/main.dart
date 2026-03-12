@@ -57,18 +57,14 @@ class CeremonialLedgerApp extends ConsumerWidget {
       ],
       supportedLocales: const [Locale('ko', 'KR')],
       theme: AppTheme.light,
-      home: authState.when(
-        data: (user) {
-          if (!splashReady) return const SplashScreen();
-          if (user == null) return const LoginScreen();
-          return const _ProfileAwareHome();
-        },
-        loading: () => const SplashScreen(),
-        error: (_, __) {
-          if (!splashReady) return const SplashScreen();
-          return const LoginScreen();
-        },
-      ),
+      home: !splashReady
+          ? const SplashScreen()
+          : authState.when(
+              data: (user) =>
+                  user == null ? const LoginScreen() : const _ProfileAwareHome(),
+              loading: () => const SplashScreen(),
+              error: (_, __) => const LoginScreen(),
+            ),
     );
   }
 }
@@ -113,9 +109,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   // 서브타이틀(0~12%) 완료 후 글자 시작(10%), 각 10% 간격
   static const _charStarts = [0.10, 0.20, 0.30, 0.40];
 
-  // 총 애니메이션 3200ms + 1초 대기 = 4200ms 후 화면 전환
-  static const _splashTotalMs = 4200;
-
   @override
   void initState() {
     super.initState();
@@ -143,14 +136,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
 
-    _ctrl.forward();
-
     // 애니메이션 완료 후 1초 뒤 화면 전환 허용
-    Future.delayed(const Duration(milliseconds: _splashTotalMs), () {
-      if (mounted) {
-        ref.read(_splashReadyProvider.notifier).state = true;
+    _ctrl.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            ref.read(_splashReadyProvider.notifier).state = true;
+          }
+        });
       }
     });
+
+    _ctrl.forward();
   }
 
   @override
