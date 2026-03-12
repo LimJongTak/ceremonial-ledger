@@ -133,25 +133,25 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3200),
+      duration: const Duration(milliseconds: 2400),
     );
 
     _charFades = _charStarts
         .map((start) => CurvedAnimation(
               parent: _ctrl,
-              curve: Interval(start, start + 0.15, curve: Curves.easeOut),
+              curve: Interval(start, start + 0.20, curve: Curves.easeOut),
             ))
         .toList();
 
     // 서브타이틀: 글자보다 먼저 시작해 빠르게 완료
     _subtitleFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.0, 0.12, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.15, curve: Curves.easeOut),
     );
     _subtitleOffset = Tween<double>(begin: 22.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _ctrl,
-        curve: const Interval(0.0, 0.16, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.20, curve: Curves.easeOutCubic),
       ),
     );
 
