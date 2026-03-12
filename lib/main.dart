@@ -90,67 +90,55 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _titleCtrl;
-  late final AnimationController _subtitleCtrl;
-  late final AnimationController _indicatorCtrl;
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
 
+  // 전체 1400ms: 타이틀 0~50%, 서브타이틀 30~70%, 인디케이터 65~100%
   late final Animation<double> _titleFade;
   late final Animation<double> _titleScale;
   late final Animation<double> _subtitleFade;
-  late final Animation<Offset> _subtitleSlide;
+  late final Animation<double> _subtitleOffset;
   late final Animation<double> _indicatorFade;
 
   @override
   void initState() {
     super.initState();
-
-    _titleCtrl = AnimationController(
+    _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _subtitleCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _indicatorCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 1400),
     );
 
-    _titleFade = CurvedAnimation(parent: _titleCtrl, curve: Curves.easeOut);
-    _titleScale = Tween<double>(begin: 0.65, end: 1.0).animate(
-      CurvedAnimation(parent: _titleCtrl, curve: Curves.easeOutBack),
+    _titleFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     );
-    _subtitleFade =
-        CurvedAnimation(parent: _subtitleCtrl, curve: Curves.easeOut);
-    _subtitleSlide =
-        Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(
-      CurvedAnimation(parent: _subtitleCtrl, curve: Curves.easeOutCubic),
+    _titleScale = Tween<double>(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOutBack),
+      ),
     );
-    _indicatorFade =
-        CurvedAnimation(parent: _indicatorCtrl, curve: Curves.easeIn);
+    _subtitleFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.3, 0.7, curve: Curves.easeOut),
+    );
+    _subtitleOffset = Tween<double>(begin: 12.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.3, 0.7, curve: Curves.easeOutCubic),
+      ),
+    );
+    _indicatorFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.65, 1.0, curve: Curves.easeIn),
+    );
 
-    // 순차 애니메이션: 타이틀 → 서브타이틀 → 인디케이터
-    _titleCtrl.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) _subtitleCtrl.forward();
-      });
-    });
-    _subtitleCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) _indicatorCtrl.forward();
-        });
-      }
-    });
+    _ctrl.forward();
   }
 
   @override
   void dispose() {
-    _titleCtrl.dispose();
-    _subtitleCtrl.dispose();
-    _indicatorCtrl.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
@@ -159,51 +147,56 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ScaleTransition(
-              scale: _titleScale,
-              child: FadeTransition(
-                opacity: _titleFade,
-                child: const Text(
-                  '오고가고',
-                  style: TextStyle(
-                    fontFamily: 'NanumMiraenamu',
-                    fontSize: 52,
-                    color: Color(0xFF9a30ae),
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (context, _) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FadeTransition(
+                  opacity: _titleFade,
+                  child: ScaleTransition(
+                    scale: _titleScale,
+                    child: const Text(
+                      '오고가고',
+                      style: TextStyle(
+                        fontFamily: 'NanumMiraenamu',
+                        fontSize: 52,
+                        color: Color(0xFF9a30ae),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SlideTransition(
-              position: _subtitleSlide,
-              child: FadeTransition(
-                opacity: _subtitleFade,
-                child: const Text(
-                  '경조사 장부 플랫폼',
-                  style: TextStyle(
-                    fontFamily: 'GigiCheonnyeonBatang',
-                    fontSize: 18,
-                    color: Color(0xFFb96bc6),
+                const SizedBox(height: 8),
+                Transform.translate(
+                  offset: Offset(0, _subtitleOffset.value),
+                  child: FadeTransition(
+                    opacity: _subtitleFade,
+                    child: const Text(
+                      '경조사 장부 플랫폼',
+                      style: TextStyle(
+                        fontFamily: 'GigiCheonnyeonBatang',
+                        fontSize: 18,
+                        color: Color(0xFFb96bc6),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 56),
-            FadeTransition(
-              opacity: _indicatorFade,
-              child: const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Color(0xFF9a30ae),
+                const SizedBox(height: 56),
+                FadeTransition(
+                  opacity: _indicatorFade,
+                  child: const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Color(0xFF9a30ae),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
