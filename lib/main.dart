@@ -84,7 +84,7 @@ class _ProfileAwareHome extends ConsumerWidget {
     return profileAsync.when(
       data: (profile) =>
           profile == null ? const ProfileSetupScreen() : const MainNavScreen(),
-      loading: () => const SplashScreen(),
+      loading: () => const Scaffold(backgroundColor: Colors.white),
       error: (_, __) => const ProfileSetupScreen(),
     );
   }
