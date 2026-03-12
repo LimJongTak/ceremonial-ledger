@@ -88,6 +88,28 @@ class FamilyService {
     }
   }
 
+  // ── 멤버 추방 (방장 전용) ────────────────────────────────────
+  Future<void> kickMember(
+      String ownerId, String targetUserId, String familyId) async {
+    final doc = _families.doc(familyId);
+    final snap = await doc.get();
+    if (!snap.exists) throw Exception('그룹을 찾을 수 없습니다.');
+
+    final data = snap.data()!;
+    if (data['ownerId'] != ownerId) {
+      throw Exception('방장만 멤버를 추방할 수 있습니다.');
+    }
+    if (targetUserId == ownerId) {
+      throw Exception('자기 자신을 추방할 수 없습니다.');
+    }
+
+    await doc.update({
+      'memberIds': FieldValue.arrayRemove([targetUserId]),
+      'memberNames.$targetUserId': FieldValue.delete(),
+      'memberAliases.$targetUserId': FieldValue.delete(),
+    });
+  }
+
   // ── 멤버 실제 이름 갱신 (본인 프로필 동기화용) ──────────────
   Future<void> updateMemberName(
       String familyId, String uid, String name) async {

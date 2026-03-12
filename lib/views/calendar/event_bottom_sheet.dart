@@ -117,6 +117,16 @@ class _State extends ConsumerState<EventBottomSheet>
     setState(() => _photoPath = destPath);
   }
 
+  // ── 사진 전체 화면 보기 ──────────────────────────────────────
+  void _showFullScreenPhoto(String path) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => _FullScreenPhotoPage(path: path),
+      ),
+    );
+  }
+
   void _showPhotoOptions() {
     showModalBottomSheet(
       context: context,
@@ -545,26 +555,31 @@ class _State extends ConsumerState<EventBottomSheet>
                       ),
                       child: _photoPath != null
                           ? Row(children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.file(
-                                  File(_photoPath!),
-                                  width: 56,
-                                  height: 56,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
+                              // 썸네일 탭 → 전체 화면 보기
+                              GestureDetector(
+                                onTap: () =>
+                                    _showFullScreenPhoto(_photoPath!),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    File(_photoPath!),
                                     width: 56,
                                     height: 56,
-                                    color: const Color(0xFFF1F5F9),
-                                    child: const Icon(Icons.broken_image,
-                                        color: AppTheme.textSecondary),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 56,
+                                      height: 56,
+                                      color: const Color(0xFFF1F5F9),
+                                      child: const Icon(Icons.broken_image,
+                                          color: AppTheme.textSecondary),
+                                    ),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  '사진 첨부됨\n탭하여 변경 또는 삭제',
+                                  '사진 첨부됨\n이미지 탭: 보기 / 여기 탭: 변경',
                                   style: TextStyle(
                                       fontSize: 13,
                                       color: AppTheme.textSecondary,
@@ -859,4 +874,39 @@ class _ModeTab extends StatelessWidget {
           ),
         ),
       );
+}
+
+// ── 전체 화면 사진 보기 ──────────────────────────────────────────
+
+class _FullScreenPhotoPage extends StatelessWidget {
+  final String path;
+  const _FullScreenPhotoPage({required this.path});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('사진 보기',
+            style: TextStyle(color: Colors.white, fontSize: 16)),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 5.0,
+          child: Image.file(
+            File(path),
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white54,
+              size: 64,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

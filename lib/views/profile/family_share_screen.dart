@@ -553,6 +553,56 @@ class _FamilyViewState extends ConsumerState<_FamilyView> {
     await FamilyService.instance.syncMemberNames(family.id, missing);
   }
 
+  // 멤버 추방 확인 다이얼로그 (방장 전용)
+  Future<void> _confirmKick(String targetId, String name) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('멤버 추방',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(
+          '$name 님을 그룹에서 추방하시겠습니까?\n추방된 멤버는 공유장부를 볼 수 없게 됩니다.',
+          style: const TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.expense,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('추방'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final uid = widget.uid;
+    final familyId = widget.family.id;
+    try {
+      await FamilyService.instance.kickMember(uid, targetId, familyId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$name 님을 추방했습니다.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('오류: $e')));
+      }
+    }
+  }
+
   // 별칭 수정 바텀시트
   void _showAliasEditor(String memberId, String currentName) {
     showModalBottomSheet(
@@ -909,13 +959,38 @@ class _FamilyViewState extends ConsumerState<_FamilyView> {
                                 ],
                               ),
                             ),
-                            // 별칭 편집 버튼
-                            Icon(
-                              Icons.edit_outlined,
-                              size: 16,
-                              color:
-                                  AppTheme.textSecondary.withValues(alpha: 0.4),
-                            ),
+                            // 추방 버튼 (방장 → 다른 멤버) / 별칭 편집 아이콘 (나머지)
+                            if (isOwner && !isMe)
+                              GestureDetector(
+                                onTap: () =>
+                                    _confirmKick(memberId, displayName),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.expense
+                                        .withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: AppTheme.expense
+                                            .withValues(alpha: 0.35)),
+                                  ),
+                                  child: const Text(
+                                    '추방',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.expense,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                              )
+                            else
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 16,
+                                color: AppTheme.textSecondary
+                                    .withValues(alpha: 0.4),
+                              ),
                           ],
                         ),
                       ),
