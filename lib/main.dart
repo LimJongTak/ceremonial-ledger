@@ -125,33 +125,33 @@ class _SplashScreenState extends State<SplashScreen>
 
   static const _titleChars = ['오', '고', '가', '고'];
 
-  // 서브타이틀(0~12%) 먼저 시작 → 글자 10%부터 순서대로
-  static const _charStarts = [0.10, 0.20, 0.30, 0.40];
+  // 서브타이틀(0~10%) 먼저 → 글자 8%부터 14% 간격으로 천천히 등장
+  static const _charStarts = [0.08, 0.22, 0.36, 0.50];
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 3500),
     );
 
     _charFades = _charStarts
         .map((start) => CurvedAnimation(
               parent: _ctrl,
-              curve: Interval(start, start + 0.20, curve: Curves.easeOut),
+              curve: Interval(start, start + 0.18, curve: Curves.easeOut),
             ))
         .toList();
 
     // 서브타이틀: 글자보다 먼저 시작해 빠르게 완료
     _subtitleFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.0, 0.15, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.12, curve: Curves.easeOut),
     );
     _subtitleOffset = Tween<double>(begin: 22.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _ctrl,
-        curve: const Interval(0.0, 0.20, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.16, curve: Curves.easeOutCubic),
       ),
     );
 
@@ -164,8 +164,10 @@ class _SplashScreenState extends State<SplashScreen>
       }
     });
 
-    // 앱 실행 즉시 애니메이션 시작
-    _ctrl.forward();
+    // 앱 실행 1초 후 애니메이션 시작
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) _ctrl.forward();
+    });
   }
 
   @override
