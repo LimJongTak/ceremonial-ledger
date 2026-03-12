@@ -44,8 +44,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     ref.listen(authNotifierProvider, (_, next) {
       if (next is AsyncError) {
+        final msg = next.error.toString();
+        if (msg.contains('PigeonUserDetails') || msg.contains('List<Object?>')) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${next.error}'),
+          content: Text(msg),
           backgroundColor: AppTheme.expense,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
