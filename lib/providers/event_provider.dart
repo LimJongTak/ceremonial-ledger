@@ -73,7 +73,10 @@ class EventNotifier extends AsyncNotifier<void> {
         // 개인 컬렉션에 저장
         await FirestoreService.instance.saveEvent(event, userId);
       }
-      if (event.date.isAfter(DateTime.now())) {
+      if (event.isRecurring) {
+        await NotificationService.instance
+            .scheduleRecurringNotifications(event);
+      } else if (event.date.isAfter(DateTime.now())) {
         await NotificationService.instance
             .scheduleEventNotifications(event);
       }

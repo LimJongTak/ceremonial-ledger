@@ -40,6 +40,8 @@ class Events extends Table {
   TextColumn get memo => text().nullable()();
   TextColumn get userId => text()();
   TextColumn get photoPath => text().nullable()(); // 첨부 사진 로컬 경로
+  BoolColumn get isRecurring =>
+      boolean().withDefault(const Constant(false))(); // 매년 반복 알림
 }
 
 class EventModel {
@@ -54,6 +56,7 @@ class EventModel {
   final String userId;
   final String? firestoreId;
   final String? photoPath; // 첨부 사진 경로
+  final bool isRecurring; // 매년 반복 알림
 
   EventModel({
     required this.id,
@@ -67,6 +70,7 @@ class EventModel {
     required this.userId,
     this.firestoreId,
     this.photoPath,
+    this.isRecurring = false,
   });
 
   bool get isIncome => eventType == EventType.income;

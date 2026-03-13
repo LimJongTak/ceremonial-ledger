@@ -128,6 +128,58 @@ class NotificationService {
     }
   }
 
+  // ── 매년 반복 알림 스케줄 (향후 5년) ─────────────────────────
+  Future<void> scheduleRecurringNotifications(EventModel event) async {
+    if (!_initialized) await initialize();
+    final now = DateTime.now();
+    final baseMonth = event.date.month;
+    final baseDay = event.date.day;
+
+    for (int offset = 0; offset <= 4; offset++) {
+      final year = now.year + offset;
+      // 윤년 예외 (2월 29일 → 2월 28일로)
+      final maxDay = _daysInMonth(year, baseMonth);
+      final day = baseDay > maxDay ? maxDay : baseDay;
+      final occDate = DateTime(year, baseMonth, day);
+
+      // 이미 지난 날짜 스킵
+      if (!occDate.isAfter(now)) continue;
+
+      // D-7
+      final d7 = occDate.subtract(const Duration(days: 7));
+      if (d7.isAfter(now)) {
+        await _scheduleNotification(
+          id: _recurringId(event, offset, 7),
+          title: '🔁 D-7 | ${event.ceremonyType.emoji} ${event.personName}',
+          body: '${event.personName}님의 ${event.ceremonyType.label}이 7일 후예요!',
+          scheduledDate: d7,
+          payload: 'recurring_${event.id}',
+        );
+      }
+
+      // D-day
+      final dDay = DateTime(year, baseMonth, day, 9, 0);
+      if (dDay.isAfter(now)) {
+        await _scheduleNotification(
+          id: _recurringId(event, offset, 0),
+          title: '🔁 오늘! | ${event.ceremonyType.emoji} ${event.personName}',
+          body: '오늘은 ${event.personName}님의 ${event.ceremonyType.label}입니다!',
+          scheduledDate: dDay,
+          payload: 'recurring_${event.id}',
+        );
+      }
+    }
+    debugPrint('🔁 반복 알림 예약: ${event.personName} (5년치)');
+  }
+
+  // ── 반복 알림 취소 ────────────────────────────────────────────
+  Future<void> cancelRecurringNotifications(EventModel event) async {
+    for (int offset = 0; offset <= 4; offset++) {
+      await _plugin.cancel(_recurringId(event, offset, 7));
+      await _plugin.cancel(_recurringId(event, offset, 0));
+    }
+  }
+
   // ── 이벤트 알림 취소 ──────────────────────────────────────────
   Future<void> cancelEventNotifications(EventModel event) async {
     // 현재 ID 취소 (base * 100)
@@ -136,6 +188,8 @@ class NotificationService {
     await _plugin.cancel(_notifId(event, 3));
     await _plugin.cancel(_notifId(event, 1));
     await _plugin.cancel(_notifId(event, 0));
+    // 반복 알림도 취소
+    await cancelRecurringNotifications(event);
     // 이전 ID 취소 (base * 10, 하위 호환)
     final oldBase = (event.id.abs() % 100000) * 10;
     await _plugin.cancel(oldBase + 7);
@@ -156,13 +210,17 @@ class NotificationService {
   // ── 이벤트 목록으로 전체 재스케줄 ──────────────────────────────
   Future<void> rescheduleAll(List<EventModel> events) async {
     await cancelAll();
-    final upcoming = events.where(
-      (e) => e.date.isAfter(DateTime.now()) && e.amount >= 0,
-    );
-    for (final event in upcoming) {
-      await scheduleEventNotifications(event);
+    int count = 0;
+    for (final event in events) {
+      if (event.isRecurring) {
+        await scheduleRecurringNotifications(event);
+        count++;
+      } else if (event.date.isAfter(DateTime.now()) && event.amount >= 0) {
+        await scheduleEventNotifications(event);
+        count++;
+      }
     }
-    debugPrint('✅ ${upcoming.length}개 이벤트 알림 재스케줄 완료');
+    debugPrint('✅ $count개 이벤트 알림 재스케줄 완료');
   }
 
   // ── 즉시 테스트 알림 ──────────────────────────────────────────
@@ -206,6 +264,17 @@ class NotificationService {
   int _notifId(EventModel event, int daysBefore) {
     // 고유 ID: eventId * 100 + daysBefore (0, 1, 3, 7, 30)
     final base = (event.id.abs() % 100000) * 100;
-    return base + daysBefore.clamp(0, 99);
+    return base + daysBefore.clamp(0, 39);
+  }
+
+  // 반복 알림 ID: 200,000,000 + eventId * 100 + offset * 10 + (daysBefore==7 ? 1 : 0)
+  int _recurringId(EventModel event, int yearOffset, int daysBefore) {
+    final base = 200000000 + (event.id.abs() % 10000) * 100 + yearOffset * 10;
+    return base + (daysBefore > 0 ? 1 : 0);
+  }
+
+  // 월별 최대 일수 계산
+  int _daysInMonth(int year, int month) {
+    return DateTime(year, month + 1, 0).day;
   }
 }
