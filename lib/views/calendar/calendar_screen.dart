@@ -282,14 +282,40 @@ class EventCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    event.personName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                      color: Color(0xFF1A1A2E),
+                  Row(children: [
+                    Text(
+                      event.personName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: Color(0xFF1A1A2E),
+                      ),
                     ),
-                  ),
+                    if (event.isRecurring) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.repeat_rounded,
+                                size: 10, color: Color(0xFF2563EB)),
+                            SizedBox(width: 2),
+                            Text('매년',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF2563EB),
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ]),
                   const SizedBox(height: 2),
                   Text(
                     '${event.ceremonyType.label} · '

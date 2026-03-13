@@ -190,6 +190,7 @@ class FamilyService {
                 userId: d['userId'] as String,
                 firestoreId: doc.id,
                 photoPath: d['photoPath'] as String?,
+                isRecurring: d['isRecurring'] as bool? ?? false,
               );
             }).toList());
   }
@@ -208,6 +209,7 @@ class FamilyService {
       'memo': event.memo,
       'userId': userId,
       'photoPath': event.photoPath,
+      'isRecurring': event.isRecurring,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 

@@ -21,6 +21,7 @@ class FirestoreService {
       'eventType': event.eventType.index,
       'memo': event.memo,
       'userId': userId,
+      'isRecurring': event.isRecurring,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -49,6 +50,7 @@ class FirestoreService {
                 memo: d['memo'] as String?,
                 userId: userId,
                 firestoreId: doc.id,
+                isRecurring: d['isRecurring'] as bool? ?? false,
               );
             }).toList());
   }
