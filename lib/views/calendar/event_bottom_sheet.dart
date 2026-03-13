@@ -41,6 +41,7 @@ class _State extends ConsumerState<EventBottomSheet>
   late DateTime _date;
   _EntryMode _mode = _EntryMode.confirmed;
   String? _photoPath; // 첨부 사진 경로
+  bool _isRecurring = false; // 매년 반복 알림
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -65,6 +66,7 @@ class _State extends ConsumerState<EventBottomSheet>
       _cer = e.ceremonyType;
       _date = e.date;
       _photoPath = e.photoPath;
+      _isRecurring = e.isRecurring;
       _mode = e.amount == 0 ? _EntryMode.scheduled : _EntryMode.confirmed;
     } else {
       if (widget.initialDate.isAfter(DateTime.now())) {
@@ -591,6 +593,71 @@ class _State extends ConsumerState<EventBottomSheet>
                   ),
                   const SizedBox(height: 12),
 
+                  // ── 매년 반복 알림 ───────────────────────────
+                  GestureDetector(
+                    onTap: () => setState(() => _isRecurring = !_isRecurring),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _isRecurring
+                            ? AppTheme.primary.withValues(alpha: 0.05)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _isRecurring
+                              ? AppTheme.primary.withValues(alpha: 0.35)
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(children: [
+                        Icon(
+                          Icons.repeat_rounded,
+                          size: 20,
+                          color: _isRecurring
+                              ? AppTheme.primary
+                              : AppTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '매년 반복 알림',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: _isRecurring
+                                      ? AppTheme.primary
+                                      : AppTheme.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'D-7, D-day 알림을 매년 자동으로 보내드려요',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: _isRecurring,
+                          onChanged: (v) =>
+                              setState(() => _isRecurring = v),
+                          activeThumbColor: AppTheme.primary,
+                          activeTrackColor:
+                              AppTheme.primary.withValues(alpha: 0.4),
+                        ),
+                      ]),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   // ── 사진 첨부 ────────────────────────────────
                   GestureDetector(
                     onTap: _showPhotoOptions,
@@ -753,6 +820,7 @@ class _State extends ConsumerState<EventBottomSheet>
       userId: uid,
       firestoreId: widget.eventToEdit?.firestoreId,
       photoPath: _photoPath,
+      isRecurring: _isRecurring,
     );
 
     await ref.read(eventNotifierProvider.notifier).addEvent(e);

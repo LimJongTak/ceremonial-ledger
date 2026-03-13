@@ -48,10 +48,15 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final upcomingEvents = (ref.watch(allEventsProvider).valueOrNull ?? [])
-        .where((e) => e.date.isAfter(DateTime.now()))
+    final allEvents = ref.watch(allEventsProvider).valueOrNull ?? [];
+    final upcomingEvents = allEvents
+        .where((e) => !e.isRecurring && e.date.isAfter(DateTime.now()))
         .toList()
       ..sort((a, b) => a.date.compareTo(b.date));
+    final recurringEvents = allEvents
+        .where((e) => e.isRecurring)
+        .toList()
+      ..sort((a, b) => _nextOccurrence(a).compareTo(_nextOccurrence(b)));
 
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
@@ -77,10 +82,42 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                   child: _SummaryBanner(pendingCount: _pending.length),
                 ),
 
+                // ── 매년 반복 알림 ──
+                if (recurringEvents.isNotEmpty) ...[
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+                      child: Row(children: [
+                        Icon(Icons.repeat_rounded,
+                            size: 16, color: AppTheme.primary),
+                        SizedBox(width: 6),
+                        Text(
+                          '매년 반복 알림',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, i) => _RecurringEventCard(
+                            event: recurringEvents[i]),
+                        childCount: recurringEvents.length,
+                      ),
+                    ),
+                  ),
+                ],
+
                 // ── 다가오는 경조사 알림 일정 ──
-                if (upcomingEvents.isEmpty)
+                if (upcomingEvents.isEmpty && recurringEvents.isEmpty)
                   const SliverFillRemaining(child: _EmptyState())
-                else ...[
+                else if (upcomingEvents.isNotEmpty) ...[
                   const SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -103,7 +140,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                       ),
                     ),
                   ),
-                ],
+                ] else
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
     );
@@ -172,6 +210,138 @@ class _SummaryBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── 다음 반복 날짜 계산 헬퍼 ──────────────────────────────────
+DateTime _nextOccurrence(EventModel event) {
+  final now = DateTime.now();
+  final thisYear = DateTime(now.year, event.date.month, event.date.day);
+  if (thisYear.isAfter(now)) return thisYear;
+  return DateTime(now.year + 1, event.date.month, event.date.day);
+}
+
+// ── 매년 반복 이벤트 카드 ──────────────────────────────────────
+class _RecurringEventCard extends StatelessWidget {
+  final EventModel event;
+  const _RecurringEventCard({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    final next = _nextOccurrence(event);
+    final daysLeft = next.difference(DateTime.now()).inDays;
+    final fmt = DateFormat('M월 d일', 'ko_KR');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: AppTheme.primary.withValues(alpha: 0.15), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: Text(event.ceremonyType.emoji,
+                    style: const TextStyle(fontSize: 24)),
+              ),
+            ),
+            Positioned(
+              right: -4,
+              top: -4,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.repeat_rounded,
+                    size: 10, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Text(
+                  event.personName,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppTheme.textPrimary),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: const Text('매년',
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primary)),
+                ),
+              ]),
+              const SizedBox(height: 3),
+              Text(
+                '${event.ceremonyType.label} · 매년 ${fmt.format(event.date)}',
+                style: const TextStyle(
+                    fontSize: 12, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 6),
+              Row(children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: daysLeft <= 7
+                        ? AppTheme.expense.withValues(alpha: 0.1)
+                        : AppTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '다음: ${fmt.format(next)} (D-$daysLeft)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: daysLeft <= 7
+                          ? AppTheme.expense
+                          : AppTheme.primary,
+                    ),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ]),
     );
   }
 }
