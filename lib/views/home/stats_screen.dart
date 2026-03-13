@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -57,6 +58,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
   }
 }
 
+// ── 메인 바디 ─────────────────────────────────────────────────
 class _StatsBody extends StatelessWidget {
   final List<EventModel> events;
   final List<EventModel> allEvents;
@@ -80,14 +82,10 @@ class _StatsBody extends StatelessWidget {
       final monthEvents = events.where((e) => e.date.month == month).toList();
       final income =
           monthEvents.where((e) => e.isIncome).fold(0, (s, e) => s + e.amount);
-      final expense =
-          monthEvents.where((e) => !e.isIncome).fold(0, (s, e) => s + e.amount);
+      final expense = monthEvents
+          .where((e) => !e.isIncome)
+          .fold(0, (s, e) => s + e.amount);
       return _MonthData(month: month, income: income, expense: expense);
-    });
-
-    final maxVal = monthlyData.fold(0, (max, d) {
-      final m = d.income > d.expense ? d.income : d.expense;
-      return m > max ? m : max;
     });
 
     final totalIncome =
@@ -95,14 +93,16 @@ class _StatsBody extends StatelessWidget {
     final totalExpense =
         events.where((e) => !e.isIncome).fold(0, (s, e) => s + e.amount);
 
-    // 카테고리별
+    // 경조사별
     final Map<CeremonyType, int> byCategory = {};
     for (final e in events) {
-      byCategory[e.ceremonyType] = (byCategory[e.ceremonyType] ?? 0) + e.amount;
+      byCategory[e.ceremonyType] =
+          (byCategory[e.ceremonyType] ?? 0) + e.amount;
     }
     final sortedCats = byCategory.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
+    // 관계별
     final Map<RelationType, int> byRelation = {};
     for (final e in events) {
       byRelation[e.relation] = (byRelation[e.relation] ?? 0) + e.amount;
@@ -113,10 +113,13 @@ class _StatsBody extends StatelessWidget {
     final fmt = NumberFormat('#,###');
     final total = totalIncome + totalExpense;
 
+    // 연도 목록 (트렌드 차트용)
+    final years = allEvents.map((e) => e.date.year).toSet().toList()..sort();
+
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // 헤더
+        // ── 헤더 ──────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Container(
             padding: EdgeInsets.fromLTRB(
@@ -142,7 +145,6 @@ class _StatsBody extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5)),
                 const SizedBox(height: 20),
-                // 연도 선택
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   _YearBtn(
                       icon: Icons.chevron_left,
@@ -161,7 +163,6 @@ class _StatsBody extends StatelessWidget {
                           : null),
                 ]),
                 const SizedBox(height: 20),
-                // 연간 요약
                 Row(children: [
                   Expanded(
                       child: _YearSummaryCard(
@@ -178,7 +179,6 @@ class _StatsBody extends StatelessWidget {
                           color: AppTheme.expense)),
                 ]),
                 const SizedBox(height: 16),
-                // ── 통계 / 장부 탭 선택 ──────────────────────
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -208,95 +208,79 @@ class _StatsBody extends StatelessWidget {
           ),
         ),
 
-        // ── 통계 탭 콘텐츠 ──────────────────────────────────
+        // ── 통계 탭 ───────────────────────────────────────────
         if (tab.index == 0) ...[
-          // 월별 바 차트
+          // 1. 월별 수입/지출 바 차트
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _ChartTitle(title: '월별 수입/지출'),
-                  const SizedBox(height: 16),
-                  const Row(children: [
-                    _Legend(color: AppTheme.income, label: '수입'),
-                    SizedBox(width: 16),
-                    _Legend(color: AppTheme.expense, label: '지출'),
-                  ]),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 180,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: monthlyData
-                          .map((d) => Expanded(
-                                child: _BarGroup(
-                                    data: d, maxVal: maxVal == 0 ? 1 : maxVal),
-                              ))
-                          .toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: List.generate(
-                        12,
-                        (i) => Expanded(
-                              child: Text('${i + 1}',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AppTheme.textSecondary)),
-                            )),
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: _ChartCard(
+                title: '월별 수입/지출',
+                child: _MonthlyBarChart(monthlyData: monthlyData),
               ),
             ),
           ),
-          // 경조사별 / 관계별
+
+          // 2. 연도별 트렌드 라인 차트 (2년 이상 데이터가 있을 때만)
+          if (years.length >= 2)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: _ChartCard(
+                  title: '연도별 트렌드',
+                  child: _YearTrendChart(allEvents: allEvents, years: years),
+                ),
+              ),
+            ),
+
+          // 3. 관계별 파이 차트
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _ChartTitle(title: '경조사별'),
-                  const SizedBox(height: 12),
-                  if (sortedCats.isEmpty)
-                    const Center(
-                        child: Text('데이터 없음',
-                            style: TextStyle(color: AppTheme.textSecondary)))
-                  else
-                    ...sortedCats.map((e) => _CategoryBar(
-                          emoji: e.key.emoji,
-                          label: e.key.label,
-                          amount: e.value,
-                          total: total == 0 ? 1 : total,
-                          color: AppTheme.primary,
-                        )),
-                  const SizedBox(height: 24),
-                  const _ChartTitle(title: '관계별'),
-                  const SizedBox(height: 12),
-                  if (sortedRels.isEmpty)
-                    const Center(
-                        child: Text('데이터 없음',
-                            style: TextStyle(color: AppTheme.textSecondary)))
-                  else
-                    ...sortedRels.map((e) => _CategoryBar(
-                          emoji: _relationEmoji(e.key),
-                          label: e.key.label,
-                          amount: e.value,
-                          total: total == 0 ? 1 : total,
-                          color: AppTheme.secondary,
-                        )),
-                  const SizedBox(height: 100),
-                ],
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: _ChartCard(
+                title: '관계별 현황',
+                child: sortedRels.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                            child: Text('데이터 없음',
+                                style: TextStyle(
+                                    color: AppTheme.textSecondary))))
+                    : _RelationPieChart(sortedRels: sortedRels),
+              ),
+            ),
+          ),
+
+          // 4. 경조사별 프로그레스 바
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+              child: _ChartCard(
+                title: '경조사별',
+                child: sortedCats.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                            child: Text('데이터 없음',
+                                style: TextStyle(
+                                    color: AppTheme.textSecondary))))
+                    : Column(
+                        children: sortedCats
+                            .map((e) => _CategoryBar(
+                                  emoji: e.key.emoji,
+                                  label: e.key.label,
+                                  amount: e.value,
+                                  total: total == 0 ? 1 : total,
+                                  color: AppTheme.primary,
+                                ))
+                            .toList(),
+                      ),
               ),
             ),
           ),
         ],
 
-        // ── 장부 탭 콘텐츠 ──────────────────────────────────
+        // ── 장부 탭 ───────────────────────────────────────────
         if (tab.index == 1) ...[
           if (events.isEmpty)
             const SliverFillRemaining(
@@ -331,13 +315,512 @@ class _StatsBody extends StatelessWidget {
       ],
     );
   }
+}
 
-  String _relationEmoji(RelationType r) {
-    const emojis = ['👨‍👩‍👧', '👥', '🤝', '💼', '🏘️', '📌'];
-    return emojis[r.index.clamp(0, emojis.length - 1)];
+// ── 섹션 카드 컨테이너 ────────────────────────────────────────
+class _ChartCard extends StatelessWidget {
+  final String title;
+  final Widget child;
+  const _ChartCard({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                    letterSpacing: -0.3)),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      );
+}
+
+// ── 1. 월별 수입/지출 바 차트 ─────────────────────────────────
+class _MonthlyBarChart extends StatelessWidget {
+  final List<_MonthData> monthlyData;
+  const _MonthlyBarChart({required this.monthlyData});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxVal = monthlyData.fold(0, (max, d) {
+      final m = d.income > d.expense ? d.income : d.expense;
+      return m > max ? m : max;
+    });
+    final yMax = maxVal == 0 ? 100000.0 : maxVal * 1.3;
+    final fmt = NumberFormat('#,###');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          _Legend(color: AppTheme.income, label: '수입'),
+          const SizedBox(width: 16),
+          _Legend(color: AppTheme.expense, label: '지출'),
+        ]),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 200,
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: yMax,
+              barGroups: monthlyData.asMap().entries.map((entry) {
+                final i = entry.key;
+                final d = entry.value;
+                return BarChartGroupData(
+                  x: i,
+                  barRods: [
+                    BarChartRodData(
+                      toY: d.income.toDouble(),
+                      color: AppTheme.income,
+                      width: 7,
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(4)),
+                    ),
+                    BarChartRodData(
+                      toY: d.expense.toDouble(),
+                      color: AppTheme.expense,
+                      width: 7,
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(4)),
+                    ),
+                  ],
+                  barsSpace: 2,
+                );
+              }).toList(),
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 22,
+                    getTitlesWidget: (value, meta) => Text(
+                      '${value.toInt() + 1}',
+                      style: const TextStyle(
+                          fontSize: 10, color: AppTheme.textSecondary),
+                    ),
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 44,
+                    interval: yMax / 4,
+                    getTitlesWidget: (value, meta) {
+                      if (value == 0) return const SizedBox.shrink();
+                      final inMan = (value / 10000).round();
+                      return Text('${inMan}만',
+                          style: const TextStyle(
+                              fontSize: 9, color: AppTheme.textSecondary));
+                    },
+                  ),
+                ),
+                topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+              ),
+              borderData: FlBorderData(show: false),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: yMax / 4,
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Colors.grey.withValues(alpha: 0.15),
+                  strokeWidth: 1,
+                ),
+              ),
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => Colors.blueGrey.shade800,
+                  tooltipPadding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final amount = rod.toY.toInt();
+                    if (amount == 0) return null;
+                    final label = rodIndex == 0 ? '수입' : '지출';
+                    return BarTooltipItem(
+                      '$label\n${fmt.format(amount)}원',
+                      TextStyle(
+                        color: rodIndex == 0
+                            ? AppTheme.income
+                            : AppTheme.expense,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
+// ── 2. 연도별 트렌드 라인 차트 ──────────────────────────────────
+class _YearTrendChart extends StatelessWidget {
+  final List<EventModel> allEvents;
+  final List<int> years;
+  const _YearTrendChart({required this.allEvents, required this.years});
+
+  @override
+  Widget build(BuildContext context) {
+    final fmt = NumberFormat('#,###');
+
+    final incomeSpots = years.asMap().entries.map((entry) {
+      final year = entry.value;
+      final total = allEvents
+          .where((e) => e.date.year == year && e.isIncome)
+          .fold(0, (s, e) => s + e.amount);
+      return FlSpot(entry.key.toDouble(), total.toDouble());
+    }).toList();
+
+    final expenseSpots = years.asMap().entries.map((entry) {
+      final year = entry.value;
+      final total = allEvents
+          .where((e) => e.date.year == year && !e.isIncome)
+          .fold(0, (s, e) => s + e.amount);
+      return FlSpot(entry.key.toDouble(), total.toDouble());
+    }).toList();
+
+    final allValues = [...incomeSpots, ...expenseSpots].map((s) => s.y);
+    final maxY = allValues.isEmpty
+        ? 100000.0
+        : allValues.reduce((a, b) => a > b ? a : b) * 1.3;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          _Legend(color: AppTheme.income, label: '수입'),
+          const SizedBox(width: 16),
+          _Legend(color: AppTheme.expense, label: '지출'),
+        ]),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 180,
+          child: LineChart(
+            LineChartData(
+              minX: 0,
+              maxX: (years.length - 1).toDouble(),
+              minY: 0,
+              maxY: maxY == 0 ? 100000 : maxY,
+              lineBarsData: [
+                // 수입 라인
+                LineChartBarData(
+                  spots: incomeSpots,
+                  isCurved: years.length > 2,
+                  color: AppTheme.income,
+                  barWidth: 3,
+                  dotData: FlDotData(
+                    getDotPainter: (spot, percent, barData, index) =>
+                        FlDotCirclePainter(
+                            radius: 4,
+                            color: AppTheme.income,
+                            strokeWidth: 0),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: AppTheme.income.withValues(alpha: 0.08),
+                  ),
+                ),
+                // 지출 라인
+                LineChartBarData(
+                  spots: expenseSpots,
+                  isCurved: years.length > 2,
+                  color: AppTheme.expense,
+                  barWidth: 3,
+                  dotData: FlDotData(
+                    getDotPainter: (spot, percent, barData, index) =>
+                        FlDotCirclePainter(
+                            radius: 4,
+                            color: AppTheme.expense,
+                            strokeWidth: 0),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: AppTheme.expense.withValues(alpha: 0.08),
+                  ),
+                ),
+              ],
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 22,
+                    getTitlesWidget: (value, meta) {
+                      final idx = value.toInt();
+                      if (idx < 0 || idx >= years.length) {
+                        return const SizedBox.shrink();
+                      }
+                      return Text('${years[idx]}',
+                          style: const TextStyle(
+                              fontSize: 10, color: AppTheme.textSecondary));
+                    },
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 44,
+                    interval: maxY / 4,
+                    getTitlesWidget: (value, meta) {
+                      if (value == 0) return const SizedBox.shrink();
+                      final inMan = (value / 10000).round();
+                      return Text('${inMan}만',
+                          style: const TextStyle(
+                              fontSize: 9, color: AppTheme.textSecondary));
+                    },
+                  ),
+                ),
+                topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+              ),
+              borderData: FlBorderData(show: false),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: maxY / 4,
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Colors.grey.withValues(alpha: 0.15),
+                  strokeWidth: 1,
+                ),
+              ),
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (_) => Colors.blueGrey.shade800,
+                  getTooltipItems: (touchedSpots) {
+                    return touchedSpots.map((spot) {
+                      final isIncome = spot.barIndex == 0;
+                      final yearIdx = spot.x.toInt();
+                      final yearLabel = yearIdx < years.length
+                          ? '${years[yearIdx]}년 '
+                          : '';
+                      return LineTooltipItem(
+                        '$yearLabel${isIncome ? "수입" : "지출"}\n${fmt.format(spot.y.toInt())}원',
+                        TextStyle(
+                          color: isIncome ? AppTheme.income : AppTheme.expense,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── 3. 관계별 파이 차트 ──────────────────────────────────────
+class _RelationPieChart extends StatefulWidget {
+  final List<MapEntry<RelationType, int>> sortedRels;
+  const _RelationPieChart({required this.sortedRels});
+
+  @override
+  State<_RelationPieChart> createState() => _RelationPieChartState();
+}
+
+class _RelationPieChartState extends State<_RelationPieChart> {
+  int _touched = -1;
+
+  static const _pieColors = [
+    Color(0xFF2563EB),
+    Color(0xFF7C3AED),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B),
+    Color(0xFF06B6D4),
+    Color(0xFF94A3B8),
+  ];
+
+  static const _relationEmojis = ['👨‍👩‍👧', '👥', '🤝', '💼', '🏘️', '📌'];
+
+  @override
+  Widget build(BuildContext context) {
+    final total =
+        widget.sortedRels.fold(0, (s, e) => s + e.value);
+    final fmt = NumberFormat('#,###');
+
+    final sections = widget.sortedRels.asMap().entries.map((entry) {
+      final i = entry.key;
+      final e = entry.value;
+      final ratio = total == 0 ? 0.0 : e.value / total;
+      final isTouched = i == _touched;
+      final color = _pieColors[e.key.index % _pieColors.length];
+
+      return PieChartSectionData(
+        value: e.value.toDouble(),
+        color: color,
+        radius: isTouched ? 76 : 62,
+        title: ratio < 0.05
+            ? ''
+            : '${(ratio * 100).toStringAsFixed(0)}%',
+        titleStyle: TextStyle(
+          fontSize: isTouched ? 13 : 11,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      );
+    }).toList();
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 200,
+          child: PieChart(
+            PieChartData(
+              sections: sections,
+              centerSpaceRadius: 44,
+              sectionsSpace: 3,
+              pieTouchData: PieTouchData(
+                touchCallback: (event, response) {
+                  setState(() {
+                    if (!event.isInterestedForInteractions ||
+                        response == null ||
+                        response.touchedSection == null) {
+                      _touched = -1;
+                      return;
+                    }
+                    _touched =
+                        response.touchedSection!.touchedSectionIndex;
+                  });
+                },
+              ),
+            ),
+          ),
+        ),
+
+        // 터치된 항목 상세 표시
+        if (_touched >= 0 && _touched < widget.sortedRels.length) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: _pieColors[widget.sortedRels[_touched].key.index %
+                      _pieColors.length]
+                  .withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _relationEmojis[widget.sortedRels[_touched].key.index
+                      .clamp(0, _relationEmojis.length - 1)],
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  widget.sortedRels[_touched].key.label,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _pieColors[widget.sortedRels[_touched].key
+                              .index %
+                          _pieColors.length]),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${fmt.format(widget.sortedRels[_touched].value)}원',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '(${(widget.sortedRels[_touched].value / (total == 0 ? 1 : total) * 100).toStringAsFixed(1)}%)',
+                  style: const TextStyle(
+                      fontSize: 11, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 12),
+        // 범례
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: widget.sortedRels.asMap().entries.map((entry) {
+            final i = entry.key;
+            final e = entry.value;
+            final color = _pieColors[e.key.index % _pieColors.length];
+            final emoji = _relationEmojis[
+                e.key.index.clamp(0, _relationEmojis.length - 1)];
+            final isTouched = i == _touched;
+            return GestureDetector(
+              onTap: () =>
+                  setState(() => _touched = _touched == i ? -1 : i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: isTouched
+                      ? color.withValues(alpha: 0.12)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isTouched
+                        ? color.withValues(alpha: 0.4)
+                        : Colors.transparent,
+                  ),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                          color: color, shape: BoxShape.circle)),
+                  const SizedBox(width: 5),
+                  Text('$emoji ${e.key.label}',
+                      style: const TextStyle(
+                          fontSize: 11, color: AppTheme.textSecondary)),
+                  const SizedBox(width: 4),
+                  Text('${fmt.format(e.value)}원',
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary)),
+                ]),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+// ── 공통 위젯들 ───────────────────────────────────────────────
 class _YearBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
@@ -397,8 +880,7 @@ class _YearSummaryCard extends StatelessWidget {
             children: [
               Text(label,
                   style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 11)),
+                      color: AppTheme.textSecondary, fontSize: 11)),
               Text(value,
                   style: const TextStyle(
                       color: AppTheme.textPrimary,
@@ -409,65 +891,6 @@ class _YearSummaryCard extends StatelessWidget {
           )),
         ]),
       );
-}
-
-class _BarGroup extends StatelessWidget {
-  final _MonthData data;
-  final int maxVal;
-  const _BarGroup({required this.data, required this.maxVal});
-
-  @override
-  Widget build(BuildContext context) {
-    final incRatio = data.income / maxVal;
-    final expRatio = data.expense / maxVal;
-    const maxH = 140.0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // 수입 바
-          _Bar(height: incRatio * maxH, color: AppTheme.income),
-          const SizedBox(width: 1),
-          // 지출 바
-          _Bar(height: expRatio * maxH, color: AppTheme.expense),
-        ],
-      ),
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  final double height;
-  final Color color;
-  const _Bar({required this.height, required this.color});
-
-  @override
-  Widget build(BuildContext context) => AnimatedContainer(
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeOutCubic,
-        width: 6,
-        height: height < 2 ? 2 : height,
-        decoration: BoxDecoration(
-          color: height < 2 ? color.withValues(alpha: 0.2) : color,
-          borderRadius: BorderRadius.circular(3),
-        ),
-      );
-}
-
-class _ChartTitle extends StatelessWidget {
-  final String title;
-  const _ChartTitle({required this.title});
-
-  @override
-  Widget build(BuildContext context) => Text(title,
-      style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
-          color: AppTheme.textPrimary,
-          letterSpacing: -0.3));
 }
 
 class _Legend extends StatelessWidget {
@@ -484,8 +907,8 @@ class _Legend extends StatelessWidget {
                 color: color, borderRadius: BorderRadius.circular(3))),
         const SizedBox(width: 5),
         Text(label,
-            style:
-                const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+            style: const TextStyle(
+                fontSize: 12, color: AppTheme.textSecondary)),
       ]);
 }
 
@@ -513,18 +936,20 @@ class _CategoryBar extends StatelessWidget {
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary)),
-              Text('${fmt.format(amount)}원',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary)),
-            ]),
+            Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(label,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary)),
+                  Text('${fmt.format(amount)}원',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary)),
+                ]),
             const SizedBox(height: 6),
             Stack(children: [
               Container(
@@ -578,7 +1003,8 @@ class _StatsLedgerItem extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => PersonHistoryScreen(personName: event.personName),
+          builder: (_) =>
+              PersonHistoryScreen(personName: event.personName),
         ),
       ),
       child: Container(
@@ -595,7 +1021,6 @@ class _StatsLedgerItem extends StatelessWidget {
           ],
         ),
         child: Row(children: [
-          // 이모지 아이콘
           Container(
             width: 38,
             height: 38,
@@ -629,8 +1054,8 @@ class _StatsLedgerItem extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color:
-                              const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                          color: const Color(0xFF7C3AED)
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text('예정',
@@ -644,8 +1069,9 @@ class _StatsLedgerItem extends StatelessWidget {
                           style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
-                              color:
-                                  inc ? AppTheme.income : AppTheme.expense)),
+                              color: inc
+                                  ? AppTheme.income
+                                  : AppTheme.expense)),
                   ],
                 ),
                 const SizedBox(height: 3),
@@ -655,7 +1081,8 @@ class _StatsLedgerItem extends StatelessWidget {
                     Text(
                         '${event.ceremonyType.label} · ${event.relation.label}',
                         style: const TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary)),
+                            fontSize: 12,
+                            color: AppTheme.textSecondary)),
                     Text(dateFmt.format(event.date),
                         style: const TextStyle(
                             fontSize: 11, color: AppTheme.textHint)),
@@ -665,7 +1092,6 @@ class _StatsLedgerItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          // 수정 버튼
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => showModalBottomSheet(
@@ -674,8 +1100,8 @@ class _StatsLedgerItem extends StatelessWidget {
               shape: const RoundedRectangleBorder(
                   borderRadius:
                       BorderRadius.vertical(top: Radius.circular(20))),
-              builder: (_) =>
-                  EventBottomSheet(initialDate: event.date, eventToEdit: event),
+              builder: (_) => EventBottomSheet(
+                  initialDate: event.date, eventToEdit: event),
             ),
             child: Container(
               padding: const EdgeInsets.all(7),
