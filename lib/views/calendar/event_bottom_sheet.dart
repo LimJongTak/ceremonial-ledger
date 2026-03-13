@@ -797,7 +797,7 @@ class _State extends ConsumerState<EventBottomSheet>
 }
 
 // ── 연락처 자동완성 위젯 ──────────────────────────────────────
-class _ContactAutocomplete extends StatelessWidget {
+class _ContactAutocomplete extends StatefulWidget {
   final TextEditingController nameCtrl;
   final List<String> contactNames;
   final InputDecoration decoration;
@@ -809,55 +809,80 @@ class _ContactAutocomplete extends StatelessWidget {
   });
 
   @override
+  State<_ContactAutocomplete> createState() => _ContactAutocompleteState();
+}
+
+class _ContactAutocompleteState extends State<_ContactAutocomplete> {
+  // Autocomplete 내부 컨트롤러를 한 번만 참조하기 위한 키
+  final _autocompleteKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
     return Autocomplete<String>(
-      initialValue: TextEditingValue(text: nameCtrl.text),
+      key: _autocompleteKey,
+      initialValue: TextEditingValue(text: widget.nameCtrl.text),
       optionsBuilder: (textEditingValue) {
-        if (textEditingValue.text.isEmpty) {
-          return const Iterable<String>.empty();
-        }
-        return contactNames.where((name) => name
-            .toLowerCase()
-            .contains(textEditingValue.text.toLowerCase()));
+        final query = textEditingValue.text.trim();
+        if (query.isEmpty) return const Iterable<String>.empty();
+        return widget.contactNames.where(
+          (name) => name.toLowerCase().contains(query.toLowerCase()),
+        );
       },
-      onSelected: (selected) => nameCtrl.text = selected,
+      onSelected: (selected) {
+        widget.nameCtrl.text = selected;
+      },
       fieldViewBuilder: (ctx, ctrl, focusNode, onFieldSubmitted) {
-        // Autocomplete 내부 컨트롤러와 nameCtrl 동기화
-        if (ctrl.text != nameCtrl.text) ctrl.text = nameCtrl.text;
-        ctrl.addListener(() => nameCtrl.text = ctrl.text);
         return TextFormField(
           controller: ctrl,
           focusNode: focusNode,
-          decoration: decoration,
-          validator: (v) => v?.isEmpty == true ? '이름을 입력해주세요' : null,
+          decoration: widget.decoration,
+          onChanged: (value) => widget.nameCtrl.text = value,
+          validator: (v) => v?.trim().isEmpty == true ? '이름을 입력해주세요' : null,
         );
       },
       optionsViewBuilder: (ctx, onSelected, options) => Align(
         alignment: Alignment.topLeft,
         child: Material(
-          elevation: 4,
+          elevation: 6,
           borderRadius: BorderRadius.circular(12),
           color: Colors.white,
           child: ConstrainedBox(
-            constraints:
-                const BoxConstraints(maxHeight: 180, maxWidth: 280),
-            child: ListView.builder(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              itemCount: options.length,
-              itemBuilder: (_, i) {
-                final opt = options.elementAt(i);
-                return ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.person_outline_rounded,
-                      size: 18, color: AppTheme.primary),
-                  title: Text(opt,
-                      style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textPrimary)),
-                  onTap: () => onSelected(opt),
-                );
-              },
+            constraints: const BoxConstraints(maxHeight: 200, maxWidth: 300),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (_, i) {
+                  final opt = options.elementAt(i);
+                  return InkWell(
+                    onTap: () => onSelected(opt),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      child: Row(children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.person_rounded,
+                              size: 16, color: AppTheme.primary),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(opt,
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textPrimary)),
+                      ]),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
