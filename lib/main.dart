@@ -12,6 +12,7 @@ import 'views/auth/profile_setup_screen.dart';
 import 'views/common/app_theme.dart';
 import 'services/notification_service.dart';
 import 'services/home_widget_service.dart';
+import 'services/fcm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,7 @@ void main() async {
   }
   await HomeWidgetService.instance.initialize();
   await NotificationService.instance.initialize();
+  await FcmService.instance.initialize();
   KakaoSdk.init(nativeAppKey: '9e8cb74d18d1c54a5a7be9cd53461b56');
   runApp(const ProviderScope(child: CeremonialLedgerApp()));
 }
