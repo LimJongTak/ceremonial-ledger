@@ -266,6 +266,175 @@ class ExcelTemplateService {
     return RelationType.other;
   }
 
+  // ─── 데이터 내보내기 ──────────────────────────────────────────
+  Future<String?> exportData({
+    required List<EventModel> events,
+    required DateTime startDate,
+    required DateTime endDate,
+    List<CeremonyType>? categories,
+  }) async {
+    try {
+      // 기간 필터
+      final s = DateTime(startDate.year, startDate.month, startDate.day);
+      final e =
+          DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+      var filtered = events
+          .where((ev) => !ev.date.isBefore(s) && !ev.date.isAfter(e))
+          .toList();
+
+      // 카테고리 필터
+      if (categories != null && categories.isNotEmpty) {
+        filtered = filtered
+            .where((ev) => categories.contains(ev.ceremonyType))
+            .toList();
+      }
+
+      filtered.sort((a, b) => a.date.compareTo(b.date));
+
+      final excel = Excel.createExcel();
+      final sheet = excel['경조사_장부'];
+      excel.delete('Sheet1');
+
+      final headerStyle = CellStyle(
+        bold: true,
+        horizontalAlign: HorizontalAlign.Center,
+        backgroundColorHex: ExcelColor.fromHexString('#1A73E8'),
+        fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+        fontSize: 11,
+      );
+
+      // 제목
+      final titleFmt = DateFormat('yyyy.MM.dd');
+      String titleStr =
+          '${titleFmt.format(startDate)} ~ ${titleFmt.format(endDate)} 경조사 결산';
+      if (categories != null &&
+          categories.isNotEmpty &&
+          categories.length < CeremonyType.values.length) {
+        titleStr += ' [${categories.map((c) => c.label).join('·')}]';
+      }
+
+      sheet.merge(
+        CellIndex.indexByString('A1'),
+        CellIndex.indexByString('H1'),
+      );
+      sheet.cell(CellIndex.indexByString('A1'))
+        ..value = TextCellValue(titleStr)
+        ..cellStyle = CellStyle(
+          bold: true,
+          fontSize: 14,
+          horizontalAlign: HorizontalAlign.Center,
+          backgroundColorHex: ExcelColor.fromHexString('#1A73E8'),
+          fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+        );
+
+      // 헤더 행
+      final headers = ['날짜', '이름', '경조사', '관계', '금액', '수입/지출', '메모'];
+      for (var i = 0; i < headers.length; i++) {
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 1))
+          ..value = TextCellValue(headers[i])
+          ..cellStyle = headerStyle;
+      }
+
+      // 데이터 행
+      final dateFmt2 = DateFormat('yyyy-MM-dd');
+      final fmt = NumberFormat('#,###');
+      for (var r = 0; r < filtered.length; r++) {
+        final ev = filtered[r];
+        final isIncome = ev.isIncome;
+        final rowStyle = CellStyle(
+          fontSize: 10,
+          backgroundColorHex: r.isEven
+              ? ExcelColor.fromHexString('#FFFFFF')
+              : ExcelColor.fromHexString('#F8FAFF'),
+        );
+        final amountStyle = CellStyle(
+          fontSize: 10,
+          bold: true,
+          fontColorHex: isIncome
+              ? ExcelColor.fromHexString('#10B981')
+              : ExcelColor.fromHexString('#EF4444'),
+          backgroundColorHex: r.isEven
+              ? ExcelColor.fromHexString('#FFFFFF')
+              : ExcelColor.fromHexString('#F8FAFF'),
+        );
+
+        final rowData = [
+          dateFmt2.format(ev.date),
+          ev.personName,
+          '${ev.ceremonyType.emoji} ${ev.ceremonyType.label}',
+          ev.relation.label,
+          '${fmt.format(ev.amount)}원',
+          ev.eventType.label,
+          ev.memo ?? '',
+        ];
+        for (var c = 0; c < rowData.length; c++) {
+          sheet
+              .cell(
+                  CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r + 2))
+            ..value = TextCellValue(rowData[c])
+            ..cellStyle = c == 4 ? amountStyle : rowStyle;
+        }
+      }
+
+      // 합계 행
+      final totalRow = filtered.length + 2;
+      final incomeTotal = filtered
+          .where((ev) => ev.isIncome)
+          .fold(0, (s, ev) => s + ev.amount);
+      final expenseTotal = filtered
+          .where((ev) => !ev.isIncome)
+          .fold(0, (s, ev) => s + ev.amount);
+
+      final summaryStyle = CellStyle(
+        bold: true,
+        fontSize: 10,
+        backgroundColorHex: ExcelColor.fromHexString('#E8F0FE'),
+      );
+      sheet.merge(
+        CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: totalRow),
+        CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: totalRow),
+      );
+      sheet
+          .cell(
+              CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: totalRow))
+        ..value = TextCellValue('합계 (${filtered.length}건)')
+        ..cellStyle = summaryStyle;
+      sheet.merge(
+        CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: totalRow),
+        CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: totalRow),
+      );
+      sheet
+          .cell(
+              CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: totalRow))
+        ..value = TextCellValue(
+            '수입: ${fmt.format(incomeTotal)}원 / 지출: ${fmt.format(expenseTotal)}원')
+        ..cellStyle = summaryStyle;
+
+      // 컬럼 너비
+      sheet.setColumnWidth(0, 14);
+      sheet.setColumnWidth(1, 12);
+      sheet.setColumnWidth(2, 12);
+      sheet.setColumnWidth(3, 10);
+      sheet.setColumnWidth(4, 16);
+      sheet.setColumnWidth(5, 10);
+      sheet.setColumnWidth(6, 20);
+
+      // 저장
+      final dir = await getApplicationDocumentsDirectory();
+      final filenameFmt = DateFormat('yyyyMMdd');
+      final filename =
+          '경조사결산_${filenameFmt.format(startDate)}_${filenameFmt.format(endDate)}.xlsx';
+      final filePath = '${dir.path}/$filename';
+      final file = File(filePath);
+      await file.writeAsBytes(excel.encode()!);
+
+      return filePath;
+    } catch (e) {
+      debugPrint('엑셀 내보내기 오류: $e');
+      return null;
+    }
+  }
+
   Future<void> openFile(String path) async {
     await OpenFile.open(path);
   }

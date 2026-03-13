@@ -12,36 +12,41 @@ class PdfReportService {
 
   final _fmt = NumberFormat('#,###');
 
-  // ── PDF 생성 및 미리보기/공유 ────────────────────────────────
+  // ── PDF 생성 및 공유 ─────────────────────────────────────────
   Future<void> generateAndShare({
     required List<EventModel> events,
-    required int year,
-    int? month,
+    required DateTime startDate,
+    required DateTime endDate,
+    List<CeremonyType>? categories,
     required String userName,
   }) async {
     final pdf = await _buildPdf(
       events: events,
-      year: year,
-      month: month,
+      startDate: startDate,
+      endDate: endDate,
+      categories: categories,
       userName: userName,
     );
 
-    final title =
-        month != null ? '$year년 $month월 경조사 결산' : '$year년 경조사 결산';
+    final filenameFmt = DateFormat('yyyyMMdd');
+    final filename =
+        '경조사결산_${filenameFmt.format(startDate)}_${filenameFmt.format(endDate)}.pdf';
 
-    await Printing.sharePdf(bytes: pdf, filename: '$title.pdf');
+    await Printing.sharePdf(bytes: pdf, filename: filename);
   }
 
   // ── PDF 미리보기 화면 열기 ────────────────────────────────────
   Future<void> previewPdf({
     required BuildContext context,
     required List<EventModel> events,
-    required int year,
-    int? month,
+    required DateTime startDate,
+    required DateTime endDate,
+    List<CeremonyType>? categories,
     required String userName,
   }) async {
+    final titleFmt = DateFormat('yyyy.MM.dd');
     final title =
-        month != null ? '$year년 $month월 경조사 결산' : '$year년 경조사 결산';
+        '${titleFmt.format(startDate)} ~ ${titleFmt.format(endDate)} 결산';
 
     await Navigator.push(
       context,
@@ -57,11 +62,15 @@ class PdfReportService {
                 onPressed: () async {
                   final pdf = await _buildPdf(
                     events: events,
-                    year: year,
-                    month: month,
+                    startDate: startDate,
+                    endDate: endDate,
+                    categories: categories,
                     userName: userName,
                   );
-                  await Printing.sharePdf(bytes: pdf, filename: '$title.pdf');
+                  final filenameFmt = DateFormat('yyyyMMdd');
+                  final filename =
+                      '경조사결산_${filenameFmt.format(startDate)}_${filenameFmt.format(endDate)}.pdf';
+                  await Printing.sharePdf(bytes: pdf, filename: filename);
                 },
               ),
             ],
@@ -69,8 +78,9 @@ class PdfReportService {
           body: PdfPreview(
             build: (_) => _buildPdf(
               events: events,
-              year: year,
-              month: month,
+              startDate: startDate,
+              endDate: endDate,
+              categories: categories,
               userName: userName,
             ),
             canChangeOrientation: false,
@@ -85,46 +95,59 @@ class PdfReportService {
   // ── PDF 빌드 ─────────────────────────────────────────────────
   Future<Uint8List> _buildPdf({
     required List<EventModel> events,
-    required int year,
-    int? month,
+    required DateTime startDate,
+    required DateTime endDate,
+    List<CeremonyType>? categories,
     required String userName,
   }) async {
     final pdf = pw.Document();
 
-    // 폰트 (기본 폰트 사용 - 한글 깨짐 방지를 위해 notoSans)
     final font = await PdfGoogleFonts.notoSansKRRegular();
     final boldFont = await PdfGoogleFonts.notoSansKRBold();
 
-    // 데이터 계산
-    final filtered = month != null
-        ? events
-            .where((e) => e.date.year == year && e.date.month == month)
-            .toList()
-        : events.where((e) => e.date.year == year).toList();
+    // 기간 필터
+    final s = DateTime(startDate.year, startDate.month, startDate.day);
+    final e = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+    var filtered =
+        events.where((ev) => !ev.date.isBefore(s) && !ev.date.isAfter(e)).toList();
+
+    // 카테고리 필터
+    if (categories != null && categories.isNotEmpty) {
+      filtered =
+          filtered.where((ev) => categories.contains(ev.ceremonyType)).toList();
+    }
 
     filtered.sort((a, b) => a.date.compareTo(b.date));
 
     final totalIncome =
-        filtered.where((e) => e.isIncome).fold(0, (s, e) => s + e.amount);
+        filtered.where((ev) => ev.isIncome).fold(0, (s, ev) => s + ev.amount);
     final totalExpense =
-        filtered.where((e) => !e.isIncome).fold(0, (s, e) => s + e.amount);
+        filtered.where((ev) => !ev.isIncome).fold(0, (s, ev) => s + ev.amount);
     final balance = totalIncome - totalExpense;
 
     // 경조사별 집계
     final Map<CeremonyType, _CerStats> cerStats = {};
-    for (final e in filtered) {
-      cerStats[e.ceremonyType] ??= _CerStats();
-      if (e.isIncome) {
-        cerStats[e.ceremonyType]!.incomeCount++;
-        cerStats[e.ceremonyType]!.incomeTotal += e.amount;
+    for (final ev in filtered) {
+      cerStats[ev.ceremonyType] ??= _CerStats();
+      if (ev.isIncome) {
+        cerStats[ev.ceremonyType]!.incomeCount++;
+        cerStats[ev.ceremonyType]!.incomeTotal += ev.amount;
       } else {
-        cerStats[e.ceremonyType]!.expenseCount++;
-        cerStats[e.ceremonyType]!.expenseTotal += e.amount;
+        cerStats[ev.ceremonyType]!.expenseCount++;
+        cerStats[ev.ceremonyType]!.expenseTotal += ev.amount;
       }
     }
 
-    final title =
-        month != null ? '$year년 $month월 경조사 결산 보고서' : '$year년 경조사 결산 보고서';
+    final titleFmt = DateFormat('yyyy.MM.dd');
+    String reportTitle =
+        '${titleFmt.format(startDate)} ~ ${titleFmt.format(endDate)} 경조사 결산 보고서';
+    if (categories != null &&
+        categories.isNotEmpty &&
+        categories.length < CeremonyType.values.length) {
+      final cats = categories.map((c) => c.label).join('·');
+      reportTitle += ' [$cats]';
+    }
+
     final now = DateFormat('yyyy.MM.dd HH:mm').format(DateTime.now());
 
     pdf.addPage(
@@ -132,7 +155,7 @@ class PdfReportService {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(40),
         theme: pw.ThemeData.withFont(base: font, bold: boldFont),
-        header: (ctx) => _buildHeader(title, userName, now, boldFont),
+        header: (ctx) => _buildHeader(reportTitle, userName, now, boldFont),
         footer: (ctx) => _buildFooter(ctx, font),
         build: (ctx) => [
           pw.SizedBox(height: 20),
@@ -192,10 +215,11 @@ class PdfReportService {
             pw.SizedBox(height: 4),
             pw.Text(title,
                 style: pw.TextStyle(
-                    font: boldFont, fontSize: 18, color: PdfColors.white)),
+                    font: boldFont, fontSize: 16, color: PdfColors.white)),
             pw.SizedBox(height: 4),
             pw.Text('$userName · 생성일: $now',
-                style: const pw.TextStyle(fontSize: 10, color: PdfColors.white)),
+                style:
+                    const pw.TextStyle(fontSize: 10, color: PdfColors.white)),
           ],
         ),
       ),
@@ -236,7 +260,8 @@ class PdfReportService {
               : const PdfColor.fromInt(0xFFEF4444),
           boldFont),
       pw.SizedBox(width: 8),
-      _summaryCard('총 건수', '$count건', const PdfColor.fromInt(0xFF7C3AED), boldFont),
+      _summaryCard(
+          '총 건수', '$count건', const PdfColor.fromInt(0xFF7C3AED), boldFont),
     ]);
   }
 
@@ -256,7 +281,8 @@ class PdfReportService {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(label,
-                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+                style:
+                    const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
             pw.SizedBox(height: 4),
             pw.Text(value,
                 style:
@@ -307,7 +333,6 @@ class PdfReportService {
         4: const pw.FlexColumnWidth(2),
       },
       children: [
-        // 헤더
         pw.TableRow(
           decoration:
               const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF1F5F9)),
@@ -320,7 +345,6 @@ class PdfReportService {
                   ))
               .toList(),
         ),
-        // 데이터
         ...rows.map((row) => pw.TableRow(
               children: row
                   .map((cell) => pw.Padding(
@@ -350,7 +374,6 @@ class PdfReportService {
         6: const pw.FlexColumnWidth(2),
       },
       children: [
-        // 헤더
         pw.TableRow(
           decoration:
               const pw.BoxDecoration(color: PdfColor.fromInt(0xFF2563EB)),
@@ -366,24 +389,23 @@ class PdfReportService {
                   ))
               .toList(),
         ),
-        // 데이터
         ...events.asMap().entries.map((entry) {
           final i = entry.key;
-          final e = entry.value;
-          final isInc = e.isIncome;
+          final ev = entry.value;
+          final isInc = ev.isIncome;
           final bg =
               i.isEven ? PdfColors.white : const PdfColor.fromInt(0xFFF8FAFF);
 
           return pw.TableRow(
             decoration: pw.BoxDecoration(color: bg),
             children: [
-              DateFormat('MM/dd').format(e.date),
-              e.personName,
-              '${e.ceremonyType.emoji} ${e.ceremonyType.label}',
-              e.relation.label,
-              '${_fmt.format(e.amount)}원',
+              DateFormat('MM/dd').format(ev.date),
+              ev.personName,
+              '${ev.ceremonyType.emoji} ${ev.ceremonyType.label}',
+              ev.relation.label,
+              '${_fmt.format(ev.amount)}원',
               isInc ? '수입' : '지출',
-              e.memo ?? '-',
+              ev.memo ?? '-',
             ]
                 .asMap()
                 .entries
