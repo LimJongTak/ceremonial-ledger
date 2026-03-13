@@ -28,9 +28,21 @@ final allEventsProvider = StreamProvider<List<EventModel>>((ref) {
 final eventsByDateProvider = Provider<Map<DateTime, List<EventModel>>>((ref) {
   final events = ref.watch(allEventsProvider).valueOrNull ?? [];
   final map = <DateTime, List<EventModel>>{};
+  const calendarLastYear = 2030;
+
   for (final e in events) {
     final key = DateTime(e.date.year, e.date.month, e.date.day);
     map.putIfAbsent(key, () => []).add(e);
+
+    // 반복 이벤트: 등록 연도 다음 해부터 2030년까지 가상 항목 추가
+    if (e.isRecurring) {
+      for (int year = e.date.year + 1; year <= calendarLastYear; year++) {
+        final maxDay = DateTime(year, e.date.month + 1, 0).day;
+        final day = e.date.day > maxDay ? maxDay : e.date.day;
+        final futureDate = DateTime(year, e.date.month, day);
+        map.putIfAbsent(futureDate, () => []).add(e.copyWith(date: futureDate));
+      }
+    }
   }
   return map;
 });

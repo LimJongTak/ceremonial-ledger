@@ -73,6 +73,21 @@ class EventModel {
     this.isRecurring = false,
   });
 
+  EventModel copyWith({DateTime? date}) => EventModel(
+        id: id,
+        date: date ?? this.date,
+        personName: personName,
+        relation: relation,
+        ceremonyType: ceremonyType,
+        amount: amount,
+        eventType: eventType,
+        memo: memo,
+        userId: userId,
+        firestoreId: firestoreId,
+        photoPath: photoPath,
+        isRecurring: isRecurring,
+      );
+
   bool get isIncome => eventType == EventType.income;
 
   String get formattedAmount {
