@@ -189,7 +189,7 @@ class FamilyService {
                 memo: d['memo'] as String?,
                 userId: d['userId'] as String,
                 firestoreId: doc.id,
-                photoPath: d['photoPath'] as String?,
+                photos: _parsePhotos(d),
                 isRecurring: d['isRecurring'] as bool? ?? false,
               );
             }).toList());
@@ -208,7 +208,7 @@ class FamilyService {
       'eventType': event.eventType.index,
       'memo': event.memo,
       'userId': userId,
-      'photoPath': event.photoPath,
+      'photos': event.photos,
       'isRecurring': event.isRecurring,
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -230,5 +230,16 @@ class FamilyService {
         .collection('events')
         .doc(firestoreId)
         .delete();
+  }
+
+  // photos 필드 파싱 (하위 호환: 구 photoPath 단일 필드 지원)
+  static List<String> _parsePhotos(Map<String, dynamic> d) {
+    final photosField = d['photos'];
+    if (photosField is List && photosField.isNotEmpty) {
+      return photosField.cast<String>();
+    }
+    final legacy = d['photoPath'] as String?;
+    if (legacy != null) return [legacy];
+    return [];
   }
 }

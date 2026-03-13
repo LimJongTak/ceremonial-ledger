@@ -39,9 +39,11 @@ class Events extends Table {
   TextColumn get eventType => textEnum<EventType>()();
   TextColumn get memo => text().nullable()();
   TextColumn get userId => text()();
-  TextColumn get photoPath => text().nullable()(); // 첨부 사진 로컬 경로
+  TextColumn get photoPath => text().nullable()(); // 첨부 사진 로컬 경로 (하위 호환)
   BoolColumn get isRecurring =>
       boolean().withDefault(const Constant(false))(); // 매년 반복 알림
+  TextColumn get photoPaths =>
+      text().nullable()(); // JSON 인코딩된 다중 사진 경로 목록
 }
 
 class EventModel {
@@ -55,7 +57,7 @@ class EventModel {
   final String? memo;
   final String userId;
   final String? firestoreId;
-  final String? photoPath; // 첨부 사진 경로
+  final List<String> photos; // 다중 사진 경로 목록
   final bool isRecurring; // 매년 반복 알림
 
   EventModel({
@@ -69,9 +71,12 @@ class EventModel {
     this.memo,
     required this.userId,
     this.firestoreId,
-    this.photoPath,
+    this.photos = const [],
     this.isRecurring = false,
   });
+
+  // 하위 호환: 첫 번째 사진 반환
+  String? get photoPath => photos.isEmpty ? null : photos.first;
 
   EventModel copyWith({DateTime? date}) => EventModel(
         id: id,
@@ -84,7 +89,7 @@ class EventModel {
         memo: memo,
         userId: userId,
         firestoreId: firestoreId,
-        photoPath: photoPath,
+        photos: photos,
         isRecurring: isRecurring,
       );
 
