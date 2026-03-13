@@ -40,7 +40,7 @@ class _State extends ConsumerState<EventBottomSheet>
   CeremonyType _cer = CeremonyType.wedding;
   late DateTime _date;
   _EntryMode _mode = _EntryMode.confirmed;
-  String? _photoPath; // 첨부 사진 경로
+  List<String> _photoPaths = []; // 첨부 사진 경로 목록 (최대 5장)
   bool _isRecurring = false; // 매년 반복 알림
 
   late AnimationController _animCtrl;
@@ -65,7 +65,7 @@ class _State extends ConsumerState<EventBottomSheet>
       _rel = e.relation;
       _cer = e.ceremonyType;
       _date = e.date;
-      _photoPath = e.photoPath;
+      _photoPaths = List.from(e.photos);
       _isRecurring = e.isRecurring;
       _mode = e.amount == 0 ? _EntryMode.scheduled : _EntryMode.confirmed;
     } else {
@@ -102,8 +102,9 @@ class _State extends ConsumerState<EventBottomSheet>
     if (picked != null) setState(() => _date = picked);
   }
 
-  // ── 사진 선택 ────────────────────────────────────────────────
+  // ── 사진 선택 (목록에 추가) ──────────────────────────────────
   Future<void> _pickPhoto(ImageSource source) async {
+    if (_photoPaths.length >= 5) return;
     final picker = ImagePicker();
     final picked = await picker.pickImage(
         source: source, imageQuality: 80, maxWidth: 1200);
@@ -116,7 +117,9 @@ class _State extends ConsumerState<EventBottomSheet>
     final destPath = p.join(docsDir.path, fileName);
     await File(picked.path).copy(destPath);
 
-    setState(() => _photoPath = destPath);
+    setState(() {
+      if (_photoPaths.length < 5) _photoPaths.add(destPath);
+    });
   }
 
   // ── 사진 전체 화면 보기 ──────────────────────────────────────
@@ -130,6 +133,7 @@ class _State extends ConsumerState<EventBottomSheet>
   }
 
   void _showPhotoOptions() {
+    if (_photoPaths.length >= 5) return;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -163,15 +167,6 @@ class _State extends ConsumerState<EventBottomSheet>
               _pickPhoto(ImageSource.gallery);
             },
           ),
-          if (_photoPath != null)
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppTheme.expense),
-              title: const Text('사진 삭제'),
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => _photoPath = null);
-              },
-            ),
           const SizedBox(height: 8),
         ]),
       ),
@@ -658,75 +653,107 @@ class _State extends ConsumerState<EventBottomSheet>
                   ),
                   const SizedBox(height: 12),
 
-                  // ── 사진 첨부 ────────────────────────────────
-                  GestureDetector(
-                    onTap: _showPhotoOptions,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: _photoPath != null
-                            ? Border.all(
-                                color:
-                                    AppTheme.primary.withValues(alpha: 0.4),
-                                width: 1.5)
-                            : null,
-                      ),
-                      child: _photoPath != null
-                          ? Row(children: [
-                              // 썸네일 탭 → 전체 화면 보기
+                  // ── 사진 첨부 (다중, 최대 5장) ───────────────
+                  if (_photoPaths.isNotEmpty) ...[
+                    SizedBox(
+                      height: 90,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _photoPaths.length +
+                            (_photoPaths.length < 5 ? 1 : 0),
+                        itemBuilder: (ctx, i) {
+                          // 마지막 아이템: 추가 버튼
+                          if (i == _photoPaths.length) {
+                            return GestureDetector(
+                              onTap: _showPhotoOptions,
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                margin: const EdgeInsets.only(right: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: AppTheme.textSecondary
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.add_photo_alternate_outlined,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            );
+                          }
+                          final path = _photoPaths[i];
+                          return Stack(
+                            children: [
                               GestureDetector(
-                                onTap: () =>
-                                    _showFullScreenPhoto(_photoPath!),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    File(_photoPath!),
-                                    width: 56,
-                                    height: 56,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
-                                      width: 56,
-                                      height: 56,
-                                      color: const Color(0xFFF1F5F9),
-                                      child: const Icon(Icons.broken_image,
-                                          color: AppTheme.textSecondary),
+                                onTap: () => _showFullScreenPhoto(path),
+                                child: Container(
+                                  width: 80,
+                                  height: 80,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.file(
+                                      File(path),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: const Color(0xFFF1F5F9),
+                                        child: const Icon(Icons.broken_image,
+                                            color: AppTheme.textSecondary),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  '사진 첨부됨\n이미지 탭: 보기 / 여기 탭: 변경',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: AppTheme.textSecondary,
-                                      height: 1.4),
+                              Positioned(
+                                top: 0,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: () => setState(
+                                      () => _photoPaths.removeAt(i)),
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFEF4444),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close,
+                                        size: 13, color: Colors.white),
+                                  ),
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.close_rounded,
-                                    size: 18, color: AppTheme.expense),
-                                onPressed: () =>
-                                    setState(() => _photoPath = null),
-                              ),
-                            ])
-                          : Row(children: [
-                              Icon(Icons.add_photo_alternate_outlined,
-                                  color: AppTheme.textSecondary,
-                                  size: 22),
-                              const SizedBox(width: 10),
-                              Text(
-                                '사진 첨부 (청첩장·부고 등)',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.textSecondary),
-                              ),
-                            ]),
+                            ],
+                          );
+                        },
+                      ),
                     ),
-                  ),
+                  ] else ...[
+                    GestureDetector(
+                      onTap: _showPhotoOptions,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(children: [
+                          Icon(Icons.add_photo_alternate_outlined,
+                              color: AppTheme.textSecondary, size: 22),
+                          const SizedBox(width: 10),
+                          Text(
+                            '사진 첨부 (청첩장·부고 등, 최대 5장)',
+                            style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textSecondary),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // ── 저장 버튼 ────────────────────────────────
@@ -819,7 +846,7 @@ class _State extends ConsumerState<EventBottomSheet>
       memo: _memoCtrl.text.isEmpty ? null : _memoCtrl.text.trim(),
       userId: uid,
       firestoreId: widget.eventToEdit?.firestoreId,
-      photoPath: _photoPath,
+      photos: _photoPaths,
       isRecurring: _isRecurring,
     );
 

@@ -22,6 +22,7 @@ class FirestoreService {
       'memo': event.memo,
       'userId': userId,
       'isRecurring': event.isRecurring,
+      'photos': event.photos, // Firestore 네이티브 배열
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -39,6 +40,7 @@ class FirestoreService {
         .snapshots()
         .map((snap) => snap.docs.map((doc) {
               final d = doc.data();
+              final photos = _parsePhotos(d);
               return EventModel(
                 id: doc.id.hashCode,
                 date: (d['date'] as Timestamp).toDate(),
@@ -50,6 +52,7 @@ class FirestoreService {
                 memo: d['memo'] as String?,
                 userId: userId,
                 firestoreId: doc.id,
+                photos: photos,
                 isRecurring: d['isRecurring'] as bool? ?? false,
               );
             }).toList());
@@ -75,9 +78,21 @@ class FirestoreService {
         'eventType': event.eventType.index,
         'memo': event.memo,
         'userId': userId,
+        'photos': event.photos,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
     await batch.commit();
+  }
+
+  // photos 필드 파싱 (하위 호환: 구 photoPath 단일 필드 지원)
+  static List<String> _parsePhotos(Map<String, dynamic> d) {
+    final photosField = d['photos'];
+    if (photosField is List && photosField.isNotEmpty) {
+      return photosField.cast<String>();
+    }
+    final legacy = d['photoPath'] as String?;
+    if (legacy != null) return [legacy];
+    return [];
   }
 }

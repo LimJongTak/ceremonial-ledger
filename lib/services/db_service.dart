@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import '../models/event_model.dart';
@@ -9,7 +10,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -23,6 +24,10 @@ class AppDatabase extends _$AppDatabase {
             // v3: isRecurring 컬럼 추가
             await m.addColumn(events, events.isRecurring);
           }
+          if (from < 4) {
+            // v4: photoPaths 컬럼 추가 (다중 사진)
+            await m.addColumn(events, events.photoPaths);
+          }
         },
       );
 
@@ -32,6 +37,8 @@ class AppDatabase extends _$AppDatabase {
 
   // 저장 / 수정
   Future<void> saveEvent(EventModel event) async {
+    final photosJson =
+        event.photos.isEmpty ? null : jsonEncode(event.photos);
     await into(events).insertOnConflictUpdate(
       EventsCompanion(
         id: event.id == 0 ? const Value.absent() : Value(event.id),
@@ -43,8 +50,9 @@ class AppDatabase extends _$AppDatabase {
         eventType: Value(event.eventType),
         memo: Value(event.memo),
         userId: Value(event.userId),
-        photoPath: Value(event.photoPath),
+        photoPath: Value(event.photoPath), // 하위 호환 (첫 번째 사진)
         isRecurring: Value(event.isRecurring),
+        photoPaths: Value(photosJson),
       ),
     );
   }
@@ -64,6 +72,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   EventModel _rowToModel(Event row) {
+    List<String> photos = [];
+    if (row.photoPaths != null && row.photoPaths!.isNotEmpty) {
+      photos = (jsonDecode(row.photoPaths!) as List).cast<String>();
+    } else if (row.photoPath != null) {
+      photos = [row.photoPath!];
+    }
+
     return EventModel(
       id: row.id,
       date: row.date,
@@ -74,7 +89,7 @@ class AppDatabase extends _$AppDatabase {
       eventType: row.eventType,
       memo: row.memo,
       userId: row.userId,
-      photoPath: row.photoPath,
+      photos: photos,
       isRecurring: row.isRecurring,
     );
   }
