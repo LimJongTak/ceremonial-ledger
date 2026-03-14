@@ -388,67 +388,95 @@ class EventCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        event.formattedAmount,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: inc
-                              ? const Color(0xFF1A73E8)
-                              : const Color(0xFFE53935),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      GestureDetector(
-                        onTap: () => _shareEvent(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          child: Icon(
-                            Icons.ios_share_rounded,
-                            size: 14,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    event.formattedAmount,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: inc
+                          ? const Color(0xFF1A73E8)
+                          : const Color(0xFFE53935),
+                    ),
                   ),
                 ],
               ),
             ),
 
-            // ── 당일 길찾기 버튼 ─────────────────────────────
-            if (showNavBtn) ...[
+            // ── 하단 버튼 (길찾기 / 카카오톡 공유) ──────────
+            if (showNavBtn || true) ...[
               Divider(
-                  height: 1, thickness: 1, color: Colors.grey.withValues(alpha: 0.1)),
-              InkWell(
-                onTap: () => _openNavigation(context),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
-                ),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.navigation_rounded,
-                          size: 14, color: Colors.blue[600]),
-                      const SizedBox(width: 5),
-                      Text(
-                        '카카오맵으로 길찾기',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue[600],
+                  height: 1,
+                  thickness: 1,
+                  color: Colors.grey.withValues(alpha: 0.1)),
+              Row(
+                children: [
+                  // 카카오톡 공유 버튼 (항상 표시)
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _shareEvent(context),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: const Radius.circular(12),
+                        bottomRight:
+                            showNavBtn ? Radius.zero : const Radius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 9),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.chat_bubble_outline_rounded,
+                                size: 14, color: Colors.amber[700]),
+                            const SizedBox(width: 5),
+                            Text(
+                              '카카오톡 공유',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.amber[700],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  // 길찾기 버튼 (당일 + 장소 있을 때)
+                  if (showNavBtn) ...[
+                    VerticalDivider(
+                        width: 1,
+                        thickness: 1,
+                        color: Colors.grey.withValues(alpha: 0.1)),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _openNavigation(context),
+                        borderRadius: const BorderRadius.only(
+                          bottomRight: Radius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 9),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.navigation_rounded,
+                                  size: 14, color: Colors.blue[600]),
+                              const SizedBox(width: 5),
+                              Text(
+                                '카카오맵 길찾기',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ],
