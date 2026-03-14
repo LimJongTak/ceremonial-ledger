@@ -155,6 +155,7 @@ class BackupService {
           'memo': e['memo'],
           'userId': userId,
           'isRecurring': (e['isRecurring'] as bool?) ?? false,
+          'location': e['location'] as String?,
           'photos': <String>[], // 로컬 사진 경로는 복원 불가
         };
       }).toList();
@@ -327,6 +328,7 @@ class BackupService {
         'eventType': e.eventType.name,
         'memo': e.memo,
         'isRecurring': e.isRecurring,
+        'location': e.location,
         // 사진 경로는 로컬 기기에 종속되므로 백업에 포함하지 않음
       };
 }

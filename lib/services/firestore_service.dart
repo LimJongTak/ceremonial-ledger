@@ -23,6 +23,7 @@ class FirestoreService {
       'userId': userId,
       'isRecurring': event.isRecurring,
       'photos': event.photos, // Firestore 네이티브 배열
+      'location': event.location,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -54,6 +55,7 @@ class FirestoreService {
                 firestoreId: doc.id,
                 photos: photos,
                 isRecurring: d['isRecurring'] as bool? ?? false,
+                location: d['location'] as String?,
               );
             }).toList());
   }

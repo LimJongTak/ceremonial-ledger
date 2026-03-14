@@ -75,5 +75,14 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- 네이버 로그인 SDK: Chrome Custom Tabs 브라우저 접근 (Android 11+) -->
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService"/>
+        </intent>
+        <!-- 카카오맵 길찾기 URL 스킴 (Android 11+) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="kakaomap" />
+        </intent>
     </queries>
 </manifest>

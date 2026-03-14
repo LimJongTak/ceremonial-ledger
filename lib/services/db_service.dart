@@ -10,7 +10,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -27,6 +27,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 4) {
             // v4: photoPaths 컬럼 추가 (다중 사진)
             await m.addColumn(events, events.photoPaths);
+          }
+          if (from < 5) {
+            // v5: location 컬럼 추가 (행사 장소)
+            await m.addColumn(events, events.location);
           }
         },
       );
@@ -53,6 +57,7 @@ class AppDatabase extends _$AppDatabase {
         photoPath: Value(event.photoPath), // 하위 호환 (첫 번째 사진)
         isRecurring: Value(event.isRecurring),
         photoPaths: Value(photosJson),
+        location: Value(event.location),
       ),
     );
   }
@@ -96,6 +101,7 @@ class AppDatabase extends _$AppDatabase {
       userId: row.userId,
       photos: photos,
       isRecurring: row.isRecurring,
+      location: row.location,
     );
   }
 }
