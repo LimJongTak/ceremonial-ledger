@@ -3,6 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/kakao_config.dart';
 
+// ── 카카오 API 예외 ───────────────────────────────────────────
+class KakaoApiException implements Exception {
+  final int statusCode;
+  final String message;
+  const KakaoApiException(this.statusCode, this.message);
+}
+
 // ── 카카오 장소 검색 결과 모델 ────────────────────────────────
 class KakaoPlace {
   final String placeName;
@@ -69,11 +76,15 @@ class KakaoLocalService {
             .toList();
       } else {
         debugPrint('카카오 장소 검색 오류: ${response.statusCode} ${response.body}');
-        return [];
+        final body = jsonDecode(response.body) as Map<String, dynamic>?;
+        final msg = (body?['message'] as String?) ?? '';
+        throw KakaoApiException(response.statusCode, msg);
       }
+    } on KakaoApiException {
+      rethrow;
     } catch (e) {
       debugPrint('카카오 장소 검색 예외: $e');
-      return [];
+      throw KakaoApiException(0, e.toString());
     }
   }
 }
