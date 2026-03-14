@@ -45,14 +45,19 @@ class _HomeBody extends ConsumerWidget {
 
     final now = DateTime.now();
 
-    // eventsByDateProvider 사용: 반복 이벤트의 가상 항목까지 포함해서 계산
-    final eventsByDate = ref.watch(eventsByDateProvider);
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    final thisMonth = <EventModel>[];
-    for (int day = 1; day <= daysInMonth; day++) {
-      final date = DateTime(now.year, now.month, day);
-      thisMonth.addAll(eventsByDate[date] ?? []);
-    }
+    // allEventsProvider를 직접 watch → 항상 최신 데이터 사용
+    final allEvents = ref.watch(allEventsProvider).valueOrNull ?? events;
+
+    // 이번달 이벤트: 직접 날짜 필터 + 반복 이벤트 처리
+    final thisMonth = allEvents.where((e) {
+      // 이번달(올해) 날짜인 이벤트
+      if (e.date.year == now.year && e.date.month == now.month) return true;
+      // 매년 반복 이벤트 중 같은 달(이전 연도 등록)
+      if (e.isRecurring && e.date.month == now.month && e.date.year < now.year) {
+        return true;
+      }
+      return false;
+    }).toList();
 
     final totalIncome =
         thisMonth.where((e) => e.isIncome).fold(0, (s, e) => s + e.amount);
@@ -61,7 +66,7 @@ class _HomeBody extends ConsumerWidget {
     final balance = totalIncome - totalExpense;
 
     // 이번달 다가오는 이벤트 (앞으로 30일)
-    final upcoming = events
+    final upcoming = allEvents
         .where((e) =>
             e.date.isAfter(now) &&
             e.date.isBefore(now.add(const Duration(days: 30))))
@@ -69,7 +74,7 @@ class _HomeBody extends ConsumerWidget {
       ..sort((a, b) => a.date.compareTo(b.date));
 
     // 최근 내역
-    final recent = [...events]..sort((a, b) => b.date.compareTo(a.date));
+    final recent = [...allEvents]..sort((a, b) => b.date.compareTo(a.date));
     final recentTop = recent.take(5).toList();
 
     return CustomScrollView(
