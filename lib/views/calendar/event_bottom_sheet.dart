@@ -9,6 +9,7 @@ import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/contact_provider.dart';
+import '../../services/kakao_local_service.dart';
 import '../common/app_theme.dart';
 
 // 등록 모드
@@ -34,6 +35,7 @@ class _State extends ConsumerState<EventBottomSheet>
   final _nameCtrl = TextEditingController();
   final _amtCtrl = TextEditingController();
   final _memoCtrl = TextEditingController();
+  final _locationCtrl = TextEditingController();
 
   EventType _type = EventType.expense;
   RelationType _rel = RelationType.friend;
@@ -67,6 +69,7 @@ class _State extends ConsumerState<EventBottomSheet>
       _date = e.date;
       _photoPaths = List.from(e.photos);
       _isRecurring = e.isRecurring;
+      _locationCtrl.text = e.location ?? '';
       _mode = e.amount == 0 ? _EntryMode.scheduled : _EntryMode.confirmed;
     } else {
       if (widget.initialDate.isAfter(DateTime.now())) {
@@ -80,6 +83,7 @@ class _State extends ConsumerState<EventBottomSheet>
     _nameCtrl.dispose();
     _amtCtrl.dispose();
     _memoCtrl.dispose();
+    _locationCtrl.dispose();
     _animCtrl.dispose();
     super.dispose();
   }
@@ -588,6 +592,24 @@ class _State extends ConsumerState<EventBottomSheet>
                   ),
                   const SizedBox(height: 12),
 
+                  // ── 행사 장소 ─────────────────────────────────
+                  TextFormField(
+                    controller: _locationCtrl,
+                    decoration: _deco(
+                      '행사 장소 (선택사항)',
+                      Icons.location_on_outlined,
+                    ).copyWith(
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.search_rounded,
+                            size: 20, color: Color(0xFF64748B)),
+                        tooltip: '장소 검색',
+                        onPressed: () => _showLocationSearchDialog(),
+                      ),
+                    ),
+                    readOnly: false,
+                  ),
+                  const SizedBox(height: 12),
+
                   // ── 매년 반복 알림 ───────────────────────────
                   GestureDetector(
                     onTap: () => setState(() => _isRecurring = !_isRecurring),
@@ -826,6 +848,189 @@ class _State extends ConsumerState<EventBottomSheet>
     );
   }
 
+  // ── 카카오 장소 검색 다이얼로그 ────────────────────────────────
+  Future<void> _showLocationSearchDialog() async {
+    final searchCtrl = TextEditingController();
+    List<KakaoPlace> results = [];
+    bool isLoading = false;
+    String? errorMsg;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('장소 검색',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          contentPadding:
+              const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 검색 입력
+                Row(children: [
+                  Expanded(
+                    child: TextField(
+                      controller: searchCtrl,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: '장소 또는 주소 검색',
+                        hintStyle: const TextStyle(
+                            fontSize: 13, color: Color(0xFF94A3B8)),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                      ),
+                      onSubmitted: (_) async {
+                        if (searchCtrl.text.trim().isEmpty) return;
+                        setDialogState(() {
+                          isLoading = true;
+                          errorMsg = null;
+                        });
+                        try {
+                          final r = await KakaoLocalService.instance
+                              .searchPlaces(searchCtrl.text.trim());
+                          setDialogState(() {
+                            results = r;
+                            isLoading = false;
+                            if (r.isEmpty) errorMsg = '검색 결과가 없습니다';
+                          });
+                        } catch (_) {
+                          setDialogState(() {
+                            isLoading = false;
+                            errorMsg = '검색 중 오류가 발생했습니다';
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      minimumSize: const Size(44, 44),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: () async {
+                      if (searchCtrl.text.trim().isEmpty) return;
+                      setDialogState(() {
+                        isLoading = true;
+                        errorMsg = null;
+                      });
+                      try {
+                        final r = await KakaoLocalService.instance
+                            .searchPlaces(searchCtrl.text.trim());
+                        setDialogState(() {
+                          results = r;
+                          isLoading = false;
+                          if (r.isEmpty) errorMsg = '검색 결과가 없습니다';
+                        });
+                      } catch (_) {
+                        setDialogState(() {
+                          isLoading = false;
+                          errorMsg = '검색 중 오류가 발생했습니다';
+                        });
+                      }
+                    },
+                    child: const Icon(Icons.search_rounded,
+                        size: 20, color: Colors.white),
+                  ),
+                ]),
+                const SizedBox(height: 8),
+
+                // 결과 목록
+                if (isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else if (errorMsg != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(errorMsg!,
+                        style: const TextStyle(
+                            color: Color(0xFF94A3B8), fontSize: 13)),
+                  )
+                else if (results.isNotEmpty)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 240),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: results.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final place = results[i];
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            setState(
+                                () => _locationCtrl.text = place.fullLocation);
+                            Navigator.pop(dialogCtx);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 10),
+                            child: Row(children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary
+                                      .withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.location_on_rounded,
+                                    size: 16, color: AppTheme.primary),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(place.placeName,
+                                        style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF1A1A2E))),
+                                    const SizedBox(height: 2),
+                                    Text(place.displayAddress,
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF94A3B8))),
+                                  ],
+                                ),
+                              ),
+                            ]),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('취소'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _save() async {
     if (!_formKey.currentState!.validate()) return;
     final uid = ref.read(currentUserIdProvider);
@@ -848,6 +1053,9 @@ class _State extends ConsumerState<EventBottomSheet>
       firestoreId: widget.eventToEdit?.firestoreId,
       photos: _photoPaths,
       isRecurring: _isRecurring,
+      location: _locationCtrl.text.trim().isEmpty
+          ? null
+          : _locationCtrl.text.trim(),
     );
 
     await ref.read(eventNotifierProvider.notifier).addEvent(e);

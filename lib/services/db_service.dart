@@ -10,7 +10,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -27,6 +27,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 4) {
             // v4: photoPaths 컬럼 추가 (다중 사진)
             await m.addColumn(events, events.photoPaths);
+          }
+          if (from < 5) {
+            // v5: location 컬럼 추가 (행사 장소)
+            await m.addColumn(events, events.location);
           }
         },
       );
@@ -53,6 +57,7 @@ class AppDatabase extends _$AppDatabase {
         photoPath: Value(event.photoPath), // 하위 호환 (첫 번째 사진)
         isRecurring: Value(event.isRecurring),
         photoPaths: Value(photosJson),
+        location: Value(event.location),
       ),
     );
   }
@@ -69,6 +74,11 @@ class AppDatabase extends _$AppDatabase {
   // 삭제
   Future<void> deleteEvent(int id) async {
     await (delete(events)..where((e) => e.id.equals(id))).go();
+  }
+
+  // 특정 유저의 모든 이벤트 삭제 (백업 복원 시 사용)
+  Future<void> deleteAllEvents(String userId) async {
+    await (delete(events)..where((e) => e.userId.equals(userId))).go();
   }
 
   EventModel _rowToModel(Event row) {
@@ -91,6 +101,7 @@ class AppDatabase extends _$AppDatabase {
       userId: row.userId,
       photos: photos,
       isRecurring: row.isRecurring,
+      location: row.location,
     );
   }
 }

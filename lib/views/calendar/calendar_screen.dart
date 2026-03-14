@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -246,14 +247,38 @@ class EventCard extends StatelessWidget {
   final VoidCallback? onTap;
   const EventCard({super.key, required this.event, this.onTap});
 
+  bool get _isToday {
+    final now = DateTime.now();
+    return event.date.year == now.year &&
+        event.date.month == now.month &&
+        event.date.day == now.day;
+  }
+
+  Future<void> _openNavigation(BuildContext context) async {
+    final location = event.location;
+    if (location == null || location.isEmpty) return;
+
+    final encoded = Uri.encodeComponent(location);
+    final kakaoUri = Uri.parse('kakaomap://search?q=$encoded');
+
+    if (await canLaunchUrl(kakaoUri)) {
+      await launchUrl(kakaoUri);
+    } else {
+      // 카카오맵 앱 미설치 시 웹 폴백
+      final webUri = Uri.parse('https://map.kakao.com/?q=$encoded');
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final inc = event.isIncome;
+    final showNavBtn = _isToday && event.location != null;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -271,68 +296,131 @@ class EventCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              event.ceremonyType.emoji,
-              style: const TextStyle(fontSize: 26),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
                 children: [
-                  Row(children: [
-                    Text(
-                      event.personName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: Color(0xFF1A1A2E),
-                      ),
-                    ),
-                    if (event.isRecurring) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.repeat_rounded,
-                                size: 10, color: Color(0xFF2563EB)),
-                            SizedBox(width: 2),
-                            Text('매년',
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    color: Color(0xFF2563EB),
-                                    fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ]),
-                  const SizedBox(height: 2),
                   Text(
-                    '${event.ceremonyType.label} · '
-                    '${event.relation.label}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    event.ceremonyType.emoji,
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Text(
+                            event.personName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Color(0xFF1A1A2E),
+                            ),
+                          ),
+                          if (event.isRecurring) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2563EB)
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.repeat_rounded,
+                                      size: 10, color: Color(0xFF2563EB)),
+                                  SizedBox(width: 2),
+                                  Text('매년',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          color: Color(0xFF2563EB),
+                                          fontWeight: FontWeight.w700)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ]),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${event.ceremonyType.label} · '
+                          '${event.relation.label}',
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.grey[500]),
+                        ),
+                        // 장소 표시
+                        if (event.location != null) ...[
+                          const SizedBox(height: 3),
+                          Row(children: [
+                            Icon(Icons.location_on_rounded,
+                                size: 11, color: Colors.grey[400]),
+                            const SizedBox(width: 2),
+                            Flexible(
+                              child: Text(
+                                event.location!,
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey[400]),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ]),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Text(
+                    event.formattedAmount,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: inc
+                          ? const Color(0xFF1A73E8)
+                          : const Color(0xFFE53935),
+                    ),
                   ),
                 ],
               ),
             ),
-            Text(
-              event.formattedAmount,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: inc ? const Color(0xFF1A73E8) : const Color(0xFFE53935),
+
+            // ── 당일 길찾기 버튼 ─────────────────────────────
+            if (showNavBtn) ...[
+              Divider(
+                  height: 1, thickness: 1, color: Colors.grey.withValues(alpha: 0.1)),
+              InkWell(
+                onTap: () => _openNavigation(context),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.navigation_rounded,
+                          size: 14, color: Colors.blue[600]),
+                      const SizedBox(width: 5),
+                      Text(
+                        '카카오맵으로 길찾기',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

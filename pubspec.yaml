@@ -74,6 +74,14 @@ dependencies:
   # 차트
   fl_chart: ^0.69.0
 
+  # 백업/복원 (Google Drive)
+  googleapis: ^11.0.0
+  extension_google_sign_in_as_googleapis_auth: ^2.0.2
+
+  # 지도 연동 (카카오 길찾기)
+  url_launcher: ^6.3.0
+  http: ^1.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

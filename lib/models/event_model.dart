@@ -44,6 +44,7 @@ class Events extends Table {
       boolean().withDefault(const Constant(false))(); // 매년 반복 알림
   TextColumn get photoPaths =>
       text().nullable()(); // JSON 인코딩된 다중 사진 경로 목록
+  TextColumn get location => text().nullable()(); // 행사 장소
 }
 
 class EventModel {
@@ -59,6 +60,7 @@ class EventModel {
   final String? firestoreId;
   final List<String> photos; // 다중 사진 경로 목록
   final bool isRecurring; // 매년 반복 알림
+  final String? location; // 행사 장소
 
   EventModel({
     required this.id,
@@ -73,12 +75,13 @@ class EventModel {
     this.firestoreId,
     this.photos = const [],
     this.isRecurring = false,
+    this.location,
   });
 
   // 하위 호환: 첫 번째 사진 반환
   String? get photoPath => photos.isEmpty ? null : photos.first;
 
-  EventModel copyWith({DateTime? date}) => EventModel(
+  EventModel copyWith({DateTime? date, String? location}) => EventModel(
         id: id,
         date: date ?? this.date,
         personName: personName,
@@ -91,6 +94,7 @@ class EventModel {
         firestoreId: firestoreId,
         photos: photos,
         isRecurring: isRecurring,
+        location: location ?? this.location,
       );
 
   bool get isIncome => eventType == EventType.income;
