@@ -903,6 +903,13 @@ class _State extends ConsumerState<EventBottomSheet>
                             isLoading = false;
                             if (r.isEmpty) errorMsg = '검색 결과가 없습니다';
                           });
+                        } on KakaoApiException catch (e) {
+                          setDialogState(() {
+                            isLoading = false;
+                            errorMsg = e.statusCode == 403
+                                ? '카카오맵 서비스 검수 중입니다 (3~5일 소요)\n장소를 직접 입력해 주세요'
+                                : '검색 오류 (${e.statusCode})';
+                          });
                         } catch (_) {
                           setDialogState(() {
                             isLoading = false;
@@ -934,6 +941,13 @@ class _State extends ConsumerState<EventBottomSheet>
                           results = r;
                           isLoading = false;
                           if (r.isEmpty) errorMsg = '검색 결과가 없습니다';
+                        });
+                      } on KakaoApiException catch (e) {
+                        setDialogState(() {
+                          isLoading = false;
+                          errorMsg = e.statusCode == 403
+                              ? '카카오맵 서비스 검수 중입니다 (3~5일 소요)\n장소를 직접 입력해 주세요'
+                              : '검색 오류 (${e.statusCode})';
                         });
                       } catch (_) {
                         setDialogState(() {
