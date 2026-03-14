@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/kakao_share_service.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../services/auth_service.dart';
@@ -221,6 +222,32 @@ class ProfileScreen extends ConsumerWidget {
                           context,
                           MaterialPageRoute(
                               builder: (_) => const BackupScreen())),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 친구 초대
+                _Section(
+                  title: '친구 초대',
+                  children: [
+                    _MenuItem(
+                      icon: Icons.people_alt_rounded,
+                      iconColor: const Color(0xFFFFD400),
+                      title: '카카오톡으로 초대하기',
+                      subtitle: '친구에게 오고가고 앱을 소개해요',
+                      onTap: () async {
+                        final ok =
+                            await KakaoShareService.instance.shareAppInvite();
+                        if (!ok && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('카카오톡 공유에 실패했습니다'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),

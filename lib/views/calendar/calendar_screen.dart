@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/kakao_share_service.dart';
 import 'event_bottom_sheet.dart';
 // TODO: OCR 기능 준비 중 - import '../calendar/ocr_register_screen.dart';
 import '../export/excel_import_screen.dart';
@@ -254,6 +255,18 @@ class EventCard extends StatelessWidget {
         event.date.day == now.day;
   }
 
+  Future<void> _shareEvent(BuildContext context) async {
+    final ok = await KakaoShareService.instance.shareEvent(event);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('카카오톡 공유에 실패했습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   Future<void> _openNavigation(BuildContext context) async {
     final location = event.location;
     if (location == null || location.isEmpty) return;
@@ -375,15 +388,32 @@ class EventCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Text(
-                    event.formattedAmount,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: inc
-                          ? const Color(0xFF1A73E8)
-                          : const Color(0xFFE53935),
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        event.formattedAmount,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: inc
+                              ? const Color(0xFF1A73E8)
+                              : const Color(0xFFE53935),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      GestureDetector(
+                        onTap: () => _shareEvent(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          child: Icon(
+                            Icons.ios_share_rounded,
+                            size: 14,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
