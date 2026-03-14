@@ -44,9 +44,16 @@ class _HomeBody extends ConsumerWidget {
         ?? '사용자';
 
     final now = DateTime.now();
-    final thisMonth = events
-        .where((e) => e.date.year == now.year && e.date.month == now.month)
-        .toList();
+
+    // eventsByDateProvider 사용: 반복 이벤트의 가상 항목까지 포함해서 계산
+    final eventsByDate = ref.watch(eventsByDateProvider);
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    final thisMonth = <EventModel>[];
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(now.year, now.month, day);
+      thisMonth.addAll(eventsByDate[date] ?? []);
+    }
+
     final totalIncome =
         thisMonth.where((e) => e.isIncome).fold(0, (s, e) => s + e.amount);
     final totalExpense =
