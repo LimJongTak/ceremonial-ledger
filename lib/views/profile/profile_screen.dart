@@ -7,6 +7,7 @@ import '../../providers/budget_provider.dart';
 import '../../services/auth_service.dart';
 import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
+import '../settings/backup_screen.dart';
 import '../common/app_theme.dart';
 import '../settings/budget_setting_screen.dart';
 import 'family_share_screen.dart';
@@ -210,6 +211,16 @@ class ProfileScreen extends ConsumerWidget {
                           context,
                           MaterialPageRoute(
                               builder: (_) => const ExportScreen())),
+                    ),
+                    _MenuItem(
+                      icon: Icons.cloud_sync_rounded,
+                      iconColor: const Color(0xFF1A73E8),
+                      title: '백업 · 복원',
+                      subtitle: 'Google 드라이브 / 파일로 저장',
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const BackupScreen())),
                     ),
                   ],
                 ),

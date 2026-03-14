@@ -71,6 +71,11 @@ class AppDatabase extends _$AppDatabase {
     await (delete(events)..where((e) => e.id.equals(id))).go();
   }
 
+  // 특정 유저의 모든 이벤트 삭제 (백업 복원 시 사용)
+  Future<void> deleteAllEvents(String userId) async {
+    await (delete(events)..where((e) => e.userId.equals(userId))).go();
+  }
+
   EventModel _rowToModel(Event row) {
     List<String> photos = [];
     if (row.photoPaths != null && row.photoPaths!.isNotEmpty) {
