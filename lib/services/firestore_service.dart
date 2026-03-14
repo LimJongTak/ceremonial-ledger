@@ -63,6 +63,32 @@ class FirestoreService {
     await _userEvents(userId).doc(firestoreId).delete();
   }
 
+  // 특정 유저의 모든 이벤트 삭제 (백업 복원 시 사용)
+  Future<void> deleteAllUserEvents(String userId) async {
+    final snapshot = await _userEvents(userId).get();
+    final batch = _db.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    if (snapshot.docs.isNotEmpty) await batch.commit();
+  }
+
+  // 이벤트 일괄 추가 (백업 복원 시 사용)
+  Future<void> batchAddEvents(
+      List<Map<String, dynamic>> eventsData, String userId) async {
+    const chunkSize = 400; // Firestore batch 한도 500 이하
+    for (int i = 0; i < eventsData.length; i += chunkSize) {
+      final chunk = eventsData.sublist(
+          i, i + chunkSize > eventsData.length ? eventsData.length : i + chunkSize);
+      final batch = _db.batch();
+      for (final data in chunk) {
+        final ref = _userEvents(userId).doc();
+        batch.set(ref, {...data, 'updatedAt': FieldValue.serverTimestamp()});
+      }
+      await batch.commit();
+    }
+  }
+
   // 로컬 DB → Firestore 마이그레이션
   Future<void> migrateLocalEvents(
       List<EventModel> events, String userId) async {
