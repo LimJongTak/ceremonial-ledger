@@ -43,37 +43,46 @@ class KakaoLocalService {
       'https://dapi.kakao.com/v2/local/search/keyword.json';
 
   /// 키워드로 장소 검색 (최대 5개)
+  /// 실패 시 예외를 던져 호출자가 오류 메시지를 표시할 수 있도록 함
   Future<List<KakaoPlace>> searchPlaces(String query) async {
     if (query.trim().isEmpty) return [];
 
-    try {
-      final uri = Uri.parse(_baseUrl).replace(
-        queryParameters: {
-          'query': query,
-          'size': '5',
-        },
-      );
+    final uri = Uri.parse(_baseUrl).replace(
+      queryParameters: {
+        'query': query,
+        'size': '5',
+      },
+    );
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Authorization': 'KakaoAK ${KakaoConfig.restApiKey}',
-        },
-      ).timeout(const Duration(seconds: 10));
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'KakaoAK ${KakaoConfig.restApiKey}',
+      },
+    ).timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final documents = (data['documents'] as List<dynamic>? ?? []);
-        return documents
-            .map((e) => KakaoPlace.fromJson(e as Map<String, dynamic>))
-            .toList();
-      } else {
-        debugPrint('카카오 장소 검색 오류: ${response.statusCode} ${response.body}');
-        return [];
+    debugPrint('카카오 검색 응답: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final documents = (data['documents'] as List<dynamic>? ?? []);
+      return documents
+          .map((e) => KakaoPlace.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } else {
+      // 오류 응답 본문에서 메시지 추출
+      String errMsg;
+      try {
+        final errBody =
+            jsonDecode(response.body) as Map<String, dynamic>;
+        errMsg = errBody['msg'] as String? ??
+            errBody['message'] as String? ??
+            '오류 ${response.statusCode}';
+      } catch (_) {
+        errMsg = '오류 ${response.statusCode}';
       }
-    } catch (e) {
-      debugPrint('카카오 장소 검색 예외: $e');
-      return [];
+      debugPrint('카카오 장소 검색 오류: ${response.statusCode} ${response.body}');
+      throw Exception(errMsg);
     }
   }
 }

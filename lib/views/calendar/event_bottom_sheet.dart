@@ -903,10 +903,10 @@ class _State extends ConsumerState<EventBottomSheet>
                             isLoading = false;
                             if (r.isEmpty) errorMsg = '검색 결과가 없습니다';
                           });
-                        } catch (_) {
+                        } catch (e) {
                           setDialogState(() {
                             isLoading = false;
-                            errorMsg = '검색 중 오류가 발생했습니다';
+                            errorMsg = e.toString().replaceFirst('Exception: ', '');
                           });
                         }
                       },
@@ -935,10 +935,10 @@ class _State extends ConsumerState<EventBottomSheet>
                           isLoading = false;
                           if (r.isEmpty) errorMsg = '검색 결과가 없습니다';
                         });
-                      } catch (_) {
+                      } catch (e) {
                         setDialogState(() {
                           isLoading = false;
-                          errorMsg = '검색 중 오류가 발생했습니다';
+                          errorMsg = e.toString().replaceFirst('Exception: ', '');
                         });
                       }
                     },
