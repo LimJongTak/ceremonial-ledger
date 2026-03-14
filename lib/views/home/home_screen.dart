@@ -147,7 +147,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final fmt = NumberFormat('#,###');
+    final fmt = NumberFormat('#,##0');
     final greeting = now.hour < 12
         ? '좋은 아침이에요'
         : now.hour < 18
@@ -293,7 +293,7 @@ class _MonthSummaryCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat('#,###');
+    final fmt = NumberFormat('#,##0');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Row(children: [
@@ -476,7 +476,7 @@ class _RecentItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inc = event.isIncome;
-    final fmt = NumberFormat('#,###');
+    final fmt = NumberFormat('#,##0');
     return GestureDetector(
       onTap: () => showModalBottomSheet(
         context: context,
@@ -581,7 +581,7 @@ class _BudgetWidget extends ConsumerWidget {
     final budget = ref.watch(monthlyBudgetProvider);
     if (budget <= 0) return const SizedBox.shrink();
 
-    final fmt = NumberFormat('#,###');
+    final fmt = NumberFormat('#,##0');
     final ratio = (expense / budget).clamp(0.0, 1.0);
     final isOver = expense > budget;
     final remaining = budget - expense;
