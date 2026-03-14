@@ -402,83 +402,92 @@ class EventCard extends StatelessWidget {
               ),
             ),
 
-            // ── 하단 버튼 (길찾기 / 카카오톡 공유) ──────────
-            if (showNavBtn || true) ...[
-              Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Colors.grey.withValues(alpha: 0.1)),
-              Row(
+            // ── 하단 버튼 (카카오톡 공유 / 길찾기) ──────────
+            GestureDetector(
+              // 하단 버튼 탭이 카드 onTap으로 전파되지 않도록 차단
+              onTap: () {},
+              child: Column(
                 children: [
-                  // 카카오톡 공유 버튼 (항상 표시)
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => _shareEvent(context),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: const Radius.circular(12),
-                        bottomRight:
-                            showNavBtn ? Radius.zero : const Radius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 9),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.chat_bubble_outline_rounded,
-                                size: 14, color: Colors.amber[700]),
-                            const SizedBox(width: 5),
-                            Text(
-                              '카카오톡 공유',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.amber[700],
+                  Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Colors.grey.withValues(alpha: 0.12)),
+                  IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        // 카카오톡 공유 버튼 (항상 표시)
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _shareEvent(context),
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: const Radius.circular(12),
+                              bottomRight: showNavBtn
+                                  ? Radius.zero
+                                  : const Radius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.chat_bubble_rounded,
+                                      size: 15, color: Colors.amber[800]),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    '카카오톡 공유',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.amber[800],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // 길찾기 버튼 (당일 + 장소 있을 때)
-                  if (showNavBtn) ...[
-                    VerticalDivider(
-                        width: 1,
-                        thickness: 1,
-                        color: Colors.grey.withValues(alpha: 0.1)),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _openNavigation(context),
-                        borderRadius: const BorderRadius.only(
-                          bottomRight: Radius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 9),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.navigation_rounded,
-                                  size: 14, color: Colors.blue[600]),
-                              const SizedBox(width: 5),
-                              Text(
-                                '카카오맵 길찾기',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.blue[600],
-                                ),
-                              ),
-                            ],
                           ),
                         ),
-                      ),
+                        // 길찾기 버튼 (당일 + 장소 있을 때)
+                        if (showNavBtn) ...[
+                          VerticalDivider(
+                              width: 1,
+                              thickness: 1,
+                              color: Colors.grey.withValues(alpha: 0.12)),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _openNavigation(context),
+                              borderRadius: const BorderRadius.only(
+                                bottomRight: Radius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.navigation_rounded,
+                                        size: 15, color: Colors.blue[600]),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      '카카오맵 길찾기',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.blue[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ],
         ),
       ),
