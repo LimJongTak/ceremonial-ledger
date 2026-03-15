@@ -257,30 +257,34 @@ class AuthService {
           db.collection('users').doc(uid).collection('profile').doc('data'));
       await batch.commit();
 
-      // 3. 소셜 로그아웃 (각각 오류 무시 - 소셜 로그아웃 실패가 계정 삭제를 막으면 안 됨)
-      await Future.wait([
-        _googleSignIn.signOut().catchError((_) {}),
-        FlutterNaverLogin.logOut().catchError((_) {}),
-      ]);
+      // 3. 소셜 로그아웃 (각 2초 타임아웃 — 응답 없으면 무시)
       try {
-        await UserApi.instance.logout();
+        await _googleSignIn.signOut()
+            .timeout(const Duration(seconds: 2));
+      } catch (_) {}
+      try {
+        await FlutterNaverLogin.logOut()
+            .timeout(const Duration(seconds: 2));
+      } catch (_) {}
+      try {
+        await UserApi.instance.logout()
+            .timeout(const Duration(seconds: 2));
       } catch (_) {}
 
-      // 4. Firebase Auth 계정 삭제 (5초 타임아웃 — 지연 시 로그아웃으로 대체)
+      // 4. Firebase Auth 계정 삭제 (3초 타임아웃)
       try {
-        await user.delete().timeout(const Duration(seconds: 5));
+        await user.delete().timeout(const Duration(seconds: 3));
       } on FirebaseAuthException catch (e) {
         if (e.code == 'requires-recent-login') {
           throw AuthException(
               '보안을 위해 재로그인이 필요합니다.\n로그아웃 후 다시 로그인하여 탈퇴를 진행해주세요.');
         }
-        // 그 외 Auth 오류는 무시하고 로그아웃으로 대체
-      } catch (_) {
-        // 타임아웃 등 — 데이터는 삭제됐으므로 로그아웃 처리
-      }
+      } catch (_) {}
 
-      // 5. 최종 로그아웃 (Auth 삭제 성공/실패 무관하게 세션 종료)
-      await _auth.signOut().catchError((_) {});
+      // 5. 최종 로그아웃 (2초 타임아웃)
+      try {
+        await _auth.signOut().timeout(const Duration(seconds: 2));
+      } catch (_) {}
     } on AuthException {
       rethrow;
     } catch (e) {

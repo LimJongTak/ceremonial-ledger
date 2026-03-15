@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -473,15 +474,25 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
 
-    try {
-      await ref.read(authNotifierProvider.notifier).deleteAccount();
+    void closeAndGoLogin() {
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // 로딩 닫기
+        Navigator.of(context, rootNavigator: true).pop();
         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginScreen()),
           (_) => false,
         );
       }
+    }
+
+    try {
+      await ref
+          .read(authNotifierProvider.notifier)
+          .deleteAccount()
+          .timeout(const Duration(seconds: 15));
+      closeAndGoLogin();
+    } on TimeoutException {
+      // 타임아웃 — 데이터는 삭제됐으므로 로그인 화면으로 이동
+      closeAndGoLogin();
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop(); // 로딩 닫기
