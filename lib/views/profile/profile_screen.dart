@@ -773,24 +773,16 @@ class _KakaoInviteMenuItemState extends State<_KakaoInviteMenuItem> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(children: [
-          Container(
+          SizedBox(
             width: 38,
             height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFD400).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
             child: _loading
                 ? const Padding(
                     padding: EdgeInsets.all(9),
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Color(0xFFFFD400)),
                   )
-                : Padding(
-                    padding: const EdgeInsets.all(9),
-                    child: Image.asset(
-                        'assets/images/kakaotalk-icon.png'),
-                  ),
+                : Image.asset('assets/images/kakaotalk-icon.png'),
           ),
           const SizedBox(width: 14),
           const Expanded(
