@@ -7,6 +7,7 @@ import '../../services/kakao_share_service.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../services/auth_service.dart';
+import '../auth/login_screen.dart';
 import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
 import '../settings/backup_screen.dart';
@@ -476,6 +477,10 @@ class ProfileScreen extends ConsumerWidget {
       await ref.read(authNotifierProvider.notifier).deleteAccount();
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop(); // 로딩 닫기
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
       }
     } catch (e) {
       if (context.mounted) {
