@@ -380,10 +380,10 @@ class ProfileScreen extends ConsumerWidget {
   void _confirmDeleteAccount(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx2, setState2) {
-          bool confirmed = false;
-          return AlertDialog(
+      builder: (_) {
+        bool confirmed = false;
+        return StatefulBuilder(
+          builder: (ctx2, setState2) => AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
               title: const Text('회원탈퇴',
@@ -449,9 +449,9 @@ class ProfileScreen extends ConsumerWidget {
                   child: const Text('탈퇴하기'),
                 ),
               ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
