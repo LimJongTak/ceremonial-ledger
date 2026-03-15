@@ -109,6 +109,7 @@ class CalendarScreen extends ConsumerWidget {
                   if (events.isEmpty) return const SizedBox.shrink();
                   final hasIn = events.any((e) => e.isIncome);
                   final hasEx = events.any((e) => !e.isIncome);
+                  final hasRecurring = events.any((e) => e.isRecurring);
                   return Positioned(
                     bottom: 2,
                     child: Row(
@@ -132,6 +133,19 @@ class CalendarScreen extends ConsumerWidget {
                             decoration: const BoxDecoration(
                               color: Color(0xFFE53935),
                               shape: BoxShape.circle,
+                            ),
+                          ),
+                        // 반복 이벤트: 주황 테두리 원
+                        if (hasRecurring)
+                          Container(
+                            width: 6,
+                            height: 6,
+                            margin: const EdgeInsets.symmetric(horizontal: 1),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: const Color(0xFFF59E0B),
+                                  width: 1.5),
                             ),
                           ),
                       ],
@@ -317,7 +331,7 @@ class EventCard extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    event.ceremonyType.emoji,
+                    event.displayEmoji,
                     style: const TextStyle(fontSize: 26),
                   ),
                   const SizedBox(width: 12),
@@ -362,7 +376,7 @@ class EventCard extends StatelessWidget {
                         ]),
                         const SizedBox(height: 2),
                         Text(
-                          '${event.ceremonyType.label} · '
+                          '${event.displayLabel} · '
                           '${event.relation.label}',
                           style:
                               TextStyle(fontSize: 12, color: Colors.grey[500]),

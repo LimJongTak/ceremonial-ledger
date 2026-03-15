@@ -258,7 +258,7 @@ class _StatsItem extends ConsumerWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-                child: Text(event.ceremonyType.emoji,
+                child: Text(event.displayEmoji,
                     style: const TextStyle(fontSize: 20))),
           ),
           const SizedBox(width: 12),
@@ -288,7 +288,7 @@ class _StatsItem extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                        '${event.ceremonyType.label} · ${event.relation.label}',
+                        '${event.displayLabel} · ${event.relation.label}',
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey[500])),
                     Text(dateStr,

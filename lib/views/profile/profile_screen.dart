@@ -9,6 +9,7 @@ import '../../services/auth_service.dart';
 import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
 import '../settings/backup_screen.dart';
+import '../settings/category_settings_screen.dart';
 import '../common/app_theme.dart';
 import '../settings/budget_setting_screen.dart';
 import 'family_share_screen.dart';
@@ -196,11 +197,22 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // 앱 설정
-                const _Section(
+                _Section(
                   title: '앱 설정',
                   children: [
-                    _BudgetMenuItem(),
-                    _FamilyMenuItem(),
+                    const _BudgetMenuItem(),
+                    const _FamilyMenuItem(),
+                    _MenuItem(
+                      icon: Icons.category_outlined,
+                      iconColor: const Color(0xFF8B5CF6),
+                      title: '카테고리 관리',
+                      subtitle: '경조사 종류 추가 · 편집',
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  const CategorySettingsScreen())),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),

@@ -99,6 +99,37 @@ class EventModel {
 
   bool get isIncome => eventType == EventType.income;
 
+  /// memo 앞의 커스텀 카테고리 접두사 [CC:emoji|label] 파싱
+  String? get _customCategoryKey {
+    if (memo == null) return null;
+    final m = RegExp(r'^\[CC:([^\]]+)\]').firstMatch(memo!);
+    return m?.group(1);
+  }
+
+  /// 표시용 이모지 (커스텀 카테고리 우선)
+  String get displayEmoji {
+    final key = _customCategoryKey;
+    if (key != null) return key.split('|').first;
+    return ceremonyType.emoji;
+  }
+
+  /// 표시용 라벨 (커스텀 카테고리 우선)
+  String get displayLabel {
+    final key = _customCategoryKey;
+    if (key != null) {
+      final parts = key.split('|');
+      return parts.length > 1 ? parts[1] : ceremonyType.label;
+    }
+    return ceremonyType.label;
+  }
+
+  /// 접두사를 제거한 실제 메모
+  String? get displayMemo {
+    if (memo == null) return null;
+    final cleaned = memo!.replaceFirst(RegExp(r'^\[CC:[^\]]+\]\n?'), '');
+    return cleaned.isEmpty ? null : cleaned;
+  }
+
   String get formattedAmount {
     final sign = isIncome ? '+' : '-';
     final formatted = amount.toString().replaceAllMapped(

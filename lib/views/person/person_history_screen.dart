@@ -25,6 +25,21 @@ class PersonHistoryScreen extends ConsumerWidget {
     final balance = totalIncome - totalExpense;
     final fmt = NumberFormat('#,###');
 
+    // 관계 (가장 최근 이벤트 기준)
+    final relation = events.isNotEmpty ? events.first.relation : null;
+
+    // 다음 예정 이벤트
+    final now = DateTime.now();
+    final nextEvent = events
+        .where((e) => e.date.isAfter(now))
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    final upcoming = nextEvent.isEmpty ? null : nextEvent.first;
+
+    // 마지막 교류
+    final pastEvents = events.where((e) => !e.date.isAfter(now)).toList();
+    final lastDate = pastEvents.isEmpty ? null : pastEvents.first.date;
+
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
       body: CustomScrollView(
@@ -57,15 +72,47 @@ class PersonHistoryScreen extends ConsumerWidget {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          personName,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              personName,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.textPrimary,
+                                letterSpacing: -0.5,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (relation != null || lastDate != null)
+                              Row(children: [
+                                if (relation != null) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 7, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primary
+                                          .withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(relation.label,
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.primary)),
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                if (lastDate != null)
+                                  Text(
+                                    '마지막 교류 ${DateFormat('yyyy.MM.dd').format(lastDate)}',
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary),
+                                  ),
+                              ]),
+                          ],
                         ),
                       ),
                       Container(
@@ -86,7 +133,7 @@ class PersonHistoryScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // 요약 카드
                   Container(
@@ -97,20 +144,41 @@ class PersonHistoryScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        // 잔액
+                        // 잔액 + 설명
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text('총 잔액',
-                                style: TextStyle(
-                                    color: Colors.white70, fontSize: 13)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('총 잔액',
+                                    style: TextStyle(
+                                        color: Colors.white70, fontSize: 12)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  balance == 0
+                                      ? '균형'
+                                      : balance > 0
+                                          ? '상대가 줄 금액'
+                                          : '내가 줄 금액',
+                                  style: TextStyle(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.55),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
                             Text(
-                              '${balance >= 0 ? '+' : ''}${fmt.format(balance)}원',
+                              balance == 0
+                                  ? '0원'
+                                  : '${balance > 0 ? '+' : ''}${fmt.format(balance)}원',
                               style: TextStyle(
                                 color: balance >= 0
                                     ? Colors.white
                                     : Colors.red[200],
-                                fontSize: 20,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.5,
                               ),
@@ -142,6 +210,75 @@ class PersonHistoryScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+
+                  // 다음 예정 이벤트
+                  if (upcoming != null) ...[
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () => showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(20))),
+                        builder: (_) => EventBottomSheet(
+                            initialDate: upcoming.date,
+                            eventToEdit: upcoming),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color:
+                                  AppTheme.secondary.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(children: [
+                          Text(upcoming.displayEmoji,
+                              style: const TextStyle(fontSize: 18)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${upcoming.displayLabel} 예정',
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.secondary),
+                                ),
+                                Text(
+                                  DateFormat('yyyy년 M월 d일 (E)', 'ko_KR')
+                                      .format(upcoming.date),
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'D-${upcoming.date.difference(now).inDays}',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.secondary),
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -255,7 +392,6 @@ class _HistoryItem extends StatelessWidget {
           ],
         ),
         child: Row(children: [
-          // 이모지 아이콘
           Container(
             width: 42,
             height: 42,
@@ -268,7 +404,7 @@ class _HistoryItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-                child: Text(event.ceremonyType.emoji,
+                child: Text(event.displayEmoji,
                     style: const TextStyle(fontSize: 22))),
           ),
           const SizedBox(width: 12),
@@ -279,7 +415,7 @@ class _HistoryItem extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(event.ceremonyType.label,
+                    Text(event.displayLabel,
                         style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,

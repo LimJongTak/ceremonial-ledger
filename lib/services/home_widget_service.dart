@@ -44,13 +44,19 @@ class HomeWidgetService {
           .toList()
         ..sort((a, b) => a.date.compareTo(b.date));
 
-      String upcomingText = '다가오는 일정 없음';
-      if (upcoming.isNotEmpty) {
-        final top = upcoming.take(2).toList();
-        upcomingText = top.map((e) {
-          final d = e.date.difference(now).inDays;
-          return 'D-$d ${e.ceremonyType.emoji} ${e.personName}';
-        }).join('  ·  ');
+      // 다가오는 일정 데이터 구성
+      final top = upcoming.take(2).toList();
+
+      String info1 = '', dday1 = '', info2 = '', dday2 = '';
+      if (top.isNotEmpty) {
+        final d1 = top[0].date.difference(now).inDays;
+        info1 = '${top[0].displayEmoji} ${top[0].personName}';
+        dday1 = 'D-$d1';
+      }
+      if (top.length >= 2) {
+        final d2 = top[1].date.difference(now).inDays;
+        info2 = '${top[1].displayEmoji} ${top[1].personName}';
+        dday2 = 'D-$d2';
       }
 
       // 데이터 저장
@@ -65,7 +71,11 @@ class HomeWidgetService {
           'widget_expense', '${_fmt.format(expense)}원');
       await HomeWidget.saveWidgetData('widget_count', '${thisMonth.length}건');
       await HomeWidget.saveWidgetData('widget_month', '${now.month}월');
-      await HomeWidget.saveWidgetData('widget_upcoming', upcomingText);
+      await HomeWidget.saveWidgetData('widget_upcoming_count', '${upcoming.length}');
+      await HomeWidget.saveWidgetData('widget_upcoming_1_info', info1);
+      await HomeWidget.saveWidgetData('widget_upcoming_1_dday', dday1);
+      await HomeWidget.saveWidgetData('widget_upcoming_2_info', info2);
+      await HomeWidget.saveWidgetData('widget_upcoming_2_dday', dday2);
 
       // 위젯 갱신
       await HomeWidget.updateWidget(

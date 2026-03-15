@@ -137,7 +137,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- 다가오는 일정 -->
+    <!-- 다가오는 경조사 섹션 -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -145,14 +145,82 @@
         android:layout_marginTop="10dp"
         android:layout_marginBottom="8dp" />
 
+    <!-- 섹션 헤더 -->
     <TextView
-        android:id="@+id/widget_upcoming"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="다가오는 일정 없음"
+        android:text="📅 다가오는 경조사"
+        android:textSize="10sp"
+        android:textColor="#AAFFFFFF"
+        android:layout_marginBottom="6dp" />
+
+    <!-- 이벤트 1행 -->
+    <LinearLayout
+        android:id="@+id/widget_upcoming_row1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/widget_upcoming_1_info"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/widget_upcoming_1_dday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#FCD34D" />
+    </LinearLayout>
+
+    <!-- 이벤트 2행 -->
+    <LinearLayout
+        android:id="@+id/widget_upcoming_row2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/widget_upcoming_2_info"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/widget_upcoming_2_dday"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#FCD34D" />
+    </LinearLayout>
+
+    <!-- 없을 때 -->
+    <TextView
+        android:id="@+id/widget_upcoming_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="30일 내 예정 없음"
         android:textSize="11sp"
-        android:textColor="#CCFFFFFF"
-        android:maxLines="2"
-        android:ellipsize="end" />
+        android:textColor="#66FFFFFF"
+        android:visibility="gone" />
 
 </LinearLayout>

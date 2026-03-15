@@ -1048,7 +1048,7 @@ class _StatsLedgerItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
-                child: Text(event.ceremonyType.emoji,
+                child: Text(event.displayEmoji,
                     style: const TextStyle(fontSize: 20))),
           ),
           const SizedBox(width: 12),
@@ -1094,7 +1094,7 @@ class _StatsLedgerItem extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                        '${event.ceremonyType.label} · ${event.relation.label}',
+                        '${event.displayLabel} · ${event.relation.label}',
                         style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondary)),

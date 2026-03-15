@@ -106,12 +106,33 @@ class EventNotifier extends AsyncNotifier<void> {
       await db.deleteEvent(id);
       if (firestoreId != null) {
         if (family != null) {
-          // 가족 공유 컬렉션에서 삭제
           await FamilyService.instance
               .deleteFamilyEvent(family.id, firestoreId);
         } else if (userId != null) {
-          // 개인 컬렉션에서 삭제
           await FirestoreService.instance.deleteEvent(userId, firestoreId);
+        }
+      }
+      final allEvents = ref.read(allEventsProvider).valueOrNull ?? [];
+      await HomeWidgetService.instance.updateWidget(allEvents);
+    });
+  }
+
+  Future<void> deleteMultipleEvents(List<EventModel> events) async {
+    state = const AsyncLoading();
+    final userId = ref.read(currentUserIdProvider);
+    final family = ref.read(familyProvider).valueOrNull;
+
+    state = await AsyncValue.guard(() async {
+      for (final event in events) {
+        await db.deleteEvent(event.id);
+        if (event.firestoreId != null) {
+          if (family != null) {
+            await FamilyService.instance
+                .deleteFamilyEvent(family.id, event.firestoreId!);
+          } else if (userId != null) {
+            await FirestoreService.instance
+                .deleteEvent(userId, event.firestoreId!);
+          }
         }
       }
       final allEvents = ref.read(allEventsProvider).valueOrNull ?? [];

@@ -9,6 +9,7 @@ import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/contact_provider.dart';
+import '../../providers/custom_category_provider.dart';
 import '../../services/kakao_local_service.dart';
 import '../common/app_theme.dart';
 
@@ -40,6 +41,7 @@ class _State extends ConsumerState<EventBottomSheet>
   EventType _type = EventType.expense;
   RelationType _rel = RelationType.friend;
   CeremonyType _cer = CeremonyType.wedding;
+  String? _customCategoryLabel; // "emoji|label" 형식, null이면 기본 카테고리
   late DateTime _date;
   _EntryMode _mode = _EntryMode.confirmed;
   List<String> _photoPaths = []; // 첨부 사진 경로 목록 (최대 5장)
@@ -62,10 +64,18 @@ class _State extends ConsumerState<EventBottomSheet>
       final e = widget.eventToEdit!;
       _nameCtrl.text = e.personName;
       _amtCtrl.text = e.amount == 0 ? '' : e.amount.toString();
-      _memoCtrl.text = e.memo ?? '';
       _type = e.eventType;
       _rel = e.relation;
       _cer = e.ceremonyType;
+      // 커스텀 카테고리 접두사 파싱
+      final rawMemo = e.memo ?? '';
+      final ccMatch = RegExp(r'^\[CC:([^\]]+)\]\n?').firstMatch(rawMemo);
+      if (ccMatch != null) {
+        _customCategoryLabel = ccMatch.group(1);
+        _memoCtrl.text = rawMemo.replaceFirst(RegExp(r'^\[CC:[^\]]+\]\n?'), '');
+      } else {
+        _memoCtrl.text = rawMemo;
+      }
       _date = e.date;
       _photoPaths = List.from(e.photos);
       _isRecurring = e.isRecurring;
@@ -565,20 +575,25 @@ class _State extends ConsumerState<EventBottomSheet>
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: DropdownButtonFormField<CeremonyType>(
-                        initialValue: _cer,
-                        decoration:
-                            _deco('경조사', Icons.celebration_outlined),
-                        isExpanded: true,
-                        items: CeremonyType.values
-                            .map((c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text('${c.emoji} ${c.label}',
-                                      style:
-                                          const TextStyle(fontSize: 13)),
-                                ))
-                            .toList(),
-                        onChanged: (v) => setState(() => _cer = v!),
+                      child: InkWell(
+                        onTap: () => _showCeremonyPicker(context),
+                        borderRadius: BorderRadius.circular(10),
+                        child: InputDecorator(
+                          decoration:
+                              _deco('경조사', Icons.celebration_outlined),
+                          child: Row(children: [
+                            Expanded(
+                              child: Text(
+                                _customCategoryLabel != null
+                                    ? '${_customCategoryLabel!.split("|")[0]} ${_customCategoryLabel!.split("|").length > 1 ? _customCategoryLabel!.split("|")[1] : ""}'
+                                    : '${_cer.emoji} ${_cer.label}',
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                            const Icon(Icons.expand_more,
+                                color: Colors.grey, size: 18),
+                          ]),
+                        ),
                       ),
                     ),
                   ]),
@@ -1062,7 +1077,13 @@ class _State extends ConsumerState<EventBottomSheet>
       ceremonyType: _cer,
       amount: amount,
       eventType: isScheduled && amount == 0 ? EventType.expense : _type,
-      memo: _memoCtrl.text.isEmpty ? null : _memoCtrl.text.trim(),
+      memo: () {
+        final memoText = _memoCtrl.text.trim();
+        if (_customCategoryLabel != null) {
+          return '[CC:$_customCategoryLabel]${memoText.isEmpty ? '' : '\n$memoText'}';
+        }
+        return memoText.isEmpty ? null : memoText;
+      }(),
       userId: uid,
       firestoreId: widget.eventToEdit?.firestoreId,
       photos: _photoPaths,
@@ -1074,6 +1095,100 @@ class _State extends ConsumerState<EventBottomSheet>
 
     await ref.read(eventNotifierProvider.notifier).addEvent(e);
     if (mounted) Navigator.pop(context);
+  }
+
+  void _showCeremonyPicker(BuildContext context) {
+    final customCategories = ref.read(customCategoryProvider);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.4,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (_, scroll) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Row(children: [
+                  Text('경조사 선택',
+                      style: TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w700)),
+                ]),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: ListView(
+                  controller: scroll,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 6),
+                      child: Text('기본',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w600)),
+                    ),
+                    ...CeremonyType.values.map((c) => _CeremonyOptionTile(
+                          emoji: c.emoji,
+                          label: c.label,
+                          selected:
+                              _customCategoryLabel == null && _cer == c,
+                          onTap: () {
+                            setState(() {
+                              _cer = c;
+                              _customCategoryLabel = null;
+                            });
+                            Navigator.pop(ctx);
+                          },
+                        )),
+                    if (customCategories.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 6),
+                        child: Text('커스텀',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                                fontWeight: FontWeight.w600)),
+                      ),
+                      ...customCategories.map((cat) => _CeremonyOptionTile(
+                            emoji: cat.emoji,
+                            label: cat.label,
+                            selected: _customCategoryLabel == cat.key,
+                            onTap: () {
+                              setState(() {
+                                _cer = CeremonyType.other;
+                                _customCategoryLabel = cat.key;
+                              });
+                              Navigator.pop(ctx);
+                            },
+                          )),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _delete() async {
@@ -1303,6 +1418,42 @@ class _ModeTab extends StatelessWidget {
             ]),
           ),
         ),
+      );
+}
+
+// ── 경조사 선택 옵션 타일 ─────────────────────────────────────────
+class _CeremonyOptionTile extends StatelessWidget {
+  final String emoji, label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _CeremonyOptionTile({
+    required this.emoji,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+        onTap: onTap,
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        leading: Text(emoji, style: const TextStyle(fontSize: 22)),
+        title: Text(label,
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight:
+                    selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF1A1A2E))),
+        trailing: selected
+            ? const Icon(Icons.check_circle_rounded,
+                color: Color(0xFF2563EB), size: 20)
+            : null,
+        tileColor: selected
+            ? const Color(0xFF2563EB).withValues(alpha: 0.05)
+            : null,
       );
 }
 

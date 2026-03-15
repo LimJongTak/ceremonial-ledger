@@ -7,11 +7,70 @@ import '../../providers/event_provider.dart';
 import '../calendar/event_bottom_sheet.dart';
 import '../person/person_history_screen.dart';
 
-class LedgerScreen extends ConsumerWidget {
+class LedgerScreen extends ConsumerStatefulWidget {
   const LedgerScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LedgerScreen> createState() => _LedgerScreenState();
+}
+
+class _LedgerScreenState extends ConsumerState<LedgerScreen> {
+  bool _selectMode = false;
+  final Set<int> _selectedIds = {};
+
+  void _enterSelectMode() => setState(() {
+        _selectMode = true;
+        _selectedIds.clear();
+      });
+
+  void _exitSelectMode() => setState(() {
+        _selectMode = false;
+        _selectedIds.clear();
+      });
+
+  void _toggleSelect(int id) => setState(() {
+        if (_selectedIds.contains(id)) {
+          _selectedIds.remove(id);
+        } else {
+          _selectedIds.add(id);
+        }
+      });
+
+  void _selectAll(List<EventModel> events) => setState(() {
+        _selectedIds.addAll(events.map((e) => e.id));
+      });
+
+  void _deselectAll() => setState(() => _selectedIds.clear());
+
+  Future<void> _deleteSelected(List<EventModel> events) async {
+    final toDelete = events.where((e) => _selectedIds.contains(e.id)).toList();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('일괄 삭제'),
+        content: Text('선택한 ${toDelete.length}건의 내역을 삭제할까요?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('취소')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) {
+      await ref
+          .read(eventNotifierProvider.notifier)
+          .deleteMultipleEvents(toDelete);
+      _exitSelectMode();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final summary = ref.watch(ledgerSummaryProvider);
     final year = ref.watch(filterYearProvider);
     final month = ref.watch(filterMonthProvider);
@@ -40,18 +99,78 @@ class LedgerScreen extends ConsumerWidget {
                   Row(children: [
                     _FilterChip(
                       label: '$year년',
-                      onTap: () => _showYearPicker(context, ref, year),
+                      onTap: () => _showYearPicker(context, year),
                     ),
                     const SizedBox(width: 8),
                     _FilterChip(
                       label: month != null ? '$month월' : '전체',
-                      onTap: () => _showMonthPicker(context, ref, month),
+                      onTap: () => _showMonthPicker(context, month),
                     ),
                     const Spacer(),
-                    Text('${summary.events.length}건',
-                        style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 13)),
+                    if (_selectMode) ...[
+                      GestureDetector(
+                        onTap: () {
+                          final all = _selectedIds.length == summary.events.length;
+                          all ? _deselectAll() : _selectAll(summary.events);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _selectedIds.length == summary.events.length
+                                ? '전체 해제'
+                                : '전체 선택',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _exitSelectMode,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text('취소',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ] else ...[
+                      Text('${summary.events.length}건',
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 13)),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: _enterSelectMode,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text('선택',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ],
                   ]),
                   const SizedBox(height: 14),
                   Row(children: [
@@ -96,26 +215,92 @@ class LedgerScreen extends ConsumerWidget {
             ),
           )
         else ...[
-          // 카테고리별 통계
-          SliverToBoxAdapter(
-            child: _CategoryStats(events: summary.events),
-          ),
+          // 카테고리별 통계 (선택 모드에서는 숨김)
+          if (!_selectMode)
+            SliverToBoxAdapter(
+              child: _CategoryStats(events: summary.events),
+            ),
           // 내역 목록
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: EdgeInsets.fromLTRB(
+                16, _selectMode ? 12 : 0, 16, _selectMode ? 100 : 16),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
-                (ctx, i) => _LedgerItem(event: summary.events[i]),
+                (ctx, i) => _LedgerItem(
+                  event: summary.events[i],
+                  selectMode: _selectMode,
+                  isSelected: _selectedIds.contains(summary.events[i].id),
+                  onToggle: () => _toggleSelect(summary.events[i].id),
+                  onLongPress: _selectMode
+                      ? null
+                      : () {
+                          _enterSelectMode();
+                          _toggleSelect(summary.events[i].id);
+                        },
+                ),
                 childCount: summary.events.length,
               ),
             ),
           ),
         ],
       ]),
+
+      // 선택 모드 하단 액션바
+      bottomNavigationBar: _selectMode
+          ? SafeArea(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, -2)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _selectedIds.isEmpty
+                            ? '항목을 선택하세요'
+                            : '${_selectedIds.length}건 선택됨',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _selectedIds.isEmpty
+                                ? Colors.grey[400]
+                                : const Color(0xFF1A1A2E)),
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _selectedIds.isEmpty
+                          ? null
+                          : () => _deleteSelected(summary.events),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.red[400],
+                        disabledBackgroundColor:
+                            Colors.grey[200],
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                      ),
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      label: const Text('삭제',
+                          style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 
-  void _showYearPicker(BuildContext ctx, WidgetRef ref, int cur) {
+  void _showYearPicker(BuildContext ctx, int cur) {
     showCupertinoModalPopup(
       context: ctx,
       builder: (_) => Container(
@@ -124,7 +309,8 @@ class LedgerScreen extends ConsumerWidget {
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.end, children: [
             CupertinoButton(
-                child: const Text('완료'), onPressed: () => Navigator.pop(ctx)),
+                child: const Text('완료'),
+                onPressed: () => Navigator.pop(ctx)),
           ]),
           Expanded(
               child: CupertinoPicker(
@@ -141,7 +327,7 @@ class LedgerScreen extends ConsumerWidget {
     );
   }
 
-  void _showMonthPicker(BuildContext ctx, WidgetRef ref, int? cur) {
+  void _showMonthPicker(BuildContext ctx, int? cur) {
     showCupertinoModalPopup(
       context: ctx,
       builder: (_) => Container(
@@ -150,7 +336,8 @@ class LedgerScreen extends ConsumerWidget {
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.end, children: [
             CupertinoButton(
-                child: const Text('완료'), onPressed: () => Navigator.pop(ctx)),
+                child: const Text('완료'),
+                onPressed: () => Navigator.pop(ctx)),
           ]),
           Expanded(
               child: CupertinoPicker(
@@ -185,32 +372,31 @@ class _CategoryStatsState extends State<_CategoryStats> {
 
   @override
   Widget build(BuildContext context) {
-    // 경조사 종류별 합계
-    final Map<CeremonyType, int> incomeByCategory = {};
-    final Map<CeremonyType, int> expenseByCategory = {};
+    final Map<String, int> incomeByCategory = {};
+    final Map<String, int> expenseByCategory = {};
 
     for (final e in widget.events) {
+      final key = e.displayLabel;
       if (e.isIncome) {
-        incomeByCategory[e.ceremonyType] =
-            (incomeByCategory[e.ceremonyType] ?? 0) + e.amount;
+        incomeByCategory[key] = (incomeByCategory[key] ?? 0) + e.amount;
       } else {
-        expenseByCategory[e.ceremonyType] =
-            (expenseByCategory[e.ceremonyType] ?? 0) + e.amount;
+        expenseByCategory[key] = (expenseByCategory[key] ?? 0) + e.amount;
       }
     }
 
-    // 관계별 합계
     final Map<RelationType, int> byRelation = {};
     for (final e in widget.events) {
       byRelation[e.relation] = (byRelation[e.relation] ?? 0) + e.amount;
     }
 
-    final sortedCeremony = CeremonyType.values
-        .where(
-            (c) => (incomeByCategory[c] ?? 0) + (expenseByCategory[c] ?? 0) > 0)
-        .toList()
-      ..sort((a, b) => ((incomeByCategory[b] ?? 0) +
-              (expenseByCategory[b] ?? 0))
+    // 경조사별 (displayLabel 기준)
+    final Map<String, String> labelToEmoji = {};
+    for (final e in widget.events) {
+      labelToEmoji.putIfAbsent(e.displayLabel, () => e.displayEmoji);
+    }
+
+    final sortedCeremony = labelToEmoji.keys.toList()
+      ..sort((a, b) => ((incomeByCategory[b] ?? 0) + (expenseByCategory[b] ?? 0))
           .compareTo((incomeByCategory[a] ?? 0) + (expenseByCategory[a] ?? 0)));
 
     final sortedRelation = RelationType.values
@@ -235,7 +421,6 @@ class _CategoryStatsState extends State<_CategoryStats> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더
           InkWell(
             onTap: () => setState(() => _expanded = !_expanded),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -270,7 +455,6 @@ class _CategoryStatsState extends State<_CategoryStats> {
             ),
           ),
 
-          // 경조사 종류별 (항상 표시)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Column(
@@ -284,14 +468,14 @@ class _CategoryStatsState extends State<_CategoryStats> {
                 const SizedBox(height: 8),
                 ...sortedCeremony
                     .take(_expanded ? sortedCeremony.length : 3)
-                    .map((c) {
-                  final income = incomeByCategory[c] ?? 0;
-                  final expense = expenseByCategory[c] ?? 0;
+                    .map((label) {
+                  final income = incomeByCategory[label] ?? 0;
+                  final expense = expenseByCategory[label] ?? 0;
                   final total = income + expense;
                   final ratio = totalAmount > 0 ? total / totalAmount : 0.0;
                   return _CategoryRow(
-                    emoji: c.emoji,
-                    label: c.label,
+                    emoji: labelToEmoji[label] ?? '📝',
+                    label: label,
                     income: income,
                     expense: expense,
                     ratio: ratio,
@@ -310,7 +494,6 @@ class _CategoryStatsState extends State<_CategoryStats> {
             ),
           ),
 
-          // 관계별 (펼쳤을 때만)
           if (_expanded) ...[
             const Divider(height: 1),
             Padding(
@@ -339,14 +522,7 @@ class _CategoryStatsState extends State<_CategoryStats> {
                           ),
                           child: Center(
                             child: Text(
-                              [
-                                '👨‍👩‍👧',
-                                '👥',
-                                '🤝',
-                                '💼',
-                                '🏘️',
-                                '📌'
-                              ][r.index],
+                              ['👨‍👩‍👧', '👥', '🤝', '💼', '🏘️', '📌'][r.index],
                               style: const TextStyle(fontSize: 14),
                             ),
                           ),
@@ -450,10 +626,7 @@ class _CategoryRow extends StatelessWidget {
                               fontSize: 12,
                               color: Color(0xFF1A73E8),
                               fontWeight: FontWeight.w600)),
-                    if (income > 0 && expense > 0)
-                      const Text(
-                        '  ',
-                      ),
+                    if (income > 0 && expense > 0) const Text('  '),
                     if (expense > 0)
                       Text('-${fmt.format(expense)}',
                           style: const TextStyle(
@@ -469,7 +642,8 @@ class _CategoryRow extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: ratio,
                   backgroundColor: Colors.grey[100],
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF1A73E8)),
+                  valueColor:
+                      const AlwaysStoppedAnimation(Color(0xFF1A73E8)),
                   minHeight: 5,
                 ),
               ),
@@ -547,12 +721,154 @@ class _SummaryCard extends StatelessWidget {
 
 class _LedgerItem extends ConsumerWidget {
   final EventModel event;
-  const _LedgerItem({required this.event});
+  final bool selectMode;
+  final bool isSelected;
+  final VoidCallback onToggle;
+  final VoidCallback? onLongPress;
+
+  const _LedgerItem({
+    required this.event,
+    required this.selectMode,
+    required this.isSelected,
+    required this.onToggle,
+    this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inc = event.isIncome;
     final dateStr = DateFormat('M월 d일 (E)', 'ko_KR').format(event.date);
+
+    final card = GestureDetector(
+      onLongPress: onLongPress,
+      onTap: selectMode
+          ? onToggle
+          : () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      PersonHistoryScreen(personName: event.personName),
+                ),
+              ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFEFF6FF)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected
+              ? Border.all(color: const Color(0xFF2563EB), width: 1.5)
+              : null,
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 1))
+          ],
+        ),
+        child: Row(children: [
+          // 체크박스 (선택 모드)
+          if (selectMode) ...[
+            Container(
+              width: 22,
+              height: 22,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected
+                    ? const Color(0xFF2563EB)
+                    : Colors.transparent,
+                border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF2563EB)
+                        : Colors.grey[300]!,
+                    width: 2),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  : null,
+            ),
+          ],
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: inc ? const Color(0xFFE3F2FD) : const Color(0xFFFFEBEE),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+                child: Text(event.displayEmoji,
+                    style: const TextStyle(fontSize: 20))),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+              child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(event.personName,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: Color(0xFF1A1A2E))),
+                  Text(event.formattedAmount,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: inc
+                              ? const Color(0xFF1A73E8)
+                              : const Color(0xFFE53935))),
+                ],
+              ),
+              const SizedBox(height: 3),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                      '${event.displayLabel} · ${event.relation.label}',
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey[500])),
+                  Text(dateStr,
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey[400])),
+                ],
+              ),
+            ],
+          )),
+          if (!selectMode) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20))),
+                builder: (_) => EventBottomSheet(
+                    initialDate: event.date, eventToEdit: event),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.edit_outlined,
+                    size: 15, color: Color(0xFF2563EB)),
+              ),
+            ),
+          ],
+        ]),
+      ),
+    );
+
+    // 선택 모드에서는 Dismissible 비활성화
+    if (selectMode) return card;
 
     return Dismissible(
       key: Key(event.id.toString()),
@@ -584,102 +900,7 @@ class _LedgerItem extends ConsumerWidget {
       onDismissed: (_) => ref
           .read(eventNotifierProvider.notifier)
           .deleteEvent(event.id, firestoreId: event.firestoreId),
-      child: GestureDetector(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                PersonHistoryScreen(personName: event.personName),
-          ),
-        ),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 1))
-            ],
-          ),
-          child: Row(children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: inc ? const Color(0xFFE3F2FD) : const Color(0xFFFFEBEE),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                  child: Text(event.ceremonyType.emoji,
-                      style: const TextStyle(fontSize: 20))),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(event.personName,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: Color(0xFF1A1A2E))),
-                    Text(event.formattedAmount,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: inc
-                                ? const Color(0xFF1A73E8)
-                                : const Color(0xFFE53935))),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                        '${event.ceremonyType.label} · ${event.relation.label}',
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey[500])),
-                    Text(dateStr,
-                        style:
-                            TextStyle(fontSize: 11, color: Colors.grey[400])),
-                  ],
-                ),
-              ],
-            )),
-            const SizedBox(width: 8),
-            // 수정 버튼 (인물별 히스토리 탭과 분리)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                shape: const RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20))),
-                builder: (_) =>
-                    EventBottomSheet(initialDate: event.date, eventToEdit: event),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.edit_outlined,
-                    size: 15, color: Color(0xFF2563EB)),
-              ),
-            ),
-          ]),
-        ),
-      ),
+      child: card,
     );
   }
 }

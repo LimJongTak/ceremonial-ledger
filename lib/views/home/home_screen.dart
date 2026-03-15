@@ -432,7 +432,7 @@ class _UpcomingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text(event.ceremonyType.emoji,
+            Text(event.displayEmoji,
                 style: const TextStyle(fontSize: 22)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -458,7 +458,7 @@ class _UpcomingCard extends StatelessWidget {
                   color: AppTheme.textPrimary),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
-          Text(event.ceremonyType.label,
+          Text(event.displayLabel,
               style:
                   const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
         ],
@@ -537,7 +537,7 @@ class _RecentItem extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
-                child: Text(event.ceremonyType.emoji,
+                child: Text(event.displayEmoji,
                     style: const TextStyle(fontSize: 20))),
           ),
           const SizedBox(width: 14),
@@ -551,7 +551,7 @@ class _RecentItem extends ConsumerWidget {
                       fontSize: 14,
                       color: AppTheme.textPrimary)),
               const SizedBox(height: 3),
-              Text('${event.ceremonyType.label} · ${event.relation.label}',
+              Text('${event.displayLabel} · ${event.relation.label}',
                   style: const TextStyle(
                       fontSize: 12, color: AppTheme.textSecondary)),
             ],
