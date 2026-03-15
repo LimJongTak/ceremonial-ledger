@@ -321,19 +321,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              width: 20,
-                              height: 20,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
-                              ),
-                              child: const Center(
-                                child: Text('N',
-                                    style: TextStyle(
-                                        color: Color(0xFF03C75A),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w900)),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.asset(
+                                'assets/images/naver-icon.jpeg',
+                                width: 22,
+                                height: 22,
+                                fit: BoxFit.cover,
                               ),
                             ),
                             const SizedBox(width: 10),
