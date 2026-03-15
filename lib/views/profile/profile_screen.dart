@@ -7,7 +7,6 @@ import '../../providers/auth_provider.dart';
 import '../../services/kakao_share_service.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/budget_provider.dart';
-import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
@@ -484,37 +483,49 @@ class ProfileScreen extends ConsumerWidget {
       }
     }
 
-    try {
-      await ref
-          .read(authNotifierProvider.notifier)
-          .deleteAccount()
-          .timeout(const Duration(seconds: 15));
-      closeAndGoLogin();
-    } on TimeoutException {
-      // 타임아웃 — 데이터는 삭제됐으므로 로그인 화면으로 이동
-      closeAndGoLogin();
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // 로딩 닫기
-        final msg = e is AuthException ? e.message : '계정 삭제 중 오류가 발생했습니다.';
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text('오류',
-                style: TextStyle(fontWeight: FontWeight.w700)),
-            content: Text(msg),
-            actions: [
-              FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('확인'),
-              ),
-            ],
-          ),
-        );
-      }
+    // 삭제 결과를 Completer로 수신 — 완료/오류/타임아웃 모두 처리
+    final completer = Completer<String?>();
+
+    ref.read(authNotifierProvider.notifier).deleteAccount().then((_) {
+      if (!completer.isCompleted) completer.complete(null);
+    }).catchError((e) {
+      if (!completer.isCompleted) completer.complete(e.toString());
+    });
+
+    // 8초 타이머와 경쟁 — 둘 중 먼저 완료되는 쪽을 사용
+    final result = await Future.any([
+      completer.future,
+      Future.delayed(const Duration(seconds: 8), () => '__timeout__'),
+    ]);
+
+    if (!context.mounted) return;
+
+    // 재로그인 필요 오류만 예외 처리
+    if (result != null &&
+        result != '__timeout__' &&
+        result.contains('재로그인')) {
+      Navigator.of(context, rootNavigator: true).pop();
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20)),
+          title: const Text('오류',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+          content: Text(result),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      );
+      return;
     }
+
+    // 성공 또는 타임아웃 — 로그인 화면으로 이동
+    closeAndGoLogin();
   }
 }
 
