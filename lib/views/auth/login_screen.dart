@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../providers/auth_provider.dart';
 import '../common/app_theme.dart';
 
@@ -293,20 +294,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              width: 20,
-                              height: 20,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Color(0xFF3C1E1E),
-                              ),
-                              child: const Center(
-                                child: Text('K',
-                                    style: TextStyle(
-                                        color: Color(0xFFFEE500),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w900)),
-                              ),
+                            SvgPicture.asset(
+                              'assets/images/kakaotalk-icon.svg',
+                              width: 22,
+                              height: 22,
                             ),
                             const SizedBox(width: 10),
                             const Text('카카오로 계속하기',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../providers/auth_provider.dart';
@@ -786,8 +787,11 @@ class _KakaoInviteMenuItemState extends State<_KakaoInviteMenuItem> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Color(0xFFFFD400)),
                   )
-                : const Icon(Icons.people_alt_rounded,
-                    color: Color(0xFFFFD400), size: 18),
+                : Padding(
+                    padding: const EdgeInsets.all(9),
+                    child: SvgPicture.asset(
+                        'assets/images/kakaotalk-icon.svg'),
+                  ),
           ),
           const SizedBox(width: 14),
           const Expanded(

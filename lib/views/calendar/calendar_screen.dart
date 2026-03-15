@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/event_model.dart';
@@ -445,8 +446,11 @@ class EventCard extends StatelessWidget {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.chat_bubble_rounded,
-                                      size: 15, color: Colors.amber[800]),
+                                  SvgPicture.asset(
+                                    'assets/images/kakaotalk-icon.svg',
+                                    width: 16,
+                                    height: 16,
+                                  ),
                                   const SizedBox(width: 5),
                                   Text(
                                     '카카오톡 공유',

@@ -15,6 +15,9 @@ dependencies:
   # 상태관리
   flutter_riverpod: ^2.4.9
 
+  # SVG
+  flutter_svg: ^2.0.10+1
+
   #알림
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
