@@ -782,7 +782,13 @@ class _KakaoInviteMenuItemState extends State<_KakaoInviteMenuItem> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Color(0xFFFFD400)),
                   )
-                : Image.asset('assets/images/kakaotalk-icon.png'),
+                : Center(
+                    child: Image.asset(
+                      'assets/images/kakaotalk-icon.png',
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
           ),
           const SizedBox(width: 14),
           const Expanded(
