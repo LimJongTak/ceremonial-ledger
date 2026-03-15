@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/kakao_share_service.dart';
 import '../../providers/event_provider.dart';
@@ -258,26 +259,7 @@ class ProfileScreen extends ConsumerWidget {
                 // 친구 초대
                 _Section(
                   title: '친구 초대',
-                  children: [
-                    _MenuItem(
-                      icon: Icons.people_alt_rounded,
-                      iconColor: const Color(0xFFFFD400),
-                      title: '카카오톡으로 초대하기',
-                      subtitle: '친구에게 오고가고 앱을 소개해요',
-                      onTap: () async {
-                        final ok =
-                            await KakaoShareService.instance.shareAppInvite();
-                        if (!ok && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('카카오톡 공유에 실패했습니다'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                  children: [const _KakaoInviteMenuItem()],
                 ),
                 const SizedBox(height: 16),
 
@@ -743,6 +725,88 @@ class _FamilyMenuItem extends ConsumerWidget {
           else
             const Icon(Icons.chevron_right_rounded,
                 color: AppTheme.textHint, size: 20),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── 카카오 초대 메뉴 (로딩 상태 + 폴백 처리) ──────────────────
+class _KakaoInviteMenuItem extends StatefulWidget {
+  const _KakaoInviteMenuItem();
+
+  @override
+  State<_KakaoInviteMenuItem> createState() => _KakaoInviteMenuItemState();
+}
+
+class _KakaoInviteMenuItemState extends State<_KakaoInviteMenuItem> {
+  bool _loading = false;
+
+  static const _fallbackText =
+      '📒 오고가고 - 경조사 장부\n'
+      '결혼식·장례식·돌잔치 등 경조사 내역을 스마트하게 관리해보세요!\n'
+      '친구와 함께 사용하면 더 편리해요 😊';
+
+  Future<void> _invite() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+    try {
+      final error = await KakaoShareService.instance.shareAppInvite();
+      if (!mounted) return;
+      if (error != null) {
+        // 카카오 실패 → 시스템 공유 폴백
+        await Share.share(_fallbackText, subject: '오고가고 앱 초대');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      await Share.share(_fallbackText, subject: '오고가고 앱 초대');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: _loading ? null : _invite,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFD400).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: _loading
+                ? const Padding(
+                    padding: EdgeInsets.all(9),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Color(0xFFFFD400)),
+                  )
+                : const Icon(Icons.people_alt_rounded,
+                    color: Color(0xFFFFD400), size: 18),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('카카오톡으로 초대하기',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary)),
+                Text('친구에게 오고가고 앱을 소개해요',
+                    style: TextStyle(
+                        fontSize: 12, color: AppTheme.textSecondary)),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded,
+              color: AppTheme.textHint, size: 20),
         ]),
       ),
     );

@@ -12,7 +12,7 @@ class KakaoShareService {
       'https://play.google.com/store/apps/details?id=com.yourcompany.ceremonial_ledger';
 
   // ── 행사 정보 카카오톡 공유 ───────────────────────────────
-  Future<bool> shareEvent(EventModel event) async {
+  Future<String?> shareEvent(EventModel event) async {
     final dateStr =
         '${event.date.year}년 ${event.date.month}월 ${event.date.day}일';
     final locationLine =
@@ -35,7 +35,7 @@ class KakaoShareService {
   }
 
   // ── 앱 친구 초대 ─────────────────────────────────────────
-  Future<bool> shareAppInvite() async {
+  Future<String?> shareAppInvite() async {
     final template = TextTemplate(
       text: '📒 오고가고 - 경조사 장부\n'
           '결혼식·장례식·돌잔치 등 경조사 내역을\n'
@@ -52,7 +52,8 @@ class KakaoShareService {
   }
 
   // ── 공통 전송 로직 ────────────────────────────────────────
-  Future<bool> _send(TextTemplate template) async {
+  /// 성공 시 null, 실패 시 오류 메시지를 반환합니다.
+  Future<String?> _send(TextTemplate template) async {
     try {
       final available =
           await ShareClient.instance.isKakaoTalkSharingAvailable();
@@ -63,10 +64,10 @@ class KakaoShareService {
             .makeDefaultUrl(template: template);
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
-      return true;
+      return null;
     } catch (e) {
       debugPrint('카카오톡 공유 오류: $e');
-      return false;
+      return e.toString();
     }
   }
 }
