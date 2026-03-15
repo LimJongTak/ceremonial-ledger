@@ -123,53 +123,54 @@ class _SplashScreenState extends State<SplashScreen>
   // 오고가고 4글자 각각 stagger
   late final List<Animation<double>> _charFades;
 
-  // 경조사 장부 플랫폼: 글자보다 먼저 나타남
+  // 경조사 장부 플랫폼
   late final Animation<double> _subtitleFade;
   late final Animation<double> _subtitleOffset;
 
   static const _titleChars = ['오', '고', '가', '고'];
 
-  // 서브타이틀(0~10%) 먼저 → 글자 8%부터 14% 간격으로 천천히 등장
-  static const _charStarts = [0.08, 0.22, 0.36, 0.50];
+  // 첫 글자와 서브타이틀이 동시에 등장, 이후 글자가 차례로 나타남
+  // 서브타이틀: 0~20%, 글자: 0%, 18%, 36%, 54%
+  static const _charStarts = [0.0, 0.18, 0.36, 0.54];
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3500),
+      duration: const Duration(milliseconds: 2200),
     );
 
     _charFades = _charStarts
         .map((start) => CurvedAnimation(
               parent: _ctrl,
-              curve: Interval(start, start + 0.18, curve: Curves.easeOut),
+              curve: Interval(start, start + 0.20, curve: Curves.easeOut),
             ))
         .toList();
 
-    // 서브타이틀: 글자보다 먼저 시작해 빠르게 완료
+    // 서브타이틀: 첫 글자와 동시에 슬라이드업 + 페이드인
     _subtitleFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.0, 0.12, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.22, curve: Curves.easeOut),
     );
-    _subtitleOffset = Tween<double>(begin: 22.0, end: 0.0).animate(
+    _subtitleOffset = Tween<double>(begin: 20.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _ctrl,
-        curve: const Interval(0.0, 0.16, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.24, curve: Curves.easeOutCubic),
       ),
     );
 
-    // 애니메이션 완료 후 2초 뒤 홈 화면으로 전환
+    // 애니메이션 완료 후 1.5초 뒤 홈 화면으로 전환
     _ctrl.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        Future.delayed(const Duration(seconds: 2), () {
+        Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) widget.onDone();
         });
       }
     });
 
-    // 앱 실행 1초 후 애니메이션 시작
-    Future.delayed(const Duration(seconds: 1), () {
+    // 짧은 딜레이 후 애니메이션 시작 (Flutter 엔진 초기화 여유)
+    Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _ctrl.forward();
     });
   }
