@@ -105,7 +105,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     // 앱 이름
                     const Text('오고가고',
                         style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 42,
                             fontFamily: 'NanumMiraenamu',
                             color: Color(0xFF9a30ae))),
                     const SizedBox(height: 16),
