@@ -102,17 +102,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   children: [
                     const SizedBox(height: 52),
 
-                    // 앱 로고
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        'assets/images/app_icon.jpg',
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    // 앱 이름
+                    const Text('오고가고',
+                        style: TextStyle(
+                            fontSize: 28,
+                            fontFamily: 'NanumMiraenamu',
+                            color: Color(0xFF9a30ae))),
+                    const SizedBox(height: 4),
                     const Text('경조사 장부',
                         style: TextStyle(
                             fontSize: 28,
