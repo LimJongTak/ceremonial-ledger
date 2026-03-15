@@ -266,16 +266,24 @@ class AuthService {
         await UserApi.instance.logout();
       } catch (_) {}
 
-      // 4. Firebase Auth 계정 삭제
-      await user.delete();
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'requires-recent-login') {
-        throw AuthException(
-            '보안을 위해 재로그인이 필요합니다.\n로그아웃 후 다시 로그인하여 탈퇴를 진행해주세요.');
+      // 4. Firebase Auth 계정 삭제 (5초 타임아웃 — 지연 시 로그아웃으로 대체)
+      try {
+        await user.delete().timeout(const Duration(seconds: 5));
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'requires-recent-login') {
+          throw AuthException(
+              '보안을 위해 재로그인이 필요합니다.\n로그아웃 후 다시 로그인하여 탈퇴를 진행해주세요.');
+        }
+        // 그 외 Auth 오류는 무시하고 로그아웃으로 대체
+      } catch (_) {
+        // 타임아웃 등 — 데이터는 삭제됐으므로 로그아웃 처리
       }
-      throw AuthException('계정 삭제에 실패했습니다: ${e.message}');
+
+      // 5. 최종 로그아웃 (Auth 삭제 성공/실패 무관하게 세션 종료)
+      await _auth.signOut().catchError((_) {});
+    } on AuthException {
+      rethrow;
     } catch (e) {
-      if (e is AuthException) rethrow;
       throw AuthException('계정 삭제 중 오류가 발생했습니다.');
     }
   }
