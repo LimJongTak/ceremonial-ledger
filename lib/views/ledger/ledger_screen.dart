@@ -81,7 +81,49 @@ class _LedgerScreenState extends ConsumerState<LedgerScreen> {
         SliverAppBar(
           pinned: true,
           expandedHeight: 195,
-          backgroundColor: Colors.transparent,
+          backgroundColor: const Color(0xFF1A73E8),
+          automaticallyImplyLeading: false,
+          // 항상 보이는 액션 버튼 (선택 모드 진입/취소)
+          actions: [
+            if (_selectMode) ...[
+              TextButton(
+                onPressed: () {
+                  final all = _selectedIds.length == summary.events.length;
+                  all ? _deselectAll() : _selectAll(summary.events);
+                },
+                child: Text(
+                  _selectedIds.length == summary.events.length
+                      ? '전체 해제'
+                      : '전체 선택',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+              TextButton(
+                onPressed: _exitSelectMode,
+                child: const Text('취소',
+                    style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ] else ...[
+              Text('${summary.events.length}건',
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 13)),
+              TextButton(
+                onPressed: _enterSelectMode,
+                child: const Text('선택',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ],
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               padding: const EdgeInsets.fromLTRB(20, 56, 20, 14),
@@ -106,71 +148,6 @@ class _LedgerScreenState extends ConsumerState<LedgerScreen> {
                       label: month != null ? '$month월' : '전체',
                       onTap: () => _showMonthPicker(context, month),
                     ),
-                    const Spacer(),
-                    if (_selectMode) ...[
-                      GestureDetector(
-                        onTap: () {
-                          final all = _selectedIds.length == summary.events.length;
-                          all ? _deselectAll() : _selectAll(summary.events);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            _selectedIds.length == summary.events.length
-                                ? '전체 해제'
-                                : '전체 선택',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _exitSelectMode,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text('취소',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                    ] else ...[
-                      Text('${summary.events.length}건',
-                          style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 13)),
-                      const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: _enterSelectMode,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text('선택',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                    ],
                   ]),
                   const SizedBox(height: 14),
                   Row(children: [
