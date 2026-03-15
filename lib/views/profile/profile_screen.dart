@@ -457,25 +457,8 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
-    // 로딩 다이얼로그 표시
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('계정을 삭제하는 중...'),
-          ],
-        ),
-      ),
-    );
-
-    void closeAndGoLogin() {
+    void goLogin() {
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginScreen()),
           (_) => false,
@@ -492,7 +475,7 @@ class ProfileScreen extends ConsumerWidget {
       if (!completer.isCompleted) completer.complete(e.toString());
     });
 
-    // 8초 타이머와 경쟁 — 둘 중 먼저 완료되는 쪽을 사용
+    // 8초 타이머와 경쟁
     final result = await Future.any([
       completer.future,
       Future.delayed(const Duration(seconds: 8), () => '__timeout__'),
@@ -500,11 +483,10 @@ class ProfileScreen extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    // 재로그인 필요 오류만 예외 처리
+    // 재로그인 필요 오류
     if (result != null &&
         result != '__timeout__' &&
         result.contains('재로그인')) {
-      Navigator.of(context, rootNavigator: true).pop();
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -524,8 +506,30 @@ class ProfileScreen extends ConsumerWidget {
       return;
     }
 
-    // 성공 또는 타임아웃 — 로그인 화면으로 이동
-    closeAndGoLogin();
+    // 성공 또는 타임아웃 — 완료 안내 후 로그인 화면으로 이동
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('탈퇴 완료',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text(
+          '회원탈퇴가 완료되었습니다.\n그동안 오고가고를 이용해 주셔서 감사합니다.',
+          style: TextStyle(height: 1.6),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: goLogin,
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
