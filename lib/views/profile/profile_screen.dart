@@ -380,32 +380,77 @@ class ProfileScreen extends ConsumerWidget {
   void _confirmDeleteAccount(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('회원탈퇴',
-            style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.expense)),
-        content: const Text(
-          '탈퇴하면 모든 경조사 데이터가 영구적으로 삭제됩니다.\n정말 탈퇴하시겠습니까?',
-          style: TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _deleteAccount(context, ref);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.expense,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx2, setState2) {
+          bool confirmed = false;
+          return AlertDialog(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('탈퇴하기'),
-          ),
-        ],
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Text('회원탈퇴',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.expense)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '탈퇴하면 모든 경조사 데이터가 영구적으로 삭제됩니다.\n정말 탈퇴하시겠습니까?',
+                    style: TextStyle(height: 1.5),
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () => setState2(() => confirmed = !confirmed),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: confirmed,
+                          onChanged: (v) =>
+                              setState2(() => confirmed = v ?? false),
+                          activeColor: AppTheme.expense,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4)),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        const SizedBox(width: 6),
+                        const Expanded(
+                          child: Text(
+                            '위 내용을 확인했으며 탈퇴에 동의합니다.',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx2),
+                  child: const Text('취소'),
+                ),
+                FilledButton(
+                  onPressed: confirmed
+                      ? () async {
+                          Navigator.pop(ctx2);
+                          await _deleteAccount(context, ref);
+                        }
+                      : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.expense,
+                    disabledBackgroundColor:
+                        AppTheme.expense.withValues(alpha: 0.3),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('탈퇴하기'),
+                ),
+              ],
+          );
+        },
       ),
     );
   }
