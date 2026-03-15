@@ -783,10 +783,13 @@ class _KakaoInviteMenuItemState extends State<_KakaoInviteMenuItem> {
                         strokeWidth: 2, color: Color(0xFFFFD400)),
                   )
                 : Center(
-                    child: Image.asset(
-                      'assets/images/kakaotalk-icon.png',
-                      width: 24,
-                      height: 24,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset(
+                        'assets/images/kakaotalk-icon.png',
+                        width: 24,
+                        height: 24,
+                      ),
                     ),
                   ),
           ),
