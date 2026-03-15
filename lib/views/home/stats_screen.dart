@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -86,7 +85,6 @@ class _StatsBody extends StatefulWidget {
 }
 
 class _StatsBodyState extends State<_StatsBody> {
-  final _shareKey = GlobalKey();
   bool _sharing = false;
 
   Future<void> _shareStats() async {
@@ -1285,13 +1283,15 @@ class _ShareDialogState extends State<_ShareDialog> {
           RepaintBoundary(
             key: _cardKey,
             child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF2563EB)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.all(Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.all(Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 24,
+                      offset: const Offset(0, 6)),
+                ],
               ),
               padding: const EdgeInsets.all(28),
               child: Column(
@@ -1299,44 +1299,55 @@ class _ShareDialogState extends State<_ShareDialog> {
                 children: [
                   // 헤더
                   Row(children: [
-                    const Text('오고가고', style: TextStyle(
-                        color: Colors.white70, fontSize: 13,
-                        fontWeight: FontWeight.w600)),
+                    Text('오고가고',
+                        style: TextStyle(
+                            color: AppTheme.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3)),
                     const Spacer(),
-                    Text('$year년 결산', style: const TextStyle(
-                        color: Colors.white70, fontSize: 13)),
+                    Text('$year년 결산',
+                        style: const TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 13)),
                   ]),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 4),
+                  Container(height: 1.5, color: AppTheme.primary.withValues(alpha: 0.12)),
+                  const SizedBox(height: 18),
                   Text('총 ${events.length}건의 경조사',
                       style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.textPrimary,
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5)),
                   const SizedBox(height: 20),
-                  // 수입/지출/잔액
+                  // 수입/지출
                   Row(children: [
                     _ShareStatItem(
-                        label: '수입', value: '${fmt.format(totalIncome)}원',
-                        color: const Color(0xFF86EFAC)),
+                        label: '수입',
+                        value: '${fmt.format(totalIncome)}원',
+                        color: AppTheme.income),
                     const SizedBox(width: 12),
                     _ShareStatItem(
-                        label: '지출', value: '${fmt.format(totalExpense)}원',
-                        color: const Color(0xFFFCA5A5)),
+                        label: '지출',
+                        value: '${fmt.format(totalExpense)}원',
+                        color: AppTheme.expense),
                   ]),
                   const SizedBox(height: 10),
+                  // 순 잔액
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: AppTheme.bgLight,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: Colors.grey.withValues(alpha: 0.12)),
                     ),
                     child: Row(children: [
                       const Text('순 잔액',
                           style: TextStyle(
-                              color: Colors.white70, fontSize: 13)),
+                              color: AppTheme.textSecondary, fontSize: 13)),
                       const Spacer(),
                       Text(
                         balance >= 0
@@ -1344,8 +1355,8 @@ class _ShareDialogState extends State<_ShareDialog> {
                             : '-${fmt.format(balance.abs())}원',
                         style: TextStyle(
                             color: balance >= 0
-                                ? const Color(0xFF86EFAC)
-                                : const Color(0xFFFCA5A5),
+                                ? AppTheme.income
+                                : AppTheme.expense,
                             fontSize: 16,
                             fontWeight: FontWeight.w800),
                       ),
@@ -1355,7 +1366,7 @@ class _ShareDialogState extends State<_ShareDialog> {
                     const SizedBox(height: 20),
                     const Text('많이 참석한 경조사',
                         style: TextStyle(
-                            color: Colors.white70, fontSize: 12)),
+                            color: AppTheme.textSecondary, fontSize: 12)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 6,
@@ -1364,12 +1375,12 @@ class _ShareDialogState extends State<_ShareDialog> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
+                              color: AppTheme.primary.withValues(alpha: 0.07),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text('${e.key} ${e.value}건',
                                 style: const TextStyle(
-                                    color: Colors.white,
+                                    color: AppTheme.primary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600)),
                           )).toList(),
@@ -1377,10 +1388,12 @@ class _ShareDialogState extends State<_ShareDialog> {
                   ],
                   const SizedBox(height: 20),
                   Center(
-                    child: Text('오고가고 · ogogo',
+                    child: Text('오고가고',
                         style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.4),
-                            fontSize: 11)),
+                            color: AppTheme.primary.withValues(alpha: 0.5),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5)),
                   ),
                 ],
               ),
@@ -1404,8 +1417,8 @@ class _ShareDialogState extends State<_ShareDialog> {
               child: FilledButton.icon(
                 onPressed: _capturing ? null : _capture,
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF7C3AED),
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1416,7 +1429,7 @@ class _ShareDialogState extends State<_ShareDialog> {
                         height: 16,
                         child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Color(0xFF7C3AED)))
+                            color: Colors.white))
                     : const Icon(Icons.ios_share_rounded, size: 18),
                 label: Text(_capturing ? '처리중...' : '이미지로 공유'),
               ),
@@ -1440,7 +1453,7 @@ class _ShareStatItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
+            color: color.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -1448,7 +1461,7 @@ class _ShareStatItem extends StatelessWidget {
             children: [
               Text(label,
                   style: const TextStyle(
-                      color: Colors.white70, fontSize: 12)),
+                      color: AppTheme.textSecondary, fontSize: 12)),
               const SizedBox(height: 4),
               Text(value,
                   style: TextStyle(

@@ -11,7 +11,7 @@
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
 [![Riverpod](https://img.shields.io/badge/Riverpod-2.x-006AC1?style=for-the-badge)](https://riverpod.dev)
-[![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen?style=for-the-badge)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.3.0-brightgreen?style=for-the-badge)](./CHANGELOG.md)
 
 <br>
 
@@ -54,6 +54,8 @@
 | **사진 첨부** | 청첩장·부고 등 사진 첨부, 썸네일 탭으로 전체 화면 보기 (핀치줌 지원) |
 | **실시간 동기화** | Cloud Firestore 기반 실시간 데이터 스트리밍 |
 | **로컬 캐시** | Drift(SQLite) 로컬 DB로 오프라인에서도 데이터 접근 가능 |
+| **반복 이벤트** | 매년 반복되는 경조사(생일·기념일 등) 등록 및 시각적 표시 |
+| **일괄 삭제** | 장부 화면에서 다중 선택 후 한 번에 삭제 |
 
 ### 👨‍👩‍👧‍👦 가족 공유장부
 
@@ -72,14 +74,22 @@
 
 | 기능 | 설명 |
 |---|---|
-| **홈 요약** | 이번 달 수입·지출·건수 카드 탭 시 전체 내역 상세 화면으로 이동 |
+| **홈 요약** | 이번 달 수입·지출·잔액 카드 탭 시 전체 내역 상세 화면으로 이동 |
 | **다가오는 경조사** | 홈 경조사 카드 탭 시 해당 내역 수정 바텀시트 바로 열기 |
 | **캘린더 뷰** | 월별 달력에서 경조사 일정 한눈에 파악 |
 | **통계 화면** | 연·월별 수입/지출 합계·건수·차트, 총 수입/총 지출 탭 시 상세 내역 이동 |
+| **통계 공유** | 연간 결산 카드를 이미지로 캡처해 SNS·카카오톡 등으로 공유 |
 | **내역 상세** | 수입·지출·전체 내역을 연도별 그룹 헤더 + 소계와 함께 표시 |
 | **장부 목록** | 전체 내역 검색 및 필터링 |
 | **홈 위젯** | 홈 화면 위젯에서 주요 통계 바로 확인 |
 | **프로필 통계** | 총 수입·총 지출·내역 수 칩 탭 시 해당 상세 내역 화면으로 이동 |
+
+### 🔗 연락처 연동
+
+| 기능 | 설명 |
+|---|---|
+| **이름 자동완성** | 내역 등록 시 전화번호부에서 이름 검색·자동완성 |
+| **생일 자동입력** | 연락처에 생일이 등록된 경우 이름 선택 시 날짜 자동 입력 |
 
 ### ⚡ 자동화 도구
 
@@ -87,6 +97,8 @@
 |---|---|
 | **엑셀 일괄 등록** | 제공된 양식에 맞춰 작성한 `.xlsx` 파일을 앱으로 업로드하면 한 번에 등록 |
 | **데이터 내보내기** | PDF 보고서 또는 Excel 파일로 변환·저장·공유 |
+| **백업 · 복원** | Google 드라이브 또는 로컬 파일로 데이터 백업 및 복원 |
+| **카테고리 관리** | 경조사 종류 추가·편집으로 커스텀 카테고리 운영 |
 | **OCR 스캔** | *(준비 중)* Google ML Kit 기반 봉투·청첩장 텍스트 자동 인식 |
 
 ### 🔔 알림
@@ -100,9 +112,11 @@
 
 | 기능 | 설명 |
 |---|---|
+| **월별 예산 설정** | 월 지출 예산 설정 및 초과 경고 |
 | **버전 정보** | 버전별 업데이트 날짜 및 변경사항 확인 |
 | **이용약관** | 서비스 이용약관 인앱 표시 |
 | **개인정보처리방침** | 개인정보 수집·이용 안내 인앱 표시 |
+| **카카오톡 초대** | 친구에게 오고가고 앱 링크 카카오톡으로 공유 |
 
 <br>
 
@@ -144,13 +158,16 @@
 | **DB (클라우드)** | cloud_firestore | ^4.14.0 |
 | **DB (로컬)** | drift + drift_flutter | ^2.14.1 |
 | **캘린더** | table_calendar | ^3.0.9 |
+| **차트** | fl_chart | ^0.69.0 |
 | **엑셀** | excel | ^4.0.6 |
 | **PDF** | pdf + printing | ^3.10.8 |
 | **OCR** | google_mlkit_text_recognition | ^0.13.0 |
 | **알림** | flutter_local_notifications | ^17.2.2 |
 | **홈 위젯** | home_widget | ^0.6.0 |
+| **연락처** | flutter_contacts | ^1.1.7+1 |
 | **파일** | file_picker + open_file | ^8.1.2 |
 | **공유** | share_plus | ^7.2.1 |
+| **카카오 공유** | kakao_flutter_sdk_share | ^1.9.1 |
 
 <br>
 
@@ -172,7 +189,7 @@ lib/
 ├── providers/
 │   ├── auth_provider.dart        # 인증 상태 관리 (AuthNotifier, userProfileProvider)
 │   ├── budget_provider.dart      # 예산 관리 Provider
-│   ├── contact_provider.dart     # 연락처 Provider
+│   ├── contact_provider.dart     # 연락처 이름 목록 + 생일 자동완성 Provider
 │   ├── event_provider.dart       # 이벤트 CRUD 및 통계 (EventNotifier, ledgerSummaryProvider)
 │   ├── family_provider.dart      # 가족 그룹 실시간 스트림 Provider
 │   └── notification_settings_provider.dart # 알림 설정 Provider
@@ -188,6 +205,7 @@ lib/
 │   ├── pdf_report_service.dart   # PDF 보고서 생성
 │   ├── notification_service.dart # 로컬 푸시 알림
 │   ├── notification_settings_service.dart # 알림 설정 관리
+│   ├── kakao_share_service.dart  # 카카오톡 앱 초대 공유
 │   └── home_widget_service.dart  # 홈 위젯 업데이트
 │
 └── views/
@@ -196,14 +214,14 @@ lib/
     │   └── profile_setup_screen.dart # 최초 프로필 설정 화면
     ├── home/
     │   ├── main_nav_screen.dart      # 하단 네비게이션 (홈/캘린더/장부/통계/프로필)
-    │   ├── home_screen.dart          # 홈 화면 (최근 내역, 월 요약)
-    │   └── stats_screen.dart         # 통계 화면
+    │   ├── home_screen.dart          # 홈 화면 (최근 내역, 월 요약, 이번달 잔액)
+    │   └── stats_screen.dart         # 통계 화면 (차트 + 연간 결산 이미지 공유)
     ├── calendar/
     │   ├── calendar_screen.dart      # 캘린더 뷰
-    │   ├── event_bottom_sheet.dart   # 내역 등록/수정 바텀시트 (사진 첨부 + 전체 화면 보기)
+    │   ├── event_bottom_sheet.dart   # 내역 등록/수정 바텀시트 (연락처 자동완성 + 생일 자동입력)
     │   └── ocr_register_screen.dart  # OCR 스캔 화면 (준비 중)
     ├── ledger/
-    │   └── ledger_screen.dart        # 장부 목록 화면
+    │   └── ledger_screen.dart        # 장부 목록 화면 (다중 선택 삭제)
     ├── search/
     │   └── search_screen.dart        # 검색 화면
     ├── export/
@@ -211,6 +229,12 @@ lib/
     │   └── export_screen.dart        # 데이터 내보내기
     ├── notifications/
     │   └── notification_screen.dart  # 알림 목록
+    ├── person/
+    │   └── person_history_screen.dart # 인물별 경조사 내역
+    ├── settings/
+    │   ├── backup_screen.dart        # 백업 · 복원
+    │   ├── budget_setting_screen.dart # 월별 예산 설정
+    │   └── category_settings_screen.dart # 카테고리 커스텀 관리
     ├── profile/
     │   ├── profile_screen.dart       # 프로필 탭 메인 (총 수입/지출/내역 수 칩 → 상세 이동)
     │   ├── profile_stats_screen.dart # 수입·지출·전체 내역 상세 (연도별 그룹핑)
@@ -347,16 +371,19 @@ dart run flutter_native_splash:create
             ├─ 미로그인 → 로그인 화면 (Google / 카카오 / 네이버 / 이메일)
             │                └─ 최초 로그인 → 프로필 설정 화면 (닉네임 입력)
             └─ 로그인됨 → 메인 화면 (하단 탭 네비게이션)
-                              ├─ 홈       : 최근 내역 + 월 요약
-                              ├─ 캘린더   : 달력 뷰 + 내역 등록/수정 + 사진 첨부
-                              ├─ 장부     : 전체 목록 + 검색
-                              ├─ 통계     : 월별/연별 차트
+                              ├─ 홈       : 최근 내역 + 이번달 수입/지출/잔액
+                              ├─ 캘린더   : 달력 뷰 + 내역 등록/수정 + 연락처 자동완성
+                              ├─ 장부     : 전체 목록 + 검색 + 일괄 삭제
+                              ├─ 통계     : 월별/연별 차트 + 연간 결산 이미지 공유
                               └─ 프로필   : 계정 관리 + 가족 공유장부 + 데이터 관리 + 앱 정보
-                                                └─ 가족 공유장부
-                                                      ├─ 그룹 없음 → 생성 또는 코드로 참여
-                                                      └─ 그룹 있음 → 공유 장부 + 멤버 목록
-                                                                        ├─ 방장: 멤버 추방 / 그룹 해산
-                                                                        └─ 멤버: 그룹 나가기
+                                                ├─ 가족 공유장부
+                                                │     ├─ 그룹 없음 → 생성 또는 코드로 참여
+                                                │     └─ 그룹 있음 → 공유 장부 + 멤버 목록
+                                                │                       ├─ 방장: 멤버 추방 / 그룹 해산
+                                                │                       └─ 멤버: 그룹 나가기
+                                                ├─ 백업 · 복원
+                                                ├─ 카테고리 관리
+                                                └─ 월별 예산 설정
 ```
 
 <br>
@@ -367,6 +394,7 @@ dart run flutter_native_splash:create
 
 | 버전 | 출시일 | 주요 변경사항 |
 |---|---|---|
+| **v1.3.0** | 2026년 3월 | 연락처 생일 자동입력, 통계 연간 결산 이미지 공유, 장부 일괄 삭제, 반복 이벤트 시각화, 카테고리 커스텀 관리, 백업·복원, 카카오톡 초대 |
 | **v1.2.0** | 2026년 3월 | 수입·지출·내역 상세 화면 (연도별 그룹핑), 홈·통계·프로필 통계 카드 탭 내비게이션 연동, 홈 경조사 카드 탭으로 내역 수정, 어댑티브 앱 아이콘 적용 |
 | **v1.1.0** | 2026년 3월 | 가족 공유장부 (그룹 생성/참여/추방/해산), 사진 전체 화면 보기, 알림 설정 커스터마이징 |
 | **v1.0.0** | 2025년 3월 | 최초 출시 — 경조사 기록, 소셜 로그인, 캘린더, 통계, 엑셀 가져오기/내보내기, 홈 위젯, 알림, 프로필 수정, 회원탈퇴 |

@@ -10,7 +10,6 @@ import '../export/excel_import_screen.dart';
 import '../export/export_screen.dart';
 import '../settings/backup_screen.dart';
 import '../settings/category_settings_screen.dart';
-import '../tools/envelope_calculator_screen.dart';
 import '../common/app_theme.dart';
 import '../settings/budget_setting_screen.dart';
 import 'family_share_screen.dart';
@@ -213,17 +212,6 @@ class ProfileScreen extends ConsumerWidget {
                           MaterialPageRoute(
                               builder: (_) =>
                                   const CategorySettingsScreen())),
-                    ),
-                    _MenuItem(
-                      icon: Icons.calculate_outlined,
-                      iconColor: const Color(0xFFD97706),
-                      title: '봉투 계산기',
-                      subtitle: '관계별 적정 경조사 금액 추천',
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  const EnvelopeCalculatorScreen())),
                     ),
                   ],
                 ),
