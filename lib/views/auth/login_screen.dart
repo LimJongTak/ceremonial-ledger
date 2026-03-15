@@ -108,7 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             fontSize: 28,
                             fontFamily: 'NanumMiraenamu',
                             color: Color(0xFF9a30ae))),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 16),
                     const Text('경조사 장부',
                         style: TextStyle(
                             fontSize: 28,
