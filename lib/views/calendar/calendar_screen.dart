@@ -270,8 +270,8 @@ class EventCard extends StatelessWidget {
   }
 
   Future<void> _shareEvent(BuildContext context) async {
-    final ok = await KakaoShareService.instance.shareEvent(event);
-    if (!ok && context.mounted) {
+    final error = await KakaoShareService.instance.shareEvent(event);
+    if (error != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('카카오톡 공유에 실패했습니다'),
