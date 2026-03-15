@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../providers/auth_provider.dart';
 import '../common/app_theme.dart';
 
@@ -294,8 +293,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SvgPicture.asset(
-                              'assets/images/kakaotalk-icon.svg',
+                            Image.asset(
+                              'assets/images/kakaotalk-icon.png',
                               width: 22,
                               height: 22,
                             ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../providers/auth_provider.dart';
@@ -789,8 +788,8 @@ class _KakaoInviteMenuItemState extends State<_KakaoInviteMenuItem> {
                   )
                 : Padding(
                     padding: const EdgeInsets.all(9),
-                    child: SvgPicture.asset(
-                        'assets/images/kakaotalk-icon.svg'),
+                    child: Image.asset(
+                        'assets/images/kakaotalk-icon.png'),
                   ),
           ),
           const SizedBox(width: 14),
