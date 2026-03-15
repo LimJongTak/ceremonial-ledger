@@ -10,6 +10,7 @@ import '../common/app_theme.dart';
 import '../search/search_screen.dart';
 import '../notifications/notification_screen.dart';
 import '../settings/budget_setting_screen.dart';
+import '../profile/profile_stats_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -303,6 +304,11 @@ class _MonthSummaryCards extends StatelessWidget {
           value: '${fmt.format(income)}원',
           color: AppTheme.income,
           icon: Icons.arrow_downward_rounded,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      const ProfileStatsScreen(type: StatsType.income))),
         )),
         const SizedBox(width: 12),
         Expanded(
@@ -311,6 +317,11 @@ class _MonthSummaryCards extends StatelessWidget {
           value: '${fmt.format(expense)}원',
           color: AppTheme.expense,
           icon: Icons.arrow_upward_rounded,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      const ProfileStatsScreen(type: StatsType.expense))),
         )),
         const SizedBox(width: 12),
         Expanded(
@@ -319,6 +330,11 @@ class _MonthSummaryCards extends StatelessWidget {
           value: '$count건',
           color: AppTheme.secondary,
           icon: Icons.receipt_long_outlined,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      const ProfileStatsScreen(type: StatsType.all))),
         )),
       ]),
     );
@@ -329,50 +345,55 @@ class _SummaryMini extends StatelessWidget {
   final String label, value;
   final Color color;
   final IconData icon;
+  final VoidCallback? onTap;
   const _SummaryMini(
       {required this.label,
       required this.value,
       required this.color,
-      required this.icon});
+      required this.icon,
+      this.onTap});
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 16, color: color),
               ),
-              child: Icon(icon, size: 16, color: color),
-            ),
-            const SizedBox(height: 8),
-            Text(value,
-                style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3),
-                overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 11)),
-          ],
+              const SizedBox(height: 8),
+              Text(value,
+                  style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3),
+                  overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 2),
+              Text(label,
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 11)),
+            ],
+          ),
         ),
       );
 }
@@ -385,7 +406,15 @@ class _UpcomingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final daysLeft = event.date.difference(DateTime.now()).inDays;
-    return Container(
+    return GestureDetector(
+      onTap: () => showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) =>
+            EventBottomSheet(initialDate: event.date, eventToEdit: event),
+      ),
+      child: Container(
       width: 140,
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(14),
@@ -434,7 +463,7 @@ class _UpcomingCard extends StatelessWidget {
                   const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
         ],
       ),
-    );
+    ));
   }
 }
 

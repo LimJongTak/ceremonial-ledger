@@ -13,6 +13,7 @@ import '../common/app_theme.dart';
 import '../settings/budget_setting_screen.dart';
 import 'family_share_screen.dart';
 import 'profile_edit_screen.dart';
+import 'profile_stats_screen.dart';
 import 'version_info_screen.dart';
 import 'legal_screen.dart';
 import '../../providers/family_provider.dart';
@@ -138,19 +139,34 @@ class ProfileScreen extends ConsumerWidget {
                       child: _StatChip(
                           label: '총 수입',
                           value: '${fmt.format(totalIncome)}원',
-                          color: AppTheme.income)),
+                          color: AppTheme.income,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ProfileStatsScreen(
+                                      type: StatsType.income))))),
                   const SizedBox(width: 10),
                   Expanded(
                       child: _StatChip(
                           label: '총 지출',
                           value: '${fmt.format(totalExpense)}원',
-                          color: AppTheme.expense)),
+                          color: AppTheme.expense,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ProfileStatsScreen(
+                                      type: StatsType.expense))))),
                   const SizedBox(width: 10),
                   Expanded(
                       child: _StatChip(
                           label: '내역 수',
                           value: '${events.length}건',
-                          color: AppTheme.gold)),
+                          color: AppTheme.gold,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ProfileStatsScreen(
+                                      type: StatsType.all))))),
                 ]),
               ]),
             ),
@@ -452,27 +468,44 @@ class ProfileScreen extends ConsumerWidget {
 class _StatChip extends StatelessWidget {
   final String label, value;
   final Color color;
+  final VoidCallback? onTap;
   const _StatChip(
-      {required this.label, required this.value, required this.color});
+      {required this.label,
+      required this.value,
+      required this.color,
+      this.onTap});
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppTheme.bgLight,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            color: AppTheme.bgLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
+          ),
+          child: Column(children: [
+            Text(value,
+                style: TextStyle(
+                    color: color, fontSize: 12, fontWeight: FontWeight.w800),
+                overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 10)),
+                if (onTap != null) ...[
+                  const SizedBox(width: 2),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 10, color: color.withValues(alpha: 0.6)),
+                ],
+              ],
+            ),
+          ]),
         ),
-        child: Column(children: [
-          Text(value,
-              style: TextStyle(
-                  color: color, fontSize: 12, fontWeight: FontWeight.w800),
-              overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 2),
-          Text(label,
-              style: const TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 10)),
-        ]),
       );
 }
 

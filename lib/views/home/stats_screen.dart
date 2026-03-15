@@ -7,6 +7,7 @@ import '../../providers/event_provider.dart';
 import '../calendar/event_bottom_sheet.dart';
 import '../common/app_theme.dart';
 import '../person/person_history_screen.dart';
+import '../profile/profile_stats_screen.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -169,14 +170,24 @@ class _StatsBody extends StatelessWidget {
                           label: '총 수입',
                           value: '${fmt.format(totalIncome)}원',
                           icon: Icons.arrow_downward_rounded,
-                          color: AppTheme.income)),
+                          color: AppTheme.income,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ProfileStatsScreen(
+                                      type: StatsType.income))))),
                   const SizedBox(width: 12),
                   Expanded(
                       child: _YearSummaryCard(
                           label: '총 지출',
                           value: '${fmt.format(totalExpense)}원',
                           icon: Icons.arrow_upward_rounded,
-                          color: AppTheme.expense)),
+                          color: AppTheme.expense,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ProfileStatsScreen(
+                                      type: StatsType.expense))))),
                 ]),
                 const SizedBox(height: 16),
                 Container(
@@ -849,14 +860,18 @@ class _YearSummaryCard extends StatelessWidget {
   final String label, value;
   final IconData icon;
   final Color color;
+  final VoidCallback? onTap;
   const _YearSummaryCard(
       {required this.label,
       required this.value,
       required this.icon,
-      required this.color});
+      required this.color,
+      this.onTap});
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppTheme.bgLight,
@@ -890,7 +905,7 @@ class _YearSummaryCard extends StatelessWidget {
             ],
           )),
         ]),
-      );
+      ));
 }
 
 class _Legend extends StatelessWidget {

@@ -11,7 +11,7 @@
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
 [![Riverpod](https://img.shields.io/badge/Riverpod-2.x-006AC1?style=for-the-badge)](https://riverpod.dev)
-[![Version](https://img.shields.io/badge/Version-1.1.0-brightgreen?style=for-the-badge)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen?style=for-the-badge)](./CHANGELOG.md)
 
 <br>
 
@@ -72,11 +72,14 @@
 
 | 기능 | 설명 |
 |---|---|
-| **홈 요약** | 최근 내역 및 이번 달 수입·지출 요약 |
+| **홈 요약** | 이번 달 수입·지출·건수 카드 탭 시 전체 내역 상세 화면으로 이동 |
+| **다가오는 경조사** | 홈 경조사 카드 탭 시 해당 내역 수정 바텀시트 바로 열기 |
 | **캘린더 뷰** | 월별 달력에서 경조사 일정 한눈에 파악 |
-| **통계 화면** | 연·월별 수입/지출 합계, 건수, 차트 |
+| **통계 화면** | 연·월별 수입/지출 합계·건수·차트, 총 수입/총 지출 탭 시 상세 내역 이동 |
+| **내역 상세** | 수입·지출·전체 내역을 연도별 그룹 헤더 + 소계와 함께 표시 |
 | **장부 목록** | 전체 내역 검색 및 필터링 |
 | **홈 위젯** | 홈 화면 위젯에서 주요 통계 바로 확인 |
+| **프로필 통계** | 총 수입·총 지출·내역 수 칩 탭 시 해당 상세 내역 화면으로 이동 |
 
 ### ⚡ 자동화 도구
 
@@ -209,7 +212,8 @@ lib/
     ├── notifications/
     │   └── notification_screen.dart  # 알림 목록
     ├── profile/
-    │   ├── profile_screen.dart       # 프로필 탭 메인
+    │   ├── profile_screen.dart       # 프로필 탭 메인 (총 수입/지출/내역 수 칩 → 상세 이동)
+    │   ├── profile_stats_screen.dart # 수입·지출·전체 내역 상세 (연도별 그룹핑)
     │   ├── family_share_screen.dart  # 가족 공유장부 (그룹 생성/참여/멤버 관리/추방)
     │   ├── profile_edit_screen.dart  # 닉네임/이름 수정
     │   ├── version_info_screen.dart  # 버전 정보 & 업데이트 내역
@@ -363,6 +367,7 @@ dart run flutter_native_splash:create
 
 | 버전 | 출시일 | 주요 변경사항 |
 |---|---|---|
+| **v1.2.0** | 2026년 3월 | 수입·지출·내역 상세 화면 (연도별 그룹핑), 홈·통계·프로필 통계 카드 탭 내비게이션 연동, 홈 경조사 카드 탭으로 내역 수정, 어댑티브 앱 아이콘 적용 |
 | **v1.1.0** | 2026년 3월 | 가족 공유장부 (그룹 생성/참여/추방/해산), 사진 전체 화면 보기, 알림 설정 커스터마이징 |
 | **v1.0.0** | 2025년 3월 | 최초 출시 — 경조사 기록, 소셜 로그인, 캘린더, 통계, 엑셀 가져오기/내보내기, 홈 위젯, 알림, 프로필 수정, 회원탈퇴 |
 
