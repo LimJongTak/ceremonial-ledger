@@ -1,7 +1,13 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../calendar/event_bottom_sheet.dart';
@@ -60,7 +66,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
 }
 
 // ── 메인 바디 ─────────────────────────────────────────────────
-class _StatsBody extends StatelessWidget {
+class _StatsBody extends StatefulWidget {
   final List<EventModel> events;
   final List<EventModel> allEvents;
   final int selectedYear;
@@ -76,7 +82,38 @@ class _StatsBody extends StatelessWidget {
   });
 
   @override
+  State<_StatsBody> createState() => _StatsBodyState();
+}
+
+class _StatsBodyState extends State<_StatsBody> {
+  final _shareKey = GlobalKey();
+  bool _sharing = false;
+
+  Future<void> _shareStats() async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    try {
+      // 공유 카드 다이얼로그 표시 후 캡처
+      await showDialog(
+        context: context,
+        barrierColor: Colors.black54,
+        builder: (_) => _ShareDialog(
+          events: widget.events,
+          selectedYear: widget.selectedYear,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final events = widget.events;
+    final allEvents = widget.allEvents;
+    final selectedYear = widget.selectedYear;
+    final onYearChanged = widget.onYearChanged;
+    final tab = widget.tab;
     // 월별 데이터
     final monthlyData = List.generate(12, (i) {
       final month = i + 1;
@@ -139,12 +176,48 @@ class _StatsBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('통계',
-                    style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('통계',
+                        style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5)),
+                    GestureDetector(
+                      onTap: _shareStats,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: _sharing
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppTheme.primary))
+                            : const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.ios_share_rounded,
+                                      size: 15, color: AppTheme.primary),
+                                  SizedBox(width: 5),
+                                  Text('공유',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppTheme.primary,
+                                          fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 20),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   _YearBtn(
@@ -1132,4 +1205,258 @@ class _StatsLedgerItem extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── 공유 다이얼로그 ────────────────────────────────────────────
+class _ShareDialog extends StatefulWidget {
+  final List<EventModel> events;
+  final int selectedYear;
+  const _ShareDialog({required this.events, required this.selectedYear});
+
+  @override
+  State<_ShareDialog> createState() => _ShareDialogState();
+}
+
+class _ShareDialogState extends State<_ShareDialog> {
+  final _cardKey = GlobalKey();
+  bool _capturing = false;
+
+  Future<void> _capture() async {
+    if (_capturing) return;
+    setState(() => _capturing = true);
+    try {
+      await Future.delayed(const Duration(milliseconds: 100));
+      final boundary = _cardKey.currentContext!.findRenderObject()
+          as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      final pngBytes = byteData!.buffer.asUint8List();
+
+      final dir = await getTemporaryDirectory();
+      final file =
+          File('${dir.path}/ogogo_${widget.selectedYear}.png');
+      await file.writeAsBytes(pngBytes);
+
+      if (mounted) Navigator.pop(context);
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: '오고가고 ${widget.selectedYear}년 경조사 연간 결산 📊',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('공유 실패: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _capturing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final events = widget.events;
+    final year = widget.selectedYear;
+    final fmt = NumberFormat('#,###');
+
+    final totalIncome =
+        events.where((e) => e.isIncome).fold(0, (s, e) => s + e.amount);
+    final totalExpense =
+        events.where((e) => !e.isIncome).fold(0, (s, e) => s + e.amount);
+    final balance = totalIncome - totalExpense;
+
+    // 경조사별 건수
+    final Map<String, int> byCeremony = {};
+    for (final e in events) {
+      final label = e.displayLabel;
+      byCeremony[label] = (byCeremony[label] ?? 0) + 1;
+    }
+    final topCeremonies = byCeremony.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 캡처 대상 카드
+          RepaintBoundary(
+            key: _cardKey,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF7C3AED), Color(0xFF2563EB)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 헤더
+                  Row(children: [
+                    const Text('오고가고', style: TextStyle(
+                        color: Colors.white70, fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text('$year년 결산', style: const TextStyle(
+                        color: Colors.white70, fontSize: 13)),
+                  ]),
+                  const SizedBox(height: 20),
+                  Text('총 ${events.length}건의 경조사',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5)),
+                  const SizedBox(height: 20),
+                  // 수입/지출/잔액
+                  Row(children: [
+                    _ShareStatItem(
+                        label: '수입', value: '${fmt.format(totalIncome)}원',
+                        color: const Color(0xFF86EFAC)),
+                    const SizedBox(width: 12),
+                    _ShareStatItem(
+                        label: '지출', value: '${fmt.format(totalExpense)}원',
+                        color: const Color(0xFFFCA5A5)),
+                  ]),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(children: [
+                      const Text('순 잔액',
+                          style: TextStyle(
+                              color: Colors.white70, fontSize: 13)),
+                      const Spacer(),
+                      Text(
+                        balance >= 0
+                            ? '+${fmt.format(balance)}원'
+                            : '-${fmt.format(balance.abs())}원',
+                        style: TextStyle(
+                            color: balance >= 0
+                                ? const Color(0xFF86EFAC)
+                                : const Color(0xFFFCA5A5),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800),
+                      ),
+                    ]),
+                  ),
+                  if (topCeremonies.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    const Text('많이 참석한 경조사',
+                        style: TextStyle(
+                            color: Colors.white70, fontSize: 12)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: topCeremonies.take(4).map((e) => Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text('${e.key} ${e.value}건',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600)),
+                          )).toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text('오고가고 · ogogo',
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            fontSize: 11)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 공유 버튼
+          Row(children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                ),
+                child: const Text('닫기'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 2,
+              child: FilledButton.icon(
+                onPressed: _capturing ? null : _capture,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF7C3AED),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                icon: _capturing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF7C3AED)))
+                    : const Icon(Icons.ios_share_rounded, size: 18),
+                label: Text(_capturing ? '처리중...' : '이미지로 공유'),
+              ),
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShareStatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  const _ShareStatItem(
+      {required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      color: Colors.white70, fontSize: 12)),
+              const SizedBox(height: 4),
+              Text(value,
+                  style: TextStyle(
+                      color: color,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700)),
+            ],
+          ),
+        ),
+      );
 }

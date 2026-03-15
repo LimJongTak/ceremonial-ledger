@@ -218,6 +218,7 @@ class _State extends ConsumerState<EventBottomSheet>
     final isEdit = widget.eventToEdit != null;
     final isScheduled = _mode == _EntryMode.scheduled;
     final contactNames = ref.watch(contactNamesProvider).valueOrNull ?? [];
+    final contactBirthdays = ref.watch(contactBirthdaysProvider).valueOrNull ?? {};
 
     return FadeTransition(
       opacity: _fadeAnim,
@@ -418,12 +419,28 @@ class _State extends ConsumerState<EventBottomSheet>
                     const SizedBox(height: 14),
                   ],
 
-                  // ── 이름 (연락처 자동완성) ───────────────────
+                  // ── 이름 (연락처 자동완성 + 생일 자동입력) ──────
                   if (contactNames.isNotEmpty)
                     _ContactAutocomplete(
                       nameCtrl: _nameCtrl,
                       contactNames: contactNames,
                       decoration: _deco('이름 *', Icons.person_outline_rounded),
+                      onBirthdayFound: (birthday) {
+                        if (widget.eventToEdit == null) {
+                          setState(() => _date = birthday);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  '생일(${birthday.month}월 ${birthday.day}일)을 날짜에 자동 입력했습니다'),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                      birthdayMap: contactBirthdays,
                     )
                   else
                     TextFormField(
@@ -1233,11 +1250,15 @@ class _ContactAutocomplete extends StatefulWidget {
   final TextEditingController nameCtrl;
   final List<String> contactNames;
   final InputDecoration decoration;
+  final Map<String, DateTime> birthdayMap;
+  final void Function(DateTime birthday)? onBirthdayFound;
 
   const _ContactAutocomplete({
     required this.nameCtrl,
     required this.contactNames,
     required this.decoration,
+    this.birthdayMap = const {},
+    this.onBirthdayFound,
   });
 
   @override
@@ -1262,6 +1283,11 @@ class _ContactAutocompleteState extends State<_ContactAutocomplete> {
       },
       onSelected: (selected) {
         widget.nameCtrl.text = selected;
+        // 생일 자동입력
+        final birthday = widget.birthdayMap[selected];
+        if (birthday != null) {
+          widget.onBirthdayFound?.call(birthday);
+        }
       },
       fieldViewBuilder: (ctx, ctrl, focusNode, onFieldSubmitted) {
         return TextFormField(

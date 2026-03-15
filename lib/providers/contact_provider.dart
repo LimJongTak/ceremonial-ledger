@@ -22,3 +22,34 @@ final contactNamesProvider = FutureProvider<List<String>>((ref) async {
     return [];
   }
 });
+
+/// 이름 → 생일 DateTime 맵 (연락처 생일 자동완성용)
+final contactBirthdaysProvider = FutureProvider<Map<String, DateTime>>((ref) async {
+  try {
+    final granted = await FlutterContacts.requestPermission(readonly: true);
+    if (!granted) return {};
+    final contacts = await FlutterContacts.getContacts(
+      withProperties: true,
+      withPhoto: false,
+    );
+    final Map<String, DateTime> result = {};
+    final now = DateTime.now();
+    for (final c in contacts) {
+      final name = c.displayName.trim();
+      if (name.isEmpty) continue;
+      try {
+        final birthdayEvent = c.events
+            .where((e) => e.label == EventLabel.birthday)
+            .firstOrNull;
+        if (birthdayEvent == null) continue;
+        final year = birthdayEvent.year ?? now.year;
+        result[name] = DateTime(year, birthdayEvent.month, birthdayEvent.day);
+      } catch (_) {
+        continue;
+      }
+    }
+    return result;
+  } catch (_) {
+    return {};
+  }
+});
