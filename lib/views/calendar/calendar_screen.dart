@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/event_model.dart';
@@ -446,8 +445,8 @@ class EventCard extends StatelessWidget {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  SvgPicture.asset(
-                                    'assets/images/kakaotalk-icon.svg',
+                                  Image.asset(
+                                    'assets/images/kakaotalk-icon.png',
                                     width: 16,
                                     height: 16,
                                   ),
