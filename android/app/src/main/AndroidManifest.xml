@@ -32,6 +32,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- 카카오톡 공유 완료 후 앱 복귀 콜백 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="kakao9e8cb74d18d1c54a5a7be9cd53461b56" android:host="sharecallback" />
+            </intent-filter>
         </activity>
         <!-- 카카오 로그인 OAuth 콜백 Activity -->
         <activity
