@@ -176,7 +176,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   const SizedBox(height: 48),
 
                   // 닉네임 입력
-                  _InputLabel(label: '닉네임', required: true),
+                  const _InputLabel(label: '닉네임', required: true),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _nicknameCtrl,
@@ -192,7 +192,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   const SizedBox(height: 20),
 
                   // 이름 입력 (선택)
-                  _InputLabel(label: '이름 (선택)', required: false),
+                  const _InputLabel(label: '이름 (선택)', required: false),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _nameCtrl,

@@ -37,12 +37,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         () => _s.signInWithKakao().then((c) => c?.user));
   }
 
-  Future<void> signInWithNaver() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-        () => _s.signInWithNaver().then((c) => c?.user));
-  }
-
   Future<void> signInWithEmail(String email, String pw) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(

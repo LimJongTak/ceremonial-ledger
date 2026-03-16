@@ -2,8 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' hide User;
-import 'package:flutter_naver_login/flutter_naver_login.dart';
-import 'package:flutter_naver_login/interface/types/naver_login_status.dart';
 
 class AuthService {
   final _auth = FirebaseAuth.instance;
@@ -113,83 +111,6 @@ class AuthService {
     }
   }
 
-  // ── 네이버 로그인 ───────────────────────────────────────────
-  // 네이버 SDK → Firebase email/password 방식으로 연결
-  // ※ 네이버 개발자 콘솔에서 앱 등록 후 client_id/secret을 strings.xml에 설정 필요
-  Future<UserCredential?> signInWithNaver() async {
-    try {
-      // 1. 네이버 로그인
-      final result = await FlutterNaverLogin.logIn();
-      if (result.status == NaverLoginStatus.loggedOut) {
-        return null; // 사용자가 취소
-      }
-      if (result.status == NaverLoginStatus.error) {
-        throw AuthException('네이버 로그인 오류: ${result.errorMessage ?? '알 수 없는 오류'}');
-      }
-
-      // 2. 네이버 사용자 정보 (logIn 결과에 포함된 account 또는 getCurrentAccount 사용)
-      final account =
-          result.account ?? await FlutterNaverLogin.getCurrentAccount();
-      final naverId = account.id ?? '';
-      final nickname =
-          (account.nickname?.isNotEmpty == true)
-              ? account.nickname!
-              : ((account.name?.isNotEmpty == true)
-                  ? account.name!
-                  : '네이버 사용자');
-
-      // 3. Firebase 계정 구성
-      final firebaseEmail = 'naver_$naverId@naver.cl.user';
-      final firebasePassword = 'naver_${naverId}_cl2024!';
-
-      // 4. Firebase 로그인 시도 → 없으면 계정 생성
-      UserCredential cred;
-      try {
-        cred = await _auth.signInWithEmailAndPassword(
-          email: firebaseEmail,
-          password: firebasePassword,
-        );
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'user-not-found' ||
-            e.code == 'invalid-credential' ||
-            e.code == 'INVALID_LOGIN_CREDENTIALS') {
-          cred = await _auth.createUserWithEmailAndPassword(
-            email: firebaseEmail,
-            password: firebasePassword,
-          );
-        } else {
-          rethrow;
-        }
-      }
-
-      // 5. displayName 없으면 네이버 닉네임 저장
-      if (cred.user?.displayName == null ||
-          cred.user!.displayName!.isEmpty) {
-        await cred.user?.updateDisplayName(nickname);
-      }
-
-      // 6. 네이버 프로필 이미지 → Firebase photoURL 동기화 (로그인마다 최신화)
-      final naverPhotoUrl = account.profileImage?.isNotEmpty == true
-          ? account.profileImage!.replaceFirst('http://', 'https://')
-          : null;
-      if (naverPhotoUrl != null) {
-        await cred.user?.updatePhotoURL(naverPhotoUrl);
-      }
-
-      return cred;
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      // firebase_auth 플러그인 PigeonUserDetails 타입 캐스팅 버그:
-      // Firebase 로그인은 성공했으나 내부 업데이트 중 예외가 발생하는 경우 무시
-      final msg = e.toString();
-      if ((msg.contains('PigeonUserDetails') || msg.contains('List<Object?>')) &&
-          _auth.currentUser != null) {
-        return null;
-      }
-      throw AuthException('네이버 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
-    }
-  }
-
   // ── 이메일/비밀번호 ─────────────────────────────────────────
   Future<UserCredential> signInWithEmail(String email, String password) async {
     try {
@@ -228,7 +149,6 @@ class AuthService {
     await Future.wait([
       _auth.signOut(),
       _googleSignIn.signOut(),
-      FlutterNaverLogin.logOut(),
     ]);
     // 카카오 로그아웃 (오류 무시)
     try {
@@ -260,10 +180,6 @@ class AuthService {
       // 3. 소셜 로그아웃 (각 2초 타임아웃 — 응답 없으면 무시)
       try {
         await _googleSignIn.signOut()
-            .timeout(const Duration(seconds: 2));
-      } catch (_) {}
-      try {
-        await FlutterNaverLogin.logOut()
             .timeout(const Duration(seconds: 2));
       } catch (_) {}
       try {

@@ -28,8 +28,6 @@ dependencies:
   firebase_messaging: ^14.7.10
   google_sign_in: ^6.2.1
   kakao_flutter_sdk_user: ^1.9.1
-  flutter_naver_login: ^2.1.1
-
   # 로컬 DB
   drift: ^2.14.1
   drift_flutter: ^0.1.0

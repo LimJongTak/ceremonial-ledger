@@ -106,7 +106,7 @@ class _NotificationSettingsSheetState
             ],
           ),
           const SizedBox(height: 6),
-          Text(
+          const Text(
             '알림을 받을 시기를 선택하세요 (최소 1개)',
             style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),

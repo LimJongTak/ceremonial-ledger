@@ -303,37 +303,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ]),
                     ),
 
-                    const SizedBox(height: 10),
-
-                    // 네이버
-                    _SocialBtn(
-                      onTap: isLoading
-                          ? null
-                          : () => ref
-                              .read(authNotifierProvider.notifier)
-                              .signInWithNaver(),
-                      backgroundColor: const Color(0xFF03C75A),
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: Image.asset(
-                                'assets/images/naver-icon.jpeg',
-                                width: 22,
-                                height: 22,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Text('네이버로 계속하기',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white)),
-                          ]),
-                    ),
-
                     const SizedBox(height: 40),
                   ],
                 ),

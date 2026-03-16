@@ -13,8 +13,3 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.openjsse.**
 -dontwarn org.apache.harmony.**
-
-# 네이버 로그인 SDK (NaverIdLoginSDK)
--keep class com.navercorp.nid.** { *; }
--keep interface com.navercorp.nid.** { *; }
--dontwarn com.navercorp.nid.**
